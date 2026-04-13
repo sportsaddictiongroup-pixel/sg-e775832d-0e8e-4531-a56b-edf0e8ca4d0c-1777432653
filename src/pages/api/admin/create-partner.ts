@@ -39,7 +39,15 @@ const partnerRoles: PartnerRoleValue[] = [
   "pincode_partner",
 ];
 
-async function getAdminProfileId(accessToken: string): Promise<string | null> {
+const INTERNAL_EMAIL_DOMAIN = "partners.app.example.com";
+
+function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
+async function getAdminProfileId(
+  accessToken: string,
+): Promise<string | null> {
   const {
     data: { user },
     error,
@@ -95,9 +103,14 @@ async function resolveUplineProfileId(
 }
 
 async function checkTerritoryConflict(
-  body: Required<Pick<CreatePartnerBody, "role">> & CreatePartnerBody,
+  role: PartnerRoleValue | undefined,
+  body: CreatePartnerBody,
 ): Promise<string | null> {
-  if (body.role === "state_head") {
+  if (!role) {
+    return null;
+  }
+
+  if (role === "state_head") {
     if (!body.stateId) {
       return "State is required for State Head.";
     }
@@ -114,7 +127,7 @@ async function checkTerritoryConflict(
     }
   }
 
-  if (body.role === "district_head") {
+  if (role === "district_head") {
     if (!body.districtId) {
       return "District is required for District Head.";
     }
@@ -131,7 +144,7 @@ async function checkTerritoryConflict(
     }
   }
 
-  if (body.role === "pincode_head") {
+  if (role === "pincode_head") {
     if (!body.pincodeId) {
       return "PIN Code is required for PIN Code Head.";
     }
@@ -148,7 +161,7 @@ async function checkTerritoryConflict(
     }
   }
 
-  if (body.role === "pincode_partner") {
+  if (role === "pincode_partner") {
     if (!body.locationId) {
       return "Location is required for PIN Code Partner.";
     }
@@ -174,9 +187,10 @@ export default async function handler(
 ): Promise<void> {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    res
-      .status(405)
-      .json({ success: false, message: "Method not allowed for this endpoint." });
+    res.status(405).json({
+      success: false,
+      message: "Method not allowed for this endpoint.",
+    });
     return;
   }
 
@@ -208,7 +222,9 @@ export default async function handler(
 
   const fullName = (body.fullName ?? "").trim();
   const mobileNumber = (body.mobileNumber ?? "").trim();
-  const username = (body.username ?? "").trim();
+  const rawUsername = (body.username ?? "").trim();
+  const username = rawUsername;
+  const normalizedUsername = normalizeUsername(rawUsername);
   const password = body.password ?? "";
   const role = body.role;
 
@@ -339,10 +355,7 @@ export default async function handler(
   }
 
   if (role) {
-    const conflictMessage = await checkTerritoryConflict({
-      ...body,
-      role,
-    });
+    const conflictMessage = await checkTerritoryConflict(role, body);
     if (conflictMessage) {
       res.status(400).json({
         success: false,
@@ -364,7 +377,13 @@ export default async function handler(
     return;
   }
 
-  const email = `${username}@app.local`;
+  const email = `${normalizedUsername}@${INTERNAL_EMAIL_DOMAIN}`;
+
+  console.log("CreatePartner: creating auth user", {
+    username,
+    normalizedUsername,
+    email,
+  });
 
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
@@ -374,11 +393,13 @@ export default async function handler(
         full_name: fullName,
         mobile_number: mobileNumber,
         role,
+        username,
       },
     },
   });
 
   if (signUpError || !signUpData.user) {
+    console.error("CreatePartner: auth signUp error", signUpError);
     res.status(400).json({
       success: false,
       message:
@@ -399,11 +420,16 @@ export default async function handler(
       mobile_number: mobileNumber,
       role,
       upline_profile_id: uplineProfileId,
+      email,
     })
     .select("id")
     .maybeSingle();
 
   if (profileError || !profileData) {
+    console.error("CreatePartner: profile insert failed", {
+      profileError,
+      newUserId: newUser.id,
+    });
     res.status(500).json({
       success: false,
       message:
@@ -438,6 +464,10 @@ export default async function handler(
       .insert(territoryPayload);
 
     if (territoryError) {
+      console.error("CreatePartner: territory assignment insert failed", {
+        territoryError,
+        profileId: profileData.id,
+      });
       res.status(500).json({
         success: false,
         message:

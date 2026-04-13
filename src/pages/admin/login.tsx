@@ -39,6 +39,10 @@ export default function AdminLogin(): JSX.Element {
         await authService.signInWithUsername(trimmedUsername, password);
 
       if (signInError || !user) {
+        console.error("Admin login failed at auth step", {
+          signInError,
+          user,
+        });
         setError(signInError?.message ?? "Invalid username or password.");
         return;
       }
@@ -50,19 +54,27 @@ export default function AdminLogin(): JSX.Element {
         .maybeSingle();
 
       if (profileError || !profile) {
+        console.error("Admin login failed while fetching profile", {
+          profileError,
+          profile,
+        });
         await authService.signOut();
         setError("No profile found for this account.");
         return;
       }
 
       if (profile.role !== "admin") {
+        console.error("Admin login blocked due to non-admin role", {
+          profile,
+        });
         await authService.signOut();
         setError("You do not have admin access. Please use the partner login.");
         return;
       }
 
       router.push("/admin");
-    } catch {
+    } catch (error) {
+      console.error("Admin login unexpected error", error);
       setError("Unable to sign in at the moment. Please try again.");
     } finally {
       setLoading(false);

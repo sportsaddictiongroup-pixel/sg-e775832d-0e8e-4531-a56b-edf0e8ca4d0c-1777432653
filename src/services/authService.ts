@@ -97,12 +97,17 @@ export const authService = {
     password: string,
   ): Promise<{ user: AuthUser | null; error: AuthError | null }> {
     try {
+      console.log("Auth: signInWithPassword - attempting", { email });
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log("Auth: signInWithPassword - response", { email, data, error });
+
       if (error) {
+        console.error("Auth: signInWithPassword - Supabase error", error);
         return {
           user: null,
           error: { message: error.message, code: error.status?.toString() },
@@ -119,7 +124,8 @@ export const authService = {
         : null;
 
       return { user: authUser, error: null };
-    } catch {
+    } catch (error) {
+      console.error("Auth: signInWithPassword - unexpected error", error);
       return {
         user: null,
         error: { message: "An unexpected error occurred during sign in" },
@@ -131,11 +137,15 @@ export const authService = {
     username: string,
     password: string,
   ): Promise<{ user: AuthUser | null; error: AuthError | null }> {
-    const trimmed = username.trim();
+    const trimmed = username.trim().toLowerCase();
     if (!trimmed) {
       return { user: null, error: { message: "Username is required" } };
     }
     const email = `${trimmed}@app.local`;
+    console.log("Auth: signInWithUsername - mapping username to email", {
+      username: trimmed,
+      email,
+    });
     return this.signIn(email, password);
   },
 

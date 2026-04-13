@@ -41,6 +41,7 @@ interface AddEntityDialogProps {
   placeholder?: string;
   submitting: boolean;
   error: string | null;
+  initialValue?: string;
   onOpenChange: (open: boolean) => void;
   onSubmit: (value: string) => Promise<void> | void;
 }
@@ -53,16 +54,19 @@ function AddEntityDialog({
   placeholder,
   submitting,
   error,
+  initialValue,
   onOpenChange,
   onSubmit,
 }: AddEntityDialogProps): JSX.Element {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialValue ?? "");
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setValue(initialValue ?? "");
+    } else {
       setValue("");
     }
-  }, [open]);
+  }, [open, initialValue]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -110,6 +114,86 @@ function AddEntityDialog({
   );
 }
 
+interface DeleteConfirmDialogProps {
+  open: boolean;
+  title: string;
+  targetLabel: string;
+  submitting: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => Promise<void> | void;
+}
+
+function DeleteConfirmDialog({
+  open,
+  title,
+  targetLabel,
+  submitting,
+  onOpenChange,
+  onConfirm,
+}: DeleteConfirmDialogProps): JSX.Element {
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (!open) {
+      setValue("");
+    }
+  }, [open, targetLabel]);
+
+  const disabled = submitting || value !== targetLabel;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (disabled) {
+      return;
+    }
+    await onConfirm();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            This action is irreversible. To confirm, type{" "}
+            <span className="font-semibold">&quot;{targetLabel}&quot;</span> in
+            the box below and then press Delete.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Type the exact name to confirm
+            </label>
+            <Input
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              placeholder={targetLabel}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={disabled}
+            >
+              {submitting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 const getCountryCardClasses = (name: string): string => {
   const map: Record<string, string> = {
     India: "bg-blue-50 border-blue-200",
@@ -120,6 +204,12 @@ const getCountryCardClasses = (name: string): string => {
   };
   return map[name] ?? "bg-muted/40";
 };
+
+interface DeleteDialogContext {
+  title: string;
+  targetLabel: string;
+  onConfirm: () => Promise<void> | void;
+}
 
 export function LocationManagement(): JSX.Element {
   const router = useRouter();
@@ -151,21 +241,30 @@ export function LocationManagement(): JSX.Element {
   const [stateDialogOpen, setStateDialogOpen] = useState(false);
   const [stateDialogError, setStateDialogError] = useState<string | null>(null);
   const [savingState, setSavingState] = useState(false);
+  const [editingState, setEditingState] = useState<State | null>(null);
 
   const [districtDialogOpen, setDistrictDialogOpen] = useState(false);
   const [districtDialogError, setDistrictDialogError] =
     useState<string | null>(null);
   const [savingDistrict, setSavingDistrict] = useState(false);
+  const [editingDistrict, setEditingDistrict] = useState<District | null>(null);
 
   const [pincodeDialogOpen, setPincodeDialogOpen] = useState(false);
   const [pincodeDialogError, setPincodeDialogError] =
     useState<string | null>(null);
   const [savingPincode, setSavingPincode] = useState(false);
+  const [editingPincode, setEditingPincode] = useState<Pincode | null>(null);
 
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [locationDialogError, setLocationDialogError] =
     useState<string | null>(null);
   const [savingLocation, setSavingLocation] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteDialogContext, setDeleteDialogContext] =
+    useState<DeleteDialogContext | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -212,6 +311,24 @@ export function LocationManagement(): JSX.Element {
       isMounted = false;
     };
   }, [router]);
+
+  const openDeleteDialog = (
+    title: string,
+    targetLabel: string,
+    onConfirm: () => Promise<void> | void,
+  ) => {
+    setDeleteDialogContext({ title, targetLabel, onConfirm });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialogContext) {
+      return;
+    }
+    setDeleting(true);
+    await deleteDialogContext.onConfirm();
+    setDeleting(false);
+  };
 
   const handleStaticCountryClick = async (countryName: string) => {
     setGlobalError(null);
@@ -357,6 +474,46 @@ export function LocationManagement(): JSX.Element {
     setSavingState(false);
   };
 
+  const handleSubmitStateDialog = async (name: string) => {
+    if (editingState) {
+      if (!selectedCountry) {
+        setStateDialogError("Select a country before renaming a state.");
+        return;
+      }
+      setSavingState(true);
+      const { item, error } = await locationService.updateState(
+        selectedCountry.id,
+        editingState.id,
+        name,
+      );
+      if (error || !item) {
+        setStateDialogError(error ?? "Unable to update state.");
+      } else {
+        setStates((prev) =>
+          prev.map((state) => (state.id === editingState.id ? item : state)),
+        );
+        setEditingState(null);
+        setStateDialogError(null);
+        setStateDialogOpen(false);
+      }
+      setSavingState(false);
+      return;
+    }
+
+    await handleCreateState(name);
+  };
+
+  const handleDeleteState = async (stateId: State["id"]) => {
+    const { error } = await locationService.deleteState(stateId);
+    if (error) {
+      setGlobalError(error);
+      return;
+    }
+    setStates((prev) => prev.filter((state) => state.id !== stateId));
+    setDeleteDialogOpen(false);
+    setDeleteDialogContext(null);
+  };
+
   const handleCreateDistrict = async (name: string) => {
     if (!selectedState) {
       setDistrictDialogError("Select a state before adding a district.");
@@ -375,6 +532,50 @@ export function LocationManagement(): JSX.Element {
       setDistrictDialogOpen(false);
     }
     setSavingDistrict(false);
+  };
+
+  const handleSubmitDistrictDialog = async (name: string) => {
+    if (editingDistrict) {
+      if (!selectedState) {
+        setDistrictDialogError("Select a state before renaming a district.");
+        return;
+      }
+      setSavingDistrict(true);
+      const { item, error } = await locationService.updateDistrict(
+        selectedState.id,
+        editingDistrict.id,
+        name,
+      );
+      if (error || !item) {
+        setDistrictDialogError(error ?? "Unable to update district.");
+      } else {
+        setDistricts((prev) =>
+          prev.map((district) =>
+            district.id === editingDistrict.id ? item : district,
+          ),
+        );
+        setEditingDistrict(null);
+        setDistrictDialogError(null);
+        setDistrictDialogOpen(false);
+      }
+      setSavingDistrict(false);
+      return;
+    }
+
+    await handleCreateDistrict(name);
+  };
+
+  const handleDeleteDistrict = async (districtId: District["id"]) => {
+    const { error } = await locationService.deleteDistrict(districtId);
+    if (error) {
+      setGlobalError(error);
+      return;
+    }
+    setDistricts((prev) =>
+      prev.filter((district) => district.id !== districtId),
+    );
+    setDeleteDialogOpen(false);
+    setDeleteDialogContext(null);
   };
 
   const handleCreatePincode = async (code: string) => {
@@ -397,6 +598,50 @@ export function LocationManagement(): JSX.Element {
     setSavingPincode(false);
   };
 
+  const handleSubmitPincodeDialog = async (code: string) => {
+    if (editingPincode) {
+      if (!selectedDistrict) {
+        setPincodeDialogError("Select a district before renaming a PIN code.");
+        return;
+      }
+      setSavingPincode(true);
+      const { item, error } = await locationService.updatePincode(
+        selectedDistrict.id,
+        editingPincode.id,
+        code,
+      );
+      if (error || !item) {
+        setPincodeDialogError(error ?? "Unable to update PIN code.");
+      } else {
+        setPincodes((prev) =>
+          prev.map((pincode) =>
+            pincode.id === editingPincode.id ? item : pincode,
+          ),
+        );
+        setEditingPincode(null);
+        setPincodeDialogError(null);
+        setPincodeDialogOpen(false);
+      }
+      setSavingPincode(false);
+      return;
+    }
+
+    await handleCreatePincode(code);
+  };
+
+  const handleDeletePincode = async (pincodeId: Pincode["id"]) => {
+    const { error } = await locationService.deletePincode(pincodeId);
+    if (error) {
+      setGlobalError(error);
+      return;
+    }
+    setPincodes((prev) =>
+      prev.filter((pincode) => pincode.id !== pincodeId),
+    );
+    setDeleteDialogOpen(false);
+    setDeleteDialogContext(null);
+  };
+
   const handleCreateLocation = async (name: string) => {
     if (!selectedPincode) {
       setLocationDialogError("Select a PIN code before adding a location.");
@@ -417,35 +662,35 @@ export function LocationManagement(): JSX.Element {
     setSavingLocation(false);
   };
 
-  const handleDeleteState = async (stateId: State["id"]) => {
-    const { error } = await locationService.deleteState(stateId);
-    if (error) {
-      setGlobalError(error);
+  const handleSubmitLocationDialog = async (name: string) => {
+    if (editingLocation) {
+      if (!selectedPincode) {
+        setLocationDialogError("Select a PIN code before renaming a location.");
+        return;
+      }
+      setSavingLocation(true);
+      const { item, error } = await locationService.updateLocation(
+        selectedPincode.id,
+        editingLocation.id,
+        name,
+      );
+      if (error || !item) {
+        setLocationDialogError(error ?? "Unable to update location.");
+      } else {
+        setLocations((prev) =>
+          prev.map((location) =>
+            location.id === editingLocation.id ? item : location,
+          ),
+        );
+        setEditingLocation(null);
+        setLocationDialogError(null);
+        setLocationDialogOpen(false);
+      }
+      setSavingLocation(false);
       return;
     }
-    setStates((prev) => prev.filter((state) => state.id !== stateId));
-  };
 
-  const handleDeleteDistrict = async (districtId: District["id"]) => {
-    const { error } = await locationService.deleteDistrict(districtId);
-    if (error) {
-      setGlobalError(error);
-      return;
-    }
-    setDistricts((prev) =>
-      prev.filter((district) => district.id !== districtId),
-    );
-  };
-
-  const handleDeletePincode = async (pincodeId: Pincode["id"]) => {
-    const { error } = await locationService.deletePincode(pincodeId);
-    if (error) {
-      setGlobalError(error);
-      return;
-    }
-    setPincodes((prev) =>
-      prev.filter((pincode) => pincode.id !== pincodeId),
-    );
+    await handleCreateLocation(name);
   };
 
   const handleDeleteLocation = async (locationId: Location["id"]) => {
@@ -457,6 +702,8 @@ export function LocationManagement(): JSX.Element {
     setLocations((prev) =>
       prev.filter((location) => location.id !== locationId),
     );
+    setDeleteDialogOpen(false);
+    setDeleteDialogContext(null);
   };
 
   const renderContent = () => {
@@ -512,6 +759,7 @@ export function LocationManagement(): JSX.Element {
             <Button
               type="button"
               onClick={() => {
+                setEditingState(null);
                 setStateDialogError(null);
                 setStateDialogOpen(true);
               }}
@@ -524,20 +772,24 @@ export function LocationManagement(): JSX.Element {
             onOpenChange={(open) => {
               setStateDialogOpen(open);
               if (!open) {
+                setEditingState(null);
                 setStateDialogError(null);
               }
             }}
-            title="Add state"
+            title={editingState ? "Edit state" : "Add state"}
             description={
-              selectedCountry
-                ? `Create a new state under ${selectedCountry.name}.`
-                : "Create a new state."
+              editingState
+                ? "Update the name of this state."
+                : selectedCountry
+                  ? `Create a new state under ${selectedCountry.name}.`
+                  : "Create a new state."
             }
             label="State name"
             placeholder="e.g. Uttar Pradesh"
             submitting={savingState}
             error={stateDialogError}
-            onSubmit={handleCreateState}
+            initialValue={editingState?.name}
+            onSubmit={handleSubmitStateDialog}
           />
           {loadingStates ? (
             <p className="text-sm text-muted-foreground">
@@ -556,7 +808,9 @@ export function LocationManagement(): JSX.Element {
                 >
                   <button
                     type="button"
-                    onClick={() => handleSelectState(state)}
+                    onClick={() => {
+                      void handleSelectState(state);
+                    }}
                     className="flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <p className="text-sm font-medium">{state.name}</p>
@@ -564,14 +818,36 @@ export function LocationManagement(): JSX.Element {
                       Tap to manage districts
                     </p>
                   </button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteState(state.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingState(state);
+                        setStateDialogError(null);
+                        setStateDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        openDeleteDialog(
+                          `Delete State: ${state.name}`,
+                          state.name,
+                          async () => {
+                            await handleDeleteState(state.id);
+                          },
+                        );
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -595,6 +871,7 @@ export function LocationManagement(): JSX.Element {
             <Button
               type="button"
               onClick={() => {
+                setEditingDistrict(null);
                 setDistrictDialogError(null);
                 setDistrictDialogOpen(true);
               }}
@@ -607,20 +884,24 @@ export function LocationManagement(): JSX.Element {
             onOpenChange={(open) => {
               setDistrictDialogOpen(open);
               if (!open) {
+                setEditingDistrict(null);
                 setDistrictDialogError(null);
               }
             }}
-            title="Add district"
+            title={editingDistrict ? "Edit district" : "Add district"}
             description={
-              selectedState
-                ? `Create a new district under ${selectedState.name}.`
-                : "Create a new district."
+              editingDistrict
+                ? "Update the name of this district."
+                : selectedState
+                  ? `Create a new district under ${selectedState.name}.`
+                  : "Create a new district."
             }
             label="District name"
             placeholder="e.g. Agra"
             submitting={savingDistrict}
             error={districtDialogError}
-            onSubmit={handleCreateDistrict}
+            initialValue={editingDistrict?.name}
+            onSubmit={handleSubmitDistrictDialog}
           />
           {loadingDistricts ? (
             <p className="text-sm text-muted-foreground">
@@ -639,7 +920,9 @@ export function LocationManagement(): JSX.Element {
                 >
                   <button
                     type="button"
-                    onClick={() => handleSelectDistrict(district)}
+                    onClick={() => {
+                      void handleSelectDistrict(district);
+                    }}
                     className="flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <p className="text-sm font-medium">{district.name}</p>
@@ -647,14 +930,36 @@ export function LocationManagement(): JSX.Element {
                       Tap to manage PIN codes
                     </p>
                   </button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteDistrict(district.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingDistrict(district);
+                        setDistrictDialogError(null);
+                        setDistrictDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        openDeleteDialog(
+                          `Delete District: ${district.name}`,
+                          district.name,
+                          async () => {
+                            await handleDeleteDistrict(district.id);
+                          },
+                        );
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -678,6 +983,7 @@ export function LocationManagement(): JSX.Element {
             <Button
               type="button"
               onClick={() => {
+                setEditingPincode(null);
                 setPincodeDialogError(null);
                 setPincodeDialogOpen(true);
               }}
@@ -690,20 +996,24 @@ export function LocationManagement(): JSX.Element {
             onOpenChange={(open) => {
               setPincodeDialogOpen(open);
               if (!open) {
+                setEditingPincode(null);
                 setPincodeDialogError(null);
               }
             }}
-            title="Add PIN code"
+            title={editingPincode ? "Edit PIN code" : "Add PIN code"}
             description={
-              selectedDistrict
-                ? `Create a new PIN code under ${selectedDistrict.name}.`
-                : "Create a new PIN code."
+              editingPincode
+                ? "Update the value of this PIN code."
+                : selectedDistrict
+                  ? `Create a new PIN code under ${selectedDistrict.name}.`
+                  : "Create a new PIN code."
             }
             label="PIN code"
             placeholder="e.g. 282001"
             submitting={savingPincode}
             error={pincodeDialogError}
-            onSubmit={handleCreatePincode}
+            initialValue={editingPincode?.code ?? undefined}
+            onSubmit={handleSubmitPincodeDialog}
           />
           {loadingPincodes ? (
             <p className="text-sm text-muted-foreground">
@@ -722,7 +1032,9 @@ export function LocationManagement(): JSX.Element {
                 >
                   <button
                     type="button"
-                    onClick={() => handleSelectPincode(pincode)}
+                    onClick={() => {
+                      void handleSelectPincode(pincode);
+                    }}
                     className="flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <p className="text-sm font-medium">{pincode.code}</p>
@@ -730,14 +1042,36 @@ export function LocationManagement(): JSX.Element {
                       Tap to manage locations
                     </p>
                   </button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeletePincode(pincode.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingPincode(pincode);
+                        setPincodeDialogError(null);
+                        setPincodeDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        openDeleteDialog(
+                          `Delete PIN Code: ${pincode.code}`,
+                          pincode.code,
+                          async () => {
+                            await handleDeletePincode(pincode.id);
+                          },
+                        );
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -760,6 +1094,7 @@ export function LocationManagement(): JSX.Element {
           <Button
             type="button"
             onClick={() => {
+              setEditingLocation(null);
               setLocationDialogError(null);
               setLocationDialogOpen(true);
             }}
@@ -772,20 +1107,24 @@ export function LocationManagement(): JSX.Element {
           onOpenChange={(open) => {
             setLocationDialogOpen(open);
             if (!open) {
+              setEditingLocation(null);
               setLocationDialogError(null);
             }
           }}
-          title="Add location"
+          title={editingLocation ? "Edit location" : "Add location"}
           description={
-            selectedPincode
-              ? `Create a new location under PIN ${selectedPincode.code}.`
-              : "Create a new location."
+            editingLocation
+              ? "Update the name of this location."
+              : selectedPincode
+                ? `Create a new location under PIN ${selectedPincode.code}.`
+                : "Create a new location."
           }
           label="Location name"
           placeholder="e.g. Civil Lines"
           submitting={savingLocation}
           error={locationDialogError}
-          onSubmit={handleCreateLocation}
+          initialValue={editingLocation?.name}
+          onSubmit={handleSubmitLocationDialog}
         />
         {loadingLocations ? (
           <p className="text-sm text-muted-foreground">
@@ -808,14 +1147,36 @@ export function LocationManagement(): JSX.Element {
                     Location / Area
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleDeleteLocation(location.id)}
-                >
-                  Delete
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingLocation(location);
+                      setLocationDialogError(null);
+                      setLocationDialogOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      openDeleteDialog(
+                        `Delete Location: ${location.name}`,
+                        location.name,
+                        async () => {
+                          await handleDeleteLocation(location.id);
+                        },
+                      );
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -925,6 +1286,20 @@ export function LocationManagement(): JSX.Element {
         ) : null}
 
         {renderContent()}
+
+        <DeleteConfirmDialog
+          open={deleteDialogOpen && !!deleteDialogContext}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) {
+              setDeleteDialogContext(null);
+            }
+          }}
+          title={deleteDialogContext?.title ?? ""}
+          targetLabel={deleteDialogContext?.targetLabel ?? ""}
+          submitting={deleting}
+          onConfirm={handleConfirmDelete}
+        />
       </div>
     </main>
   );

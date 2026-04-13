@@ -144,6 +144,65 @@ export const locationService = {
     return { item: data as State, error: null };
   },
 
+  async updateState(
+    countryId: State["country_id"],
+    stateId: State["id"],
+    name: string,
+  ): Promise<CreateResult<State>> {
+    const trimmed = normalize(name);
+
+    if (!stateId) {
+      return { item: null, error: "Missing state identifier." };
+    }
+
+    if (!countryId) {
+      return {
+        item: null,
+        error: "Select a country before renaming a state.",
+      };
+    }
+
+    if (!trimmed) {
+      return { item: null, error: "State name is required." };
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("states")
+      .select("id")
+      .eq("country_id", countryId)
+      .ilike("name", trimmed)
+      .neq("id", stateId)
+      .maybeSingle();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      console.error("Error checking existing state for update", existingError);
+    }
+
+    if (existing) {
+      return {
+        item: null,
+        error: "This state already exists for the selected country.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("states")
+      .update({ name: trimmed })
+      .eq("id", stateId)
+      .select("*")
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("Error updating state", error);
+      return {
+        item: null,
+        error: "Unable to update state. Please try again.",
+      };
+    }
+
+    return { item: data as State, error: null };
+  },
+
   async deleteState(stateId: State["id"]): Promise<DeleteResult> {
     if (!stateId) {
       return { error: "Missing state identifier." };
@@ -248,6 +307,68 @@ export const locationService = {
       return {
         item: null,
         error: "Unable to create district. Please try again.",
+      };
+    }
+
+    return { item: data as District, error: null };
+  },
+
+  async updateDistrict(
+    stateId: District["state_id"],
+    districtId: District["id"],
+    name: string,
+  ): Promise<CreateResult<District>> {
+    const trimmed = normalize(name);
+
+    if (!districtId) {
+      return { item: null, error: "Missing district identifier." };
+    }
+
+    if (!stateId) {
+      return {
+        item: null,
+        error: "Select a state before renaming a district.",
+      };
+    }
+
+    if (!trimmed) {
+      return { item: null, error: "District name is required." };
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("districts")
+      .select("id")
+      .eq("state_id", stateId)
+      .ilike("name", trimmed)
+      .neq("id", districtId)
+      .maybeSingle();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      console.error(
+        "Error checking existing district for update",
+        existingError,
+      );
+    }
+
+    if (existing) {
+      return {
+        item: null,
+        error: "This district already exists for the selected state.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("districts")
+      .update({ name: trimmed })
+      .eq("id", districtId)
+      .select("*")
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("Error updating district", error);
+      return {
+        item: null,
+        error: "Unable to update district. Please try again.",
       };
     }
 
@@ -369,6 +490,68 @@ export const locationService = {
     return { item: data as Pincode, error: null };
   },
 
+  async updatePincode(
+    districtId: Pincode["district_id"],
+    pincodeId: Pincode["id"],
+    code: string,
+  ): Promise<CreateResult<Pincode>> {
+    const trimmed = normalize(code);
+
+    if (!pincodeId) {
+      return { item: null, error: "Missing PIN code identifier." };
+    }
+
+    if (!districtId) {
+      return {
+        item: null,
+        error: "Select a district before renaming a PIN code.",
+      };
+    }
+
+    if (!trimmed) {
+      return { item: null, error: "PIN code is required." };
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("pincodes")
+      .select("id")
+      .eq("district_id", districtId)
+      .ilike("code", trimmed)
+      .neq("id", pincodeId)
+      .maybeSingle();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      console.error(
+        "Error checking existing PIN code for update",
+        existingError,
+      );
+    }
+
+    if (existing) {
+      return {
+        item: null,
+        error: "This PIN code already exists for the selected district.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("pincodes")
+      .update({ code: trimmed })
+      .eq("id", pincodeId)
+      .select("*")
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("Error updating PIN code", error);
+      return {
+        item: null,
+        error: "Unable to update PIN code. Please try again.",
+      };
+    }
+
+    return { item: data as Pincode, error: null };
+  },
+
   async deletePincode(pincodeId: Pincode["id"]): Promise<DeleteResult> {
     if (!pincodeId) {
       return { error: "Missing PIN code identifier." };
@@ -477,6 +660,68 @@ export const locationService = {
       return {
         item: null,
         error: "Unable to create location. Please try again.",
+      };
+    }
+
+    return { item: data as Location, error: null };
+  },
+
+  async updateLocation(
+    pincodeId: Location["pincode_id"],
+    locationId: Location["id"],
+    name: string,
+  ): Promise<CreateResult<Location>> {
+    const trimmed = normalize(name);
+
+    if (!locationId) {
+      return { item: null, error: "Missing location identifier." };
+    }
+
+    if (!pincodeId) {
+      return {
+        item: null,
+        error: "Select a PIN code before renaming a location.",
+      };
+    }
+
+    if (!trimmed) {
+      return { item: null, error: "Location name is required." };
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("locations")
+      .select("id")
+      .eq("pincode_id", pincodeId)
+      .ilike("name", trimmed)
+      .neq("id", locationId)
+      .maybeSingle();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      console.error(
+        "Error checking existing location for update",
+        existingError,
+      );
+    }
+
+    if (existing) {
+      return {
+        item: null,
+        error: "This location already exists for the selected PIN code.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("locations")
+      .update({ name: trimmed })
+      .eq("id", locationId)
+      .select("*")
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("Error updating location", error);
+      return {
+        item: null,
+        error: "Unable to update location. Please try again.",
       };
     }
 

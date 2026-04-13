@@ -110,14 +110,6 @@ function AddEntityDialog({
   );
 }
 
-const PRIORITY_COUNTRIES = [
-  "India",
-  "Malaysia",
-  "Sri Lanka",
-  "UAE",
-  "Nepal",
-];
-
 const getCountryCardClasses = (name: string): string => {
   const map: Record<string, string> = {
     India: "bg-blue-50 border-blue-200",
@@ -137,7 +129,6 @@ export function LocationManagement(): JSX.Element {
 
   const [viewLevel, setViewLevel] = useState<ViewLevel>("country");
 
-  const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<State[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [pincodes, setPincodes] = useState<Pincode[]>([]);
@@ -150,7 +141,6 @@ export function LocationManagement(): JSX.Element {
   );
   const [selectedPincode, setSelectedPincode] = useState<Pincode | null>(null);
 
-  const [loadingCountries, setLoadingCountries] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingPincodes, setLoadingPincodes] = useState(false);
@@ -214,14 +204,6 @@ export function LocationManagement(): JSX.Element {
 
       setAuthError(null);
       setAuthLoading(false);
-
-      setLoadingCountries(true);
-      const loadedCountries = await locationService.getCountries();
-      if (!isMounted) {
-        return;
-      }
-      setCountries(loadedCountries);
-      setLoadingCountries(false);
     };
 
     void init();
@@ -230,6 +212,43 @@ export function LocationManagement(): JSX.Element {
       isMounted = false;
     };
   }, [router]);
+
+  const handleStaticCountryClick = async (countryName: string) => {
+    setGlobalError(null);
+    setSelectedCountry(null);
+    setSelectedState(null);
+    setSelectedDistrict(null);
+    setSelectedPincode(null);
+    setStates([]);
+    setDistricts([]);
+    setPincodes([]);
+    setLocations([]);
+
+    const { data: country, error } = await supabase
+      .from("countries")
+      .select("*")
+      .ilike("name", countryName)
+      .maybeSingle();
+
+    if (error) {
+      console.error(
+        "Error fetching country by name for Location Management",
+        {
+          countryName,
+          error,
+        },
+      );
+      setGlobalError("Unable to load data for this country.");
+      return;
+    }
+
+    if (!country) {
+      setGlobalError("No data found. Please add states for this country.");
+      return;
+    }
+
+    await handleSelectCountry(country as Country);
+  };
 
   const handleSelectCountry = async (country: Country) => {
     setSelectedCountry(country);
@@ -442,79 +461,38 @@ export function LocationManagement(): JSX.Element {
 
   const renderContent = () => {
     if (viewLevel === "country") {
-      if (loadingCountries) {
-        return (
-          <p className="text-sm text-muted-foreground">
-            Loading countries from Supabase...
-          </p>
-        );
-      }
-
-      if (countries.length === 0) {
-        return (
-          <p className="text-sm text-muted-foreground">
-            No countries found. Add countries in the database to get started.
-          </p>
-        );
-      }
-
-      const prioritized = PRIORITY_COUNTRIES.map((name) =>
-        countries.find((country) => country.name === name),
-      ).filter((country): country is Country => Boolean(country));
-
-      const others = countries.filter(
-        (country) => !PRIORITY_COUNTRIES.includes(country.name),
-      );
+      const staticCountries = [
+        "India",
+        "Malaysia",
+        "Sri Lanka",
+        "UAE",
+        "Nepal",
+      ];
 
       return (
         <section className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {prioritized.map((country) => (
+            {staticCountries.map((name) => (
               <button
-                key={country.id}
+                key={name}
                 type="button"
-                onClick={() => handleSelectCountry(country)}
+                onClick={() => {
+                  void handleStaticCountryClick(name);
+                }}
                 className={`flex flex-col rounded-xl border p-4 text-left shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${getCountryCardClasses(
-                  country.name,
+                  name,
                 )}`}
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Country
                 </p>
-                <p className="mt-2 text-xl font-semibold">{country.name}</p>
+                <p className="mt-2 text-xl font-semibold">{name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Tap to manage states
                 </p>
               </button>
             ))}
           </div>
-          {others.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">
-                Other countries
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {others.map((country) => (
-                  <button
-                    key={country.id}
-                    type="button"
-                    onClick={() => handleSelectCountry(country)}
-                    className="flex flex-col rounded-xl border bg-muted/40 p-4 text-left shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Country
-                    </p>
-                    <p className="mt-2 text-lg font-semibold">
-                      {country.name}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Tap to manage states
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
       );
     }

@@ -80,6 +80,7 @@ export default function CreatePartner(): JSX.Element {
   const [selectedStateId, setSelectedStateId] = useState("");
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
   const [selectedPincodeId, setSelectedPincodeId] = useState("");
+  const [selectedLocationId, setSelectedLocationId] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [dobDay, setDobDay] = useState("");
@@ -142,6 +143,54 @@ export default function CreatePartner(): JSX.Element {
         return;
       }
       setCountries(loadedCountries);
+
+      const {
+        role: roleQuery,
+        countryId: countryIdQuery,
+        stateId: stateIdQuery,
+        districtId: districtIdQuery,
+        pincodeId: pincodeIdQuery,
+        locationId: locationIdQuery,
+      } = router.query;
+
+      const prefillRole =
+        typeof roleQuery === "string"
+          ? (roleQuery as PartnerRoleValue)
+          : undefined;
+
+      if (
+        prefillRole &&
+        partnerRoles.some((item) => item.value === prefillRole)
+      ) {
+        setRole(prefillRole);
+
+        const countryId =
+          typeof countryIdQuery === "string" ? countryIdQuery : "";
+        const stateId =
+          typeof stateIdQuery === "string" ? stateIdQuery : "";
+        const districtId =
+          typeof districtIdQuery === "string" ? districtIdQuery : "";
+        const pincodeId =
+          typeof pincodeIdQuery === "string" ? pincodeIdQuery : "";
+        const locationId =
+          typeof locationIdQuery === "string" ? locationIdQuery : "";
+
+        if (countryId) {
+          await handleSelectCountry(countryId);
+        }
+        if (stateId) {
+          await handleSelectState(stateId);
+        }
+        if (districtId) {
+          await handleSelectDistrict(districtId);
+        }
+        if (pincodeId) {
+          await handleSelectPincode(pincodeId);
+        }
+        if (locationId) {
+          setSelectedLocationId(locationId);
+        }
+      }
     };
 
     void init();
@@ -203,6 +252,7 @@ export default function CreatePartner(): JSX.Element {
 
   const handleSelectPincode = async (pincodeId: string) => {
     setSelectedPincodeId(pincodeId);
+    setSelectedLocationId("");
     setLocations([]);
 
     if (!pincodeId) {
@@ -306,9 +356,9 @@ export default function CreatePartner(): JSX.Element {
         newFieldErrors.pincodeId =
           "PIN Code is required for PIN Code Partner assignment.";
       }
-      if (!locations.length) {
+      if (!selectedLocationId) {
         newFieldErrors.locationId =
-          "Add at least one location under this PIN Code.";
+          "Location is required for PIN Code Partner assignment.";
       }
     }
 
@@ -339,7 +389,8 @@ export default function CreatePartner(): JSX.Element {
           stateId: selectedStateId || undefined,
           districtId: selectedDistrictId || undefined,
           pincodeId: selectedPincodeId || undefined,
-          locationId: role === "pincode_partner" ? undefined : undefined,
+          locationId:
+            role === "pincode_partner" ? selectedLocationId || undefined : undefined,
           uplineUsername: uplineUsername.trim() || undefined,
           username: username.trim(),
           password,
@@ -668,17 +719,8 @@ export default function CreatePartner(): JSX.Element {
                         <div className="space-y-2">
                           <Label htmlFor="location">Location / Area</Label>
                           <Select
-                            value={
-                              locations.find(
-                                (location) =>
-                                  fieldErrors.locationId &&
-                                  location.id === fieldErrors.locationId,
-                              )
-                                ? (fieldErrors.locationId as string)
-                                : ""
-                            }
-                            onValueChange={() => {
-                            }}
+                            value={selectedLocationId}
+                            onValueChange={(value) => setSelectedLocationId(value)}
                           >
                             <SelectTrigger id="location">
                               <SelectValue placeholder="Select location" />

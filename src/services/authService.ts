@@ -141,12 +141,31 @@ export const authService = {
     if (!trimmed) {
       return { user: null, error: { message: "Username is required" } };
     }
-    const email = `${trimmed}@app.local`;
-    console.log("Auth: signInWithUsername - mapping username to email", {
+
+    const primaryEmail = `${trimmed}@partners.app.example.com`;
+    const fallbackEmail = `${trimmed}@app.local`;
+
+    console.log("Auth: signInWithUsername - primary mapping", {
       username: trimmed,
-      email,
+      email: primaryEmail,
     });
-    return this.signIn(email, password);
+
+    const primaryResult = await this.signIn(primaryEmail, password);
+
+    if (primaryResult.user) {
+      return primaryResult;
+    }
+
+    console.log("Auth: signInWithUsername - primary failed, trying fallback", {
+      username: trimmed,
+      primaryEmail,
+      fallbackEmail,
+      primaryError: primaryResult.error,
+    });
+
+    const fallbackResult = await this.signIn(fallbackEmail, password);
+
+    return fallbackResult;
   },
 
   async signOut(): Promise<{ error: AuthError | null }> {

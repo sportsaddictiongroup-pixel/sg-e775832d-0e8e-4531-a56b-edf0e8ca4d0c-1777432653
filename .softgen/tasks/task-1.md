@@ -15,5 +15,5 @@ Establish a clean, professional visual foundation and shared layout structure fo
 ## Checklist
 - [x] Define visual design system in globals.css and tailwind.config.ts (colors, typography, spacing) to match the project brief.
 - [ ] Implement shared layout containers for admin and partner sections (header, content wrapper, responsive behavior).
-- [ ] Update src/pages/_app.tsx to include ThemeProvider and apply base layout styling consistently.
-- [ ] Implement src/pages/index.tsx as a simple landing page with clear entry cards/links to Admin and Partner login routes.
+- [x] Update src/pages/_app.tsx to include ThemeProvider and apply base layout styling consistently.
+- [x] Implement src/pages/index.tsx as a simple landing page with clear entry cards/links to Admin and Partner login routes.

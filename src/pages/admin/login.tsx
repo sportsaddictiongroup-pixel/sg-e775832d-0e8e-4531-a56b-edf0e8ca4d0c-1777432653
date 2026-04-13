@@ -47,19 +47,37 @@ export default function AdminLogin(): JSX.Element {
         return;
       }
 
+      console.log("Admin login: fetching profile for user", {
+        userId: user.id,
+      });
+
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, role")
+        .select("*")
         .eq("id", user.id)
         .maybeSingle();
 
+      console.log("Admin login: profile fetch result", {
+        userId: user.id,
+        profile,
+        profileError,
+      });
+
       if (profileError || !profile) {
         console.error("Admin login failed while fetching profile", {
+          userId: user.id,
           profileError,
           profile,
         });
         await authService.signOut();
-        setError("No profile found for this account.");
+        const details =
+          profileError?.message || "No profile row returned for this account.";
+        setError(
+          "No profile found for this account (user id: " +
+            user.id +
+            "). Details: " +
+            details,
+        );
         return;
       }
 

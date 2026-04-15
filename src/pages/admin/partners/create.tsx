@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { SEO } from "@/components/SEO";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +39,7 @@ type Profile = Tables<"profiles">;
 
 export default function CreatePartner(): JSX.Element {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -72,8 +75,32 @@ export default function CreatePartner(): JSX.Element {
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setFullName("");
+    setMobileCode("+91");
+    setMobileNumber("");
+    setSameAsMobile(true);
+    setWhatsappCode("+91");
+    setWhatsappNumber("");
+    setEmail("");
+    setSelectedCountryId("");
+    setSelectedStateId("");
+    setSelectedDistrictId("");
+    setSelectedPincodeId("");
+    setSelectedLocationId("");
+    setUplineUsername("");
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
+    setFieldErrors({});
+    setSubmitError(null);
+    setStates([]);
+    setDistricts([]);
+    setPincodes([]);
+    setLocations([]);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -184,7 +211,6 @@ export default function CreatePartner(): JSX.Element {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitError(null);
-    setSubmitSuccess(null);
     setFieldErrors({});
 
     const newFieldErrors: Record<string, string> = {};
@@ -267,8 +293,12 @@ export default function CreatePartner(): JSX.Element {
         return;
       }
 
-      setSubmitSuccess("Partner created successfully.");
-      setSubmitError(null);
+      toast({
+        title: "Success",
+        description: "Partner created successfully. The form has been reset for the next entry.",
+        duration: 4000,
+      });
+      resetForm();
     } catch {
       setSubmitError("Unable to create partner right now. Please try again.");
     } finally {
@@ -307,6 +337,13 @@ export default function CreatePartner(): JSX.Element {
       <SEO title="Create Partner" description="Create a new partner account." />
       <main className="min-h-screen bg-background text-foreground px-4 py-8">
         <div className="mx-auto w-full max-w-5xl space-y-6">
+          <div className="flex items-center">
+            <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
+              <Link href="/admin">
+                ← Back to Dashboard
+              </Link>
+            </Button>
+          </div>
           <header className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
               Admin Portal
@@ -330,11 +367,6 @@ export default function CreatePartner(): JSX.Element {
               {submitError && (
                 <p className="mb-4 text-sm text-destructive" role="alert">
                   {submitError}
-                </p>
-              )}
-              {submitSuccess && (
-                <p className="mb-4 text-sm text-emerald-600" role="status">
-                  {submitSuccess}
                 </p>
               )}
               <form className="space-y-8" onSubmit={handleSubmit} noValidate>

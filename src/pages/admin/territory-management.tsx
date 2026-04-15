@@ -42,7 +42,6 @@ type Profile = Tables<"profiles">;
 
 interface AssignmentInfo {
   profileId: string;
-  fullName: string;
   username: string;
 }
 
@@ -63,28 +62,19 @@ export default function TerritoryManagement(): JSX.Element {
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
   const [selectedPincodeId, setSelectedPincodeId] = useState("");
   const [selectedLocationId, setSelectedLocationId] = useState("");
-  const [usernameFilter, setUsernameFilter] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
 
-  const [stateAssignments, setStateAssignments] = useState<
-    Record<string, AssignmentInfo>
-  >({});
-  const [districtAssignments, setDistrictAssignments] = useState<
-    Record<string, AssignmentInfo>
-  >({});
-  const [pincodeAssignments, setPincodeAssignments] = useState<
-    Record<string, AssignmentInfo>
-  >({});
-  const [locationAssignments, setLocationAssignments] = useState<
-    Record<string, AssignmentInfo>
-  >({});
+  const [tableSearch, setTableSearch] = useState("");
+
+  const [stateAssignments, setStateAssignments] = useState<Record<string, AssignmentInfo>>({});
+  const [districtAssignments, setDistrictAssignments] = useState<Record<string, AssignmentInfo>>({});
+  const [pincodeAssignments, setPincodeAssignments] = useState<Record<string, AssignmentInfo>>({});
+  const [locationAssignments, setLocationAssignments] = useState<Record<string, AssignmentInfo>>({});
 
   useEffect(() => {
     let isMounted = true;
 
     const init = async () => {
       const user = await authService.getCurrentUser();
-
       if (!user) {
         router.replace("/admin/login");
         return;
@@ -96,9 +86,7 @@ export default function TerritoryManagement(): JSX.Element {
         .eq("id", user.id)
         .maybeSingle();
 
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
 
       if (error || !data) {
         setAuthError("Unable to load your profile. Please try again.");
@@ -107,7 +95,6 @@ export default function TerritoryManagement(): JSX.Element {
       }
 
       const profile = data as Profile;
-
       if (profile.role !== "admin") {
         await authService.signOut();
         router.replace("/partner/login");
@@ -115,9 +102,7 @@ export default function TerritoryManagement(): JSX.Element {
       }
 
       const loadedCountries = await locationService.getCountries();
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
 
       setCountries(loadedCountries);
       setAuthError(null);
@@ -125,325 +110,172 @@ export default function TerritoryManagement(): JSX.Element {
     };
 
     void init();
-
     return () => {
       isMounted = false;
     };
   }, [router]);
 
   const loadStateAssignments = async (items: State[]) => {
-    if (!items.length) {
-      setStateAssignments({});
-      return;
-    }
+    if (!items.length) return setStateAssignments({});
 
-    const ids = items
-      .map((item) => item.id as string)
-      .filter((id) => typeof id === "string" && id.length > 0);
-
-    if (!ids.length) {
-      setStateAssignments({});
-      return;
-    }
+    const ids = items.map((item) => item.id as string).filter(Boolean);
+    if (!ids.length) return setStateAssignments({});
 
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
-      .select("state_id, profile_id, is_active, role")
+      .select("state_id, profile_id")
       .eq("role", "state_head")
       .eq("is_active", true)
       .in("state_id", ids);
 
-    if (error || !assignments) {
-      setStateAssignments({});
-      return;
-    }
+    if (error || !assignments) return setStateAssignments({});
 
-    const profileIds = Array.from(
-      new Set(
-        assignments
-          .map((item) => item.profile_id as string | null)
-          .filter((value): value is string => !!value),
-      ),
-    );
+    const profileIds = Array.from(new Set(assignments.map((a) => a.profile_id as string).filter(Boolean)));
+    if (!profileIds.length) return setStateAssignments({});
 
-    if (!profileIds.length) {
-      setStateAssignments({});
-      return;
-    }
-
-    const { data: profilesData, error: profilesError } = await supabase
+    const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, full_name, username")
+      .select("id, username")
       .in("id", profileIds);
 
-    if (profilesError || !profilesData) {
-      setStateAssignments({});
-      return;
-    }
+    if (!profilesData) return setStateAssignments({});
 
-    const profilesMap = new Map(
-      profilesData.map((profile) => [profile.id as string, profile]),
-    );
-
+    const profilesMap = new Map(profilesData.map((p) => [p.id as string, p]));
     const map: Record<string, AssignmentInfo> = {};
 
     for (const assignment of assignments) {
-      const stateId = assignment.state_id as string | null;
-      const profileId = assignment.profile_id as string | null;
-
-      if (!stateId || !profileId) {
-        continue;
-      }
+      const stateId = assignment.state_id as string;
+      const profileId = assignment.profile_id as string;
+      if (!stateId || !profileId) continue;
 
       const profile = profilesMap.get(profileId);
-      if (!profile) {
-        continue;
+      if (profile) {
+        map[stateId] = { profileId, username: (profile.username as string) ?? "" };
       }
-
-      map[stateId] = {
-        profileId,
-        fullName: (profile.full_name as string) ?? "",
-        username: (profile.username as string) ?? "",
-      };
     }
-
     setStateAssignments(map);
   };
 
   const loadDistrictAssignments = async (items: District[]) => {
-    if (!items.length) {
-      setDistrictAssignments({});
-      return;
-    }
+    if (!items.length) return setDistrictAssignments({});
 
-    const ids = items
-      .map((item) => item.id as string)
-      .filter((id) => typeof id === "string" && id.length > 0);
-
-    if (!ids.length) {
-      setDistrictAssignments({});
-      return;
-    }
+    const ids = items.map((item) => item.id as string).filter(Boolean);
+    if (!ids.length) return setDistrictAssignments({});
 
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
-      .select("district_id, profile_id, is_active, role")
+      .select("district_id, profile_id")
       .eq("role", "district_head")
       .eq("is_active", true)
       .in("district_id", ids);
 
-    if (error || !assignments) {
-      setDistrictAssignments({});
-      return;
-    }
+    if (error || !assignments) return setDistrictAssignments({});
 
-    const profileIds = Array.from(
-      new Set(
-        assignments
-          .map((item) => item.profile_id as string | null)
-          .filter((value): value is string => !!value),
-      ),
-    );
+    const profileIds = Array.from(new Set(assignments.map((a) => a.profile_id as string).filter(Boolean)));
+    if (!profileIds.length) return setDistrictAssignments({});
 
-    if (!profileIds.length) {
-      setDistrictAssignments({});
-      return;
-    }
-
-    const { data: profilesData, error: profilesError } = await supabase
+    const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, full_name, username")
+      .select("id, username")
       .in("id", profileIds);
 
-    if (profilesError || !profilesData) {
-      setDistrictAssignments({});
-      return;
-    }
+    if (!profilesData) return setDistrictAssignments({});
 
-    const profilesMap = new Map(
-      profilesData.map((profile) => [profile.id as string, profile]),
-    );
-
+    const profilesMap = new Map(profilesData.map((p) => [p.id as string, p]));
     const map: Record<string, AssignmentInfo> = {};
 
     for (const assignment of assignments) {
-      const districtId = assignment.district_id as string | null;
-      const profileId = assignment.profile_id as string | null;
-
-      if (!districtId || !profileId) {
-        continue;
-      }
+      const districtId = assignment.district_id as string;
+      const profileId = assignment.profile_id as string;
+      if (!districtId || !profileId) continue;
 
       const profile = profilesMap.get(profileId);
-      if (!profile) {
-        continue;
+      if (profile) {
+        map[districtId] = { profileId, username: (profile.username as string) ?? "" };
       }
-
-      map[districtId] = {
-        profileId,
-        fullName: (profile.full_name as string) ?? "",
-        username: (profile.username as string) ?? "",
-      };
     }
-
     setDistrictAssignments(map);
   };
 
   const loadPincodeAssignments = async (items: Pincode[]) => {
-    if (!items.length) {
-      setPincodeAssignments({});
-      return;
-    }
+    if (!items.length) return setPincodeAssignments({});
 
-    const ids = items
-      .map((item) => item.id as string)
-      .filter((id) => typeof id === "string" && id.length > 0);
-
-    if (!ids.length) {
-      setPincodeAssignments({});
-      return;
-    }
+    const ids = items.map((item) => item.id as string).filter(Boolean);
+    if (!ids.length) return setPincodeAssignments({});
 
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
-      .select("pincode_id, profile_id, is_active, role")
+      .select("pincode_id, profile_id")
       .eq("role", "pincode_head")
       .eq("is_active", true)
       .in("pincode_id", ids);
 
-    if (error || !assignments) {
-      setPincodeAssignments({});
-      return;
-    }
+    if (error || !assignments) return setPincodeAssignments({});
 
-    const profileIds = Array.from(
-      new Set(
-        assignments
-          .map((item) => item.profile_id as string | null)
-          .filter((value): value is string => !!value),
-      ),
-    );
+    const profileIds = Array.from(new Set(assignments.map((a) => a.profile_id as string).filter(Boolean)));
+    if (!profileIds.length) return setPincodeAssignments({});
 
-    if (!profileIds.length) {
-      setPincodeAssignments({});
-      return;
-    }
-
-    const { data: profilesData, error: profilesError } = await supabase
+    const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, full_name, username")
+      .select("id, username")
       .in("id", profileIds);
 
-    if (profilesError || !profilesData) {
-      setPincodeAssignments({});
-      return;
-    }
+    if (!profilesData) return setPincodeAssignments({});
 
-    const profilesMap = new Map(
-      profilesData.map((profile) => [profile.id as string, profile]),
-    );
-
+    const profilesMap = new Map(profilesData.map((p) => [p.id as string, p]));
     const map: Record<string, AssignmentInfo> = {};
 
     for (const assignment of assignments) {
-      const pincodeId = assignment.pincode_id as string | null;
-      const profileId = assignment.profile_id as string | null;
-
-      if (!pincodeId || !profileId) {
-        continue;
-      }
+      const pincodeId = assignment.pincode_id as string;
+      const profileId = assignment.profile_id as string;
+      if (!pincodeId || !profileId) continue;
 
       const profile = profilesMap.get(profileId);
-      if (!profile) {
-        continue;
+      if (profile) {
+        map[pincodeId] = { profileId, username: (profile.username as string) ?? "" };
       }
-
-      map[pincodeId] = {
-        profileId,
-        fullName: (profile.full_name as string) ?? "",
-        username: (profile.username as string) ?? "",
-      };
     }
-
     setPincodeAssignments(map);
   };
 
   const loadLocationAssignments = async (items: Location[]) => {
-    if (!items.length) {
-      setLocationAssignments({});
-      return;
-    }
+    if (!items.length) return setLocationAssignments({});
 
-    const ids = items
-      .map((item) => item.id as string)
-      .filter((id) => typeof id === "string" && id.length > 0);
-
-    if (!ids.length) {
-      setLocationAssignments({});
-      return;
-    }
+    const ids = items.map((item) => item.id as string).filter(Boolean);
+    if (!ids.length) return setLocationAssignments({});
 
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
-      .select("location_id, profile_id, is_active, role")
+      .select("location_id, profile_id")
       .eq("role", "pincode_partner")
       .eq("is_active", true)
       .in("location_id", ids);
 
-    if (error || !assignments) {
-      setLocationAssignments({});
-      return;
-    }
+    if (error || !assignments) return setLocationAssignments({});
 
-    const profileIds = Array.from(
-      new Set(
-        assignments
-          .map((item) => item.profile_id as string | null)
-          .filter((value): value is string => !!value),
-      ),
-    );
+    const profileIds = Array.from(new Set(assignments.map((a) => a.profile_id as string).filter(Boolean)));
+    if (!profileIds.length) return setLocationAssignments({});
 
-    if (!profileIds.length) {
-      setLocationAssignments({});
-      return;
-    }
-
-    const { data: profilesData, error: profilesError } = await supabase
+    const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, full_name, username")
+      .select("id, username")
       .in("id", profileIds);
 
-    if (profilesError || !profilesData) {
-      setLocationAssignments({});
-      return;
-    }
+    if (!profilesData) return setLocationAssignments({});
 
-    const profilesMap = new Map(
-      profilesData.map((profile) => [profile.id as string, profile]),
-    );
-
+    const profilesMap = new Map(profilesData.map((p) => [p.id as string, p]));
     const map: Record<string, AssignmentInfo> = {};
 
     for (const assignment of assignments) {
-      const locationId = assignment.location_id as string | null;
-      const profileId = assignment.profile_id as string | null;
-
-      if (!locationId || !profileId) {
-        continue;
-      }
+      const locationId = assignment.location_id as string;
+      const profileId = assignment.profile_id as string;
+      if (!locationId || !profileId) continue;
 
       const profile = profilesMap.get(profileId);
-      if (!profile) {
-        continue;
+      if (profile) {
+        map[locationId] = { profileId, username: (profile.username as string) ?? "" };
       }
-
-      map[locationId] = {
-        profileId,
-        fullName: (profile.full_name as string) ?? "",
-        username: (profile.username as string) ?? "",
-      };
     }
-
     setLocationAssignments(map);
   };
 
@@ -453,6 +285,7 @@ export default function TerritoryManagement(): JSX.Element {
     setSelectedDistrictId("");
     setSelectedPincodeId("");
     setSelectedLocationId("");
+    setTableSearch("");
     setStates([]);
     setDistricts([]);
     setPincodes([]);
@@ -462,9 +295,7 @@ export default function TerritoryManagement(): JSX.Element {
     setPincodeAssignments({});
     setLocationAssignments({});
 
-    if (!countryId) {
-      return;
-    }
+    if (!countryId) return;
 
     const loadedStates = await locationService.getStatesByCountry(countryId);
     setStates(loadedStates);
@@ -476,6 +307,7 @@ export default function TerritoryManagement(): JSX.Element {
     setSelectedDistrictId("");
     setSelectedPincodeId("");
     setSelectedLocationId("");
+    setTableSearch("");
     setDistricts([]);
     setPincodes([]);
     setLocations([]);
@@ -483,9 +315,7 @@ export default function TerritoryManagement(): JSX.Element {
     setPincodeAssignments({});
     setLocationAssignments({});
 
-    if (!stateId) {
-      return;
-    }
+    if (!stateId) return;
 
     const loadedDistricts = await locationService.getDistrictsByState(stateId);
     setDistricts(loadedDistricts);
@@ -496,18 +326,15 @@ export default function TerritoryManagement(): JSX.Element {
     setSelectedDistrictId(districtId);
     setSelectedPincodeId("");
     setSelectedLocationId("");
+    setTableSearch("");
     setPincodes([]);
     setLocations([]);
     setPincodeAssignments({});
     setLocationAssignments({});
 
-    if (!districtId) {
-      return;
-    }
+    if (!districtId) return;
 
-    const loadedPincodes = await locationService.getPincodesByDistrict(
-      districtId,
-    );
+    const loadedPincodes = await locationService.getPincodesByDistrict(districtId);
     setPincodes(loadedPincodes);
     await loadPincodeAssignments(loadedPincodes);
   };
@@ -515,289 +342,274 @@ export default function TerritoryManagement(): JSX.Element {
   const handleSelectPincode = async (pincodeId: string) => {
     setSelectedPincodeId(pincodeId);
     setSelectedLocationId("");
+    setTableSearch("");
     setLocations([]);
     setLocationAssignments({});
 
-    if (!pincodeId) {
-      return;
-    }
+    if (!pincodeId) return;
 
-    const loadedLocations = await locationService.getLocationsByPincode(
-      pincodeId,
-    );
+    const loadedLocations = await locationService.getLocationsByPincode(pincodeId);
     setLocations(loadedLocations);
     await loadLocationAssignments(loadedLocations);
   };
 
-  const selectedCountry = countries.find(
-    (country) => (country.id as string) === selectedCountryId,
-  );
-  const selectedState = states.find(
-    (state) => (state.id as string) === selectedStateId,
-  );
-  const selectedDistrict = districts.find(
-    (district) => (district.id as string) === selectedDistrictId,
-  );
-  const selectedPincode = pincodes.find(
-    (pincode) => (pincode.id as string) === selectedPincodeId,
-  );
+  const handleSelectLocation = (locationId: string) => {
+    setSelectedLocationId(locationId);
+    setTableSearch("");
+  };
 
-  const filteredStates = states.filter((state) => {
-    if (selectedStateId && selectedStateId !== "all" && state.id !== selectedStateId) return false;
-    if (roleFilter !== "all" && roleFilter !== "state_head") return false;
-    const assignment = stateAssignments[state.id as string];
-    if (usernameFilter) {
+  const renderTable = (
+    title: string,
+    description: string,
+    items: any[],
+    assignmentsMap: Record<string, AssignmentInfo>,
+    positionType: string,
+    getCreateUrl: (item: any) => string
+  ) => {
+    const filtered = items.filter((item) => {
+      if (!tableSearch) return true;
+      const assignment = assignmentsMap[item.id as string];
       if (!assignment || !assignment.username) return false;
-      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
-    }
-    return true;
-  });
+      return assignment.username.toLowerCase().includes(tableSearch.toLowerCase());
+    });
 
-  const filteredDistricts = districts.filter((district) => {
-    if (selectedDistrictId && selectedDistrictId !== "all" && district.id !== selectedDistrictId) return false;
-    if (roleFilter !== "all" && roleFilter !== "district_head") return false;
-    const assignment = districtAssignments[district.id as string];
-    if (usernameFilter) {
-      if (!assignment || !assignment.username) return false;
-      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
-    }
-    return true;
-  });
+    return (
+      <Card>
+        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 pb-4">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+          <div className="w-full md:w-64">
+            <Input
+              placeholder="Search assigned username..."
+              value={tableSearch}
+              onChange={(e) => setTableSearch(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filtered.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              No territories found matching your search.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Territory</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>User ID</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((item) => {
+                  const assignment = assignmentsMap[item.id as string];
+                  const isAssigned = !!assignment;
 
-  const filteredPincodes = pincodes.filter((pincode) => {
-    if (selectedPincodeId && selectedPincodeId !== "all" && pincode.id !== selectedPincodeId) return false;
-    if (roleFilter !== "all" && roleFilter !== "pincode_head") return false;
-    const assignment = pincodeAssignments[pincode.id as string];
-    if (usernameFilter) {
-      if (!assignment || !assignment.username) return false;
-      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
-    }
-    return true;
-  });
+                  return (
+                    <TableRow key={item.id as string}>
+                      <TableCell>{item.name || item.code}</TableCell>
+                      <TableCell>{positionType}</TableCell>
+                      <TableCell>
+                        <Badge variant={isAssigned ? "default" : "outline"}>
+                          {isAssigned ? "Assigned" : "Vacant"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{assignment?.username || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {assignment?.profileId || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant={isAssigned ? "secondary" : "outline"}
+                          onClick={() => router.push(getCreateUrl(item))}
+                        >
+                          {isAssigned ? "Change Partner" : "Assign Partner"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
-  const filteredLocations = locations.filter((location) => {
-    if (selectedLocationId && selectedLocationId !== "all" && location.id !== selectedLocationId) return false;
-    if (roleFilter !== "all" && roleFilter !== "pincode_partner") return false;
-    const assignment = locationAssignments[location.id as string];
-    if (usernameFilter) {
-      if (!assignment || !assignment.username) return false;
-      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
+  const renderActiveView = () => {
+    if (selectedLocationId) {
+      const specificLocation = locations.filter((l) => l.id === selectedLocationId);
+      const pincode = pincodes.find((p) => p.id === selectedPincodeId);
+      return renderTable(
+        `Location Details`,
+        `Viewing assignment for specific area under PIN ${pincode?.code}`,
+        specificLocation,
+        locationAssignments,
+        "Area Head",
+        (item) => `/admin/partners/create?role=pincode_partner&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${selectedPincodeId}&locationId=${item.id}`
+      );
     }
-    return true;
-  });
+
+    if (selectedPincodeId) {
+      const pincode = pincodes.find((p) => p.id === selectedPincodeId);
+      return renderTable(
+        `Areas / Locations`,
+        `Viewing Area Head positions under PIN ${pincode?.code}`,
+        locations,
+        locationAssignments,
+        "Area Head",
+        (item) => `/admin/partners/create?role=pincode_partner&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${selectedPincodeId}&locationId=${item.id}`
+      );
+    }
+
+    if (selectedDistrictId) {
+      const district = districts.find((d) => d.id === selectedDistrictId);
+      return renderTable(
+        `PIN Codes`,
+        `Viewing PIN Head positions in ${district?.name}`,
+        pincodes,
+        pincodeAssignments,
+        "PIN Head",
+        (item) => `/admin/partners/create?role=pincode_head&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${item.id}`
+      );
+    }
+
+    if (selectedStateId) {
+      const state = states.find((s) => s.id === selectedStateId);
+      return renderTable(
+        `Districts`,
+        `Viewing District Head positions in ${state?.name}`,
+        districts,
+        districtAssignments,
+        "District Head",
+        (item) => `/admin/partners/create?role=district_head&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${item.id}`
+      );
+    }
+
+    if (selectedCountryId) {
+      const country = countries.find((c) => c.id === selectedCountryId);
+      return renderTable(
+        `States`,
+        `Viewing State Head positions in ${country?.name}`,
+        states,
+        stateAssignments,
+        "State Head",
+        (item) => `/admin/partners/create?role=state_head&countryId=${selectedCountryId}&stateId=${item.id}`
+      );
+    }
+
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground">Select a country from the filters above to drill down into territory assignments.</p>
+        </CardContent>
+      </Card>
+    );
+  };
 
   if (authLoading) {
     return (
-      <>
-        <SEO
-          title="Territory Management"
-          description="View territory assignments and vacancies."
-        />
-        <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
-          <p className="text-sm text-muted-foreground">
-            Checking your access...
-          </p>
-        </main>
-      </>
+      <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <p className="text-sm text-muted-foreground">Checking your access...</p>
+      </main>
     );
   }
 
   if (authError) {
     return (
-      <>
-        <SEO
-          title="Territory Management"
-          description="View territory assignments and vacancies."
-        />
-        <main className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">
-          <p className="text-sm text-destructive" role="alert">
-            {authError}
-          </p>
-        </main>
-      </>
+      <main className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">
+        <p className="text-sm text-destructive" role="alert">{authError}</p>
+      </main>
     );
   }
 
   return (
     <>
-      <SEO
-        title="Territory Management"
-        description="See which territories are vacant or assigned and navigate by hierarchy."
-      />
+      <SEO title="Territory Management" description="Drill down to manage territory assignments and vacancies." />
       <main className="min-h-screen bg-background text-foreground px-4 py-8">
         <div className="mx-auto w-full max-w-6xl space-y-6">
           <header className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Admin Portal
-            </p>
-            <h1 className="font-heading text-2xl md:text-3xl font-semibold">
-              Territory Management
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Filter by territory, position, or username to inspect
-              assignments across the hierarchy.
-            </p>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Admin Portal</p>
+            <h1 className="font-heading text-2xl md:text-3xl font-semibold">Territory Management</h1>
+            <p className="text-sm text-muted-foreground">Select territories to drill down into the assignment hierarchy.</p>
           </header>
 
           <Card>
             <CardHeader>
-              <CardTitle>Filters</CardTitle>
-              <CardDescription>
-                Use the dropdowns to drill down or search by specific criteria.
-              </CardDescription>
+              <CardTitle>Hierarchy Filters</CardTitle>
+              <CardDescription>Select a region to view specific assignments within it.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Country
-                  </span>
-                  <Select
-                    value={selectedCountryId || undefined}
-                    onValueChange={(value) => void handleSelectCountry(value)}
-                  >
+                  <span className="text-xs font-medium text-muted-foreground">Country</span>
+                  <Select value={selectedCountryId || undefined} onValueChange={handleSelectCountry}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent>
                       {countries.map((country) => (
-                        <SelectItem
-                          key={country.id}
-                          value={String(country.id)}
-                        >
-                          {country.name}
-                        </SelectItem>
+                        <SelectItem key={country.id} value={String(country.id)}>{country.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    State
-                  </span>
-                  <Select
-                    value={selectedStateId || undefined}
-                    onValueChange={(value) => void handleSelectState(value)}
-                    disabled={!selectedCountryId}
-                  >
+                  <span className="text-xs font-medium text-muted-foreground">State</span>
+                  <Select value={selectedStateId || undefined} onValueChange={handleSelectState} disabled={!selectedCountryId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
                       {states.map((state) => (
-                        <SelectItem key={state.id} value={String(state.id)}>
-                          {state.name}
-                        </SelectItem>
+                        <SelectItem key={state.id} value={String(state.id)}>{state.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    District
-                  </span>
-                  <Select
-                    value={selectedDistrictId || undefined}
-                    onValueChange={(value) => void handleSelectDistrict(value)}
-                    disabled={!selectedStateId}
-                  >
+                  <span className="text-xs font-medium text-muted-foreground">District</span>
+                  <Select value={selectedDistrictId || undefined} onValueChange={handleSelectDistrict} disabled={!selectedStateId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select district" />
                     </SelectTrigger>
                     <SelectContent>
                       {districts.map((district) => (
-                        <SelectItem
-                          key={district.id}
-                          value={String(district.id)}
-                        >
-                          {district.name}
-                        </SelectItem>
+                        <SelectItem key={district.id} value={String(district.id)}>{district.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    PIN Code
-                  </span>
-                  <Select
-                    value={selectedPincodeId || undefined}
-                    onValueChange={(value) => void handleSelectPincode(value)}
-                    disabled={!selectedDistrictId}
-                  >
+                  <span className="text-xs font-medium text-muted-foreground">PIN Code</span>
+                  <Select value={selectedPincodeId || undefined} onValueChange={handleSelectPincode} disabled={!selectedDistrictId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select PIN code" />
+                      <SelectValue placeholder="Select PIN" />
                     </SelectTrigger>
                     <SelectContent>
                       {pincodes.map((pincode) => (
-                        <SelectItem
-                          key={pincode.id}
-                          value={String(pincode.id)}
-                        >
-                          {pincode.code}
-                        </SelectItem>
+                        <SelectItem key={pincode.id} value={String(pincode.id)}>{pincode.code}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                
-                {/* NEW: Location / Area Filter */}
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Area / Location
-                  </span>
-                  <Select
-                    value={selectedLocationId || undefined}
-                    onValueChange={setSelectedLocationId}
-                    disabled={!selectedPincodeId}
-                  >
+                  <span className="text-xs font-medium text-muted-foreground">Area / Location</span>
+                  <Select value={selectedLocationId || undefined} onValueChange={handleSelectLocation} disabled={!selectedPincodeId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
+                      <SelectValue placeholder="Select area" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Locations</SelectItem>
                       {locations.map((location) => (
-                        <SelectItem
-                          key={location.id}
-                          value={String(location.id)}
-                        >
-                          {location.name}
-                        </SelectItem>
+                        <SelectItem key={location.id} value={String(location.id)}>{location.name}</SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* NEW: Username Filter */}
-                <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Username
-                  </span>
-                  <Input 
-                    placeholder="Search by username..." 
-                    value={usernameFilter} 
-                    onChange={(e) => setUsernameFilter(e.target.value)} 
-                  />
-                </div>
-
-                {/* NEW: Role Assigned Filter */}
-                <div className="space-y-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Role Assigned (Position)
-                  </span>
-                  <Select
-                    value={roleFilter}
-                    onValueChange={setRoleFilter}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Positions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Positions</SelectItem>
-                      <SelectItem value="state_head">State Head</SelectItem>
-                      <SelectItem value="district_head">District Head</SelectItem>
-                      <SelectItem value="pincode_head">PIN Code Head</SelectItem>
-                      <SelectItem value="pincode_partner">Area / Location Head</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -805,322 +617,7 @@ export default function TerritoryManagement(): JSX.Element {
             </CardContent>
           </Card>
 
-          {selectedCountry && (
-            <Card>
-              <CardHeader>
-                <CardTitle>States in {selectedCountry.name}</CardTitle>
-                <CardDescription>
-                  State Head positions and their assignment status.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {filteredStates.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No matching states or assignments found for current filters.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Territory</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned Name</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>User ID</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredStates.map((state) => {
-                        const assignment =
-                          stateAssignments[state.id as string];
-                        const isAssigned = !!assignment;
-
-                        return (
-                          <TableRow key={state.id as string}>
-                            <TableCell>{state.name}</TableCell>
-                            <TableCell>State Head</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={isAssigned ? "default" : "outline"}
-                              >
-                                {isAssigned ? "Assigned" : "Vacant"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.fullName ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.username ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.profileId ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {!isAssigned && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    router.push(
-                                      `/admin/partners/create?role=state_head&countryId=${selectedCountryId}&stateId=${state.id as string}`,
-                                    )
-                                  }
-                                >
-                                  Create partner for this position
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {selectedState && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Districts in {selectedState.name}
-                  {selectedCountry ? `, ${selectedCountry.name}` : ""}
-                </CardTitle>
-                <CardDescription>
-                  District Head positions and their assignment status.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {filteredDistricts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No matching districts or assignments found for current filters.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Territory</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned Name</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>User ID</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredDistricts.map((district) => {
-                        const assignment =
-                          districtAssignments[district.id as string];
-                        const isAssigned = !!assignment;
-
-                        return (
-                          <TableRow key={district.id as string}>
-                            <TableCell>{district.name}</TableCell>
-                            <TableCell>District Head</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={isAssigned ? "default" : "outline"}
-                              >
-                                {isAssigned ? "Assigned" : "Vacant"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.fullName ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.username ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.profileId ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {!isAssigned && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    router.push(
-                                      `/admin/partners/create?role=district_head&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${district.id as string}`,
-                                    )
-                                  }
-                                >
-                                  Create partner for this position
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {selectedDistrict && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  PIN Codes in {selectedDistrict.name}
-                  {selectedState ? `, ${selectedState.name}` : ""}
-                </CardTitle>
-                <CardDescription>
-                  PIN Code Head positions and their assignment status.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {filteredPincodes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No matching PIN codes or assignments found for current filters.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Territory</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned Name</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>User ID</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPincodes.map((pincode) => {
-                        const assignment =
-                          pincodeAssignments[pincode.id as string];
-                        const isAssigned = !!assignment;
-
-                        return (
-                          <TableRow key={pincode.id as string}>
-                            <TableCell>{pincode.code}</TableCell>
-                            <TableCell>PIN Code Head</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={isAssigned ? "default" : "outline"}
-                              >
-                                {isAssigned ? "Assigned" : "Vacant"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.fullName ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.username ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.profileId ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {!isAssigned && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    router.push(
-                                      `/admin/partners/create?role=pincode_head&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${pincode.id as string}`,
-                                    )
-                                  }
-                                >
-                                  Create partner for this position
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {selectedPincode && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Locations under PIN {selectedPincode.code}
-                  {selectedDistrict ? `, ${selectedDistrict.name}` : ""}
-                </CardTitle>
-                <CardDescription>
-                  Area / Location Partner positions and their assignment status.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {filteredLocations.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No matching locations or assignments found for current filters.
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Territory</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned Name</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>User ID</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredLocations.map((location) => {
-                        const assignment =
-                          locationAssignments[location.id as string];
-                        const isAssigned = !!assignment;
-
-                        return (
-                          <TableRow key={location.id as string}>
-                            <TableCell>{location.name}</TableCell>
-                            <TableCell>Area / Location Head</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={isAssigned ? "default" : "outline"}
-                              >
-                                {isAssigned ? "Assigned" : "Vacant"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.fullName ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.username ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {assignment?.profileId ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {!isAssigned && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    router.push(
-                                      `/admin/partners/create?role=pincode_partner&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${selectedPincodeId}&locationId=${location.id as string}`,
-                                    )
-                                  }
-                                >
-                                  Create partner for this position
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          {renderActiveView()}
         </div>
       </main>
     </>

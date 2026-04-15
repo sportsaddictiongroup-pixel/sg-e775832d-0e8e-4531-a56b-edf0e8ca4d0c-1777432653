@@ -234,17 +234,33 @@ export default async function handler(
     email,
   });
 
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseServiceKey) {
+    console.error("CreatePartner: SUPABASE_SERVICE_ROLE_KEY is missing");
+    res.status(500).json({
+      success: false,
+      message: "Server configuration error: Service role key is missing.",
+    });
+    return;
+  }
+
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    supabaseServiceKey,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { data: signUpData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: {
-        full_name: fullName,
-        mobile_number: mobileNumber,
-        whatsapp_number: whatsappNumber,
-        role: "partner",
-        username,
-      },
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      mobile_number: mobileNumber,
+      whatsapp_number: whatsappNumber,
+      role: "partner",
+      username,
     },
   });
 

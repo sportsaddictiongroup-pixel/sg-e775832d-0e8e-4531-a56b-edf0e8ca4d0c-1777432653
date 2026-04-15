@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardHeader,
@@ -61,6 +62,9 @@ export default function TerritoryManagement(): JSX.Element {
   const [selectedStateId, setSelectedStateId] = useState("");
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
   const [selectedPincodeId, setSelectedPincodeId] = useState("");
+  const [selectedLocationId, setSelectedLocationId] = useState("");
+  const [usernameFilter, setUsernameFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   const [stateAssignments, setStateAssignments] = useState<
     Record<string, AssignmentInfo>
@@ -448,6 +452,7 @@ export default function TerritoryManagement(): JSX.Element {
     setSelectedStateId("");
     setSelectedDistrictId("");
     setSelectedPincodeId("");
+    setSelectedLocationId("");
     setStates([]);
     setDistricts([]);
     setPincodes([]);
@@ -470,6 +475,7 @@ export default function TerritoryManagement(): JSX.Element {
     setSelectedStateId(stateId);
     setSelectedDistrictId("");
     setSelectedPincodeId("");
+    setSelectedLocationId("");
     setDistricts([]);
     setPincodes([]);
     setLocations([]);
@@ -489,6 +495,7 @@ export default function TerritoryManagement(): JSX.Element {
   const handleSelectDistrict = async (districtId: string) => {
     setSelectedDistrictId(districtId);
     setSelectedPincodeId("");
+    setSelectedLocationId("");
     setPincodes([]);
     setLocations([]);
     setPincodeAssignments({});
@@ -507,6 +514,7 @@ export default function TerritoryManagement(): JSX.Element {
 
   const handleSelectPincode = async (pincodeId: string) => {
     setSelectedPincodeId(pincodeId);
+    setSelectedLocationId("");
     setLocations([]);
     setLocationAssignments({});
 
@@ -533,6 +541,50 @@ export default function TerritoryManagement(): JSX.Element {
   const selectedPincode = pincodes.find(
     (pincode) => (pincode.id as string) === selectedPincodeId,
   );
+
+  const filteredStates = states.filter((state) => {
+    if (selectedStateId && selectedStateId !== "all" && state.id !== selectedStateId) return false;
+    if (roleFilter !== "all" && roleFilter !== "state_head") return false;
+    const assignment = stateAssignments[state.id as string];
+    if (usernameFilter) {
+      if (!assignment || !assignment.username) return false;
+      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  const filteredDistricts = districts.filter((district) => {
+    if (selectedDistrictId && selectedDistrictId !== "all" && district.id !== selectedDistrictId) return false;
+    if (roleFilter !== "all" && roleFilter !== "district_head") return false;
+    const assignment = districtAssignments[district.id as string];
+    if (usernameFilter) {
+      if (!assignment || !assignment.username) return false;
+      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  const filteredPincodes = pincodes.filter((pincode) => {
+    if (selectedPincodeId && selectedPincodeId !== "all" && pincode.id !== selectedPincodeId) return false;
+    if (roleFilter !== "all" && roleFilter !== "pincode_head") return false;
+    const assignment = pincodeAssignments[pincode.id as string];
+    if (usernameFilter) {
+      if (!assignment || !assignment.username) return false;
+      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  const filteredLocations = locations.filter((location) => {
+    if (selectedLocationId && selectedLocationId !== "all" && location.id !== selectedLocationId) return false;
+    if (roleFilter !== "all" && roleFilter !== "pincode_partner") return false;
+    const assignment = locationAssignments[location.id as string];
+    if (usernameFilter) {
+      if (!assignment || !assignment.username) return false;
+      if (!assignment.username.toLowerCase().includes(usernameFilter.toLowerCase())) return false;
+    }
+    return true;
+  });
 
   if (authLoading) {
     return (
@@ -582,8 +634,8 @@ export default function TerritoryManagement(): JSX.Element {
               Territory Management
             </h1>
             <p className="text-sm text-muted-foreground">
-              Drill down from country to location to see which positions are
-              assigned or vacant.
+              Filter by territory, position, or username to inspect
+              assignments across the hierarchy.
             </p>
           </header>
 
@@ -591,18 +643,17 @@ export default function TerritoryManagement(): JSX.Element {
             <CardHeader>
               <CardTitle>Filters</CardTitle>
               <CardDescription>
-                Start from country and go down to locations to inspect
-                assignments.
+                Use the dropdowns to drill down or search by specific criteria.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
                 <div className="space-y-2">
                   <span className="text-xs font-medium text-muted-foreground">
                     Country
                   </span>
                   <Select
-                    value={selectedCountryId}
+                    value={selectedCountryId || undefined}
                     onValueChange={(value) => void handleSelectCountry(value)}
                   >
                     <SelectTrigger>
@@ -612,7 +663,7 @@ export default function TerritoryManagement(): JSX.Element {
                       {countries.map((country) => (
                         <SelectItem
                           key={country.id}
-                          value={country.id as string}
+                          value={String(country.id)}
                         >
                           {country.name}
                         </SelectItem>
@@ -625,7 +676,7 @@ export default function TerritoryManagement(): JSX.Element {
                     State
                   </span>
                   <Select
-                    value={selectedStateId}
+                    value={selectedStateId || undefined}
                     onValueChange={(value) => void handleSelectState(value)}
                     disabled={!selectedCountryId}
                   >
@@ -634,7 +685,7 @@ export default function TerritoryManagement(): JSX.Element {
                     </SelectTrigger>
                     <SelectContent>
                       {states.map((state) => (
-                        <SelectItem key={state.id} value={state.id as string}>
+                        <SelectItem key={state.id} value={String(state.id)}>
                           {state.name}
                         </SelectItem>
                       ))}
@@ -646,7 +697,7 @@ export default function TerritoryManagement(): JSX.Element {
                     District
                   </span>
                   <Select
-                    value={selectedDistrictId}
+                    value={selectedDistrictId || undefined}
                     onValueChange={(value) => void handleSelectDistrict(value)}
                     disabled={!selectedStateId}
                   >
@@ -657,7 +708,7 @@ export default function TerritoryManagement(): JSX.Element {
                       {districts.map((district) => (
                         <SelectItem
                           key={district.id}
-                          value={district.id as string}
+                          value={String(district.id)}
                         >
                           {district.name}
                         </SelectItem>
@@ -670,7 +721,7 @@ export default function TerritoryManagement(): JSX.Element {
                     PIN Code
                   </span>
                   <Select
-                    value={selectedPincodeId}
+                    value={selectedPincodeId || undefined}
                     onValueChange={(value) => void handleSelectPincode(value)}
                     disabled={!selectedDistrictId}
                   >
@@ -681,11 +732,72 @@ export default function TerritoryManagement(): JSX.Element {
                       {pincodes.map((pincode) => (
                         <SelectItem
                           key={pincode.id}
-                          value={pincode.id as string}
+                          value={String(pincode.id)}
                         >
                           {pincode.code}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* NEW: Location / Area Filter */}
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Area / Location
+                  </span>
+                  <Select
+                    value={selectedLocationId || undefined}
+                    onValueChange={setSelectedLocationId}
+                    disabled={!selectedPincodeId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {locations.map((location) => (
+                        <SelectItem
+                          key={location.id}
+                          value={String(location.id)}
+                        >
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* NEW: Username Filter */}
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Username
+                  </span>
+                  <Input 
+                    placeholder="Search by username..." 
+                    value={usernameFilter} 
+                    onChange={(e) => setUsernameFilter(e.target.value)} 
+                  />
+                </div>
+
+                {/* NEW: Role Assigned Filter */}
+                <div className="space-y-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Role Assigned (Position)
+                  </span>
+                  <Select
+                    value={roleFilter}
+                    onValueChange={setRoleFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Positions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Positions</SelectItem>
+                      <SelectItem value="state_head">State Head</SelectItem>
+                      <SelectItem value="district_head">District Head</SelectItem>
+                      <SelectItem value="pincode_head">PIN Code Head</SelectItem>
+                      <SelectItem value="pincode_partner">Area / Location Head</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -702,9 +814,9 @@ export default function TerritoryManagement(): JSX.Element {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {states.length === 0 ? (
+                {filteredStates.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No states found. Add states under Location Management.
+                    No matching states or assignments found for current filters.
                   </p>
                 ) : (
                   <Table>
@@ -715,17 +827,18 @@ export default function TerritoryManagement(): JSX.Element {
                         <TableHead>Status</TableHead>
                         <TableHead>Assigned Name</TableHead>
                         <TableHead>Username</TableHead>
+                        <TableHead>User ID</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {states.map((state) => {
+                      {filteredStates.map((state) => {
                         const assignment =
                           stateAssignments[state.id as string];
                         const isAssigned = !!assignment;
 
                         return (
-                          <TableRow key={state.id}>
+                          <TableRow key={state.id as string}>
                             <TableCell>{state.name}</TableCell>
                             <TableCell>State Head</TableCell>
                             <TableCell>
@@ -740,6 +853,9 @@ export default function TerritoryManagement(): JSX.Element {
                             </TableCell>
                             <TableCell>
                               {assignment?.username ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {assignment?.profileId ?? "-"}
                             </TableCell>
                             <TableCell className="text-right">
                               {!isAssigned && (
@@ -778,10 +894,9 @@ export default function TerritoryManagement(): JSX.Element {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {districts.length === 0 ? (
+                {filteredDistricts.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No districts found. Add districts under Location
-                    Management.
+                    No matching districts or assignments found for current filters.
                   </p>
                 ) : (
                   <Table>
@@ -792,17 +907,18 @@ export default function TerritoryManagement(): JSX.Element {
                         <TableHead>Status</TableHead>
                         <TableHead>Assigned Name</TableHead>
                         <TableHead>Username</TableHead>
+                        <TableHead>User ID</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {districts.map((district) => {
+                      {filteredDistricts.map((district) => {
                         const assignment =
                           districtAssignments[district.id as string];
                         const isAssigned = !!assignment;
 
                         return (
-                          <TableRow key={district.id}>
+                          <TableRow key={district.id as string}>
                             <TableCell>{district.name}</TableCell>
                             <TableCell>District Head</TableCell>
                             <TableCell>
@@ -817,6 +933,9 @@ export default function TerritoryManagement(): JSX.Element {
                             </TableCell>
                             <TableCell>
                               {assignment?.username ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {assignment?.profileId ?? "-"}
                             </TableCell>
                             <TableCell className="text-right">
                               {!isAssigned && (
@@ -855,10 +974,9 @@ export default function TerritoryManagement(): JSX.Element {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {pincodes.length === 0 ? (
+                {filteredPincodes.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No PIN codes found. Add PIN codes under Location
-                    Management.
+                    No matching PIN codes or assignments found for current filters.
                   </p>
                 ) : (
                   <Table>
@@ -869,17 +987,18 @@ export default function TerritoryManagement(): JSX.Element {
                         <TableHead>Status</TableHead>
                         <TableHead>Assigned Name</TableHead>
                         <TableHead>Username</TableHead>
+                        <TableHead>User ID</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pincodes.map((pincode) => {
+                      {filteredPincodes.map((pincode) => {
                         const assignment =
                           pincodeAssignments[pincode.id as string];
                         const isAssigned = !!assignment;
 
                         return (
-                          <TableRow key={pincode.id}>
+                          <TableRow key={pincode.id as string}>
                             <TableCell>{pincode.code}</TableCell>
                             <TableCell>PIN Code Head</TableCell>
                             <TableCell>
@@ -894,6 +1013,9 @@ export default function TerritoryManagement(): JSX.Element {
                             </TableCell>
                             <TableCell>
                               {assignment?.username ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {assignment?.profileId ?? "-"}
                             </TableCell>
                             <TableCell className="text-right">
                               {!isAssigned && (
@@ -928,14 +1050,13 @@ export default function TerritoryManagement(): JSX.Element {
                   {selectedDistrict ? `, ${selectedDistrict.name}` : ""}
                 </CardTitle>
                 <CardDescription>
-                  PIN Code Partner positions and their assignment status.
+                  Area / Location Partner positions and their assignment status.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {locations.length === 0 ? (
+                {filteredLocations.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No locations found. Add locations under Location
-                    Management.
+                    No matching locations or assignments found for current filters.
                   </p>
                 ) : (
                   <Table>
@@ -946,19 +1067,20 @@ export default function TerritoryManagement(): JSX.Element {
                         <TableHead>Status</TableHead>
                         <TableHead>Assigned Name</TableHead>
                         <TableHead>Username</TableHead>
+                        <TableHead>User ID</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {locations.map((location) => {
+                      {filteredLocations.map((location) => {
                         const assignment =
                           locationAssignments[location.id as string];
                         const isAssigned = !!assignment;
 
                         return (
-                          <TableRow key={location.id}>
+                          <TableRow key={location.id as string}>
                             <TableCell>{location.name}</TableCell>
-                            <TableCell>PIN Code Partner</TableCell>
+                            <TableCell>Area / Location Head</TableCell>
                             <TableCell>
                               <Badge
                                 variant={isAssigned ? "default" : "outline"}
@@ -971,6 +1093,9 @@ export default function TerritoryManagement(): JSX.Element {
                             </TableCell>
                             <TableCell>
                               {assignment?.username ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {assignment?.profileId ?? "-"}
                             </TableCell>
                             <TableCell className="text-right">
                               {!isAssigned && (

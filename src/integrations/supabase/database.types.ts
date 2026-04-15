@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -120,6 +120,7 @@ export type Database = {
           updated_at: string | null
           upline_profile_id: string | null
           username: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -132,6 +133,7 @@ export type Database = {
           updated_at?: string | null
           upline_profile_id?: string | null
           username?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -144,6 +146,7 @@ export type Database = {
           updated_at?: string | null
           upline_profile_id?: string | null
           username?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: [
           {

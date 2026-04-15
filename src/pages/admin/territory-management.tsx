@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -380,9 +381,11 @@ export default function TerritoryManagement(): JSX.Element {
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <div className="w-full md:w-64">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search assigned username..."
+              className="pl-8"
               value={tableSearch}
               onChange={(e) => setTableSearch(e.target.value)}
             />

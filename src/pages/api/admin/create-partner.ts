@@ -287,7 +287,6 @@ export default async function handler(
       whatsapp_number: whatsappNumber,
       role: "partner",
       upline_profile_id: uplineProfileId,
-      email,
     })
     .select("id")
     .maybeSingle();

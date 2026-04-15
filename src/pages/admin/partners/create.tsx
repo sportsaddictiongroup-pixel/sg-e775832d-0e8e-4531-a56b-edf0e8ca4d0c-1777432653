@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectTrigger,
@@ -28,41 +29,11 @@ import {
   type Pincode,
   type Location,
 } from "@/services/locationService";
-import { partnerService, type PartnerRoleValue } from "@/services/partnerService";
+import { partnerService } from "@/services/partnerService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
-
-const partnerRoles = [
-  { label: "Investor", value: "investor" },
-  { label: "State Head", value: "state_head" },
-  { label: "District Head", value: "district_head" },
-  { label: "PIN Code Head", value: "pincode_head" },
-  { label: "PIN Code Partner", value: "pincode_partner" },
-] as const;
-
-const days = Array.from({ length: 31 }, (_, index) =>
-  String(index + 1).padStart(2, "0"),
-);
-const months = [
-  { value: "01", label: "Jan" },
-  { value: "02", label: "Feb" },
-  { value: "03", label: "Mar" },
-  { value: "04", label: "Apr" },
-  { value: "05", label: "May" },
-  { value: "06", label: "Jun" },
-  { value: "07", label: "Jul" },
-  { value: "08", label: "Aug" },
-  { value: "09", label: "Sep" },
-  { value: "10", label: "Oct" },
-  { value: "11", label: "Nov" },
-  { value: "12", label: "Dec" },
-];
-const CURRENT_YEAR = 2026;
-const years = Array.from({ length: 60 }, (_, index) =>
-  String(CURRENT_YEAR - index),
-);
 
 export default function CreatePartner(): JSX.Element {
   const router = useRouter();
@@ -83,12 +54,16 @@ export default function CreatePartner(): JSX.Element {
   const [selectedLocationId, setSelectedLocationId] = useState("");
 
   const [fullName, setFullName] = useState("");
-  const [dobDay, setDobDay] = useState("");
-  const [dobMonth, setDobMonth] = useState("");
-  const [dobYear, setDobYear] = useState("");
+  
+  const [mobileCode, setMobileCode] = useState("+91");
   const [mobileNumber, setMobileNumber] = useState("");
+  
+  const [sameAsMobile, setSameAsMobile] = useState(true);
+  const [whatsappCode, setWhatsappCode] = useState("+91");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  
+  const [email, setEmail] = useState("");
 
-  const [role, setRole] = useState<PartnerRoleValue | "">("");
   const [uplineUsername, setUplineUsername] = useState("");
 
   const [username, setUsername] = useState("");
@@ -139,58 +114,8 @@ export default function CreatePartner(): JSX.Element {
       setAuthLoading(false);
 
       const loadedCountries = await locationService.getCountries();
-      if (!isMounted) {
-        return;
-      }
+      if (!isMounted) return;
       setCountries(loadedCountries);
-
-      const {
-        role: roleQuery,
-        countryId: countryIdQuery,
-        stateId: stateIdQuery,
-        districtId: districtIdQuery,
-        pincodeId: pincodeIdQuery,
-        locationId: locationIdQuery,
-      } = router.query;
-
-      const prefillRole =
-        typeof roleQuery === "string"
-          ? (roleQuery as PartnerRoleValue)
-          : undefined;
-
-      if (
-        prefillRole &&
-        partnerRoles.some((item) => item.value === prefillRole)
-      ) {
-        setRole(prefillRole);
-
-        const countryId =
-          typeof countryIdQuery === "string" ? countryIdQuery : "";
-        const stateId =
-          typeof stateIdQuery === "string" ? stateIdQuery : "";
-        const districtId =
-          typeof districtIdQuery === "string" ? districtIdQuery : "";
-        const pincodeId =
-          typeof pincodeIdQuery === "string" ? pincodeIdQuery : "";
-        const locationId =
-          typeof locationIdQuery === "string" ? locationIdQuery : "";
-
-        if (countryId) {
-          await handleSelectCountry(countryId);
-        }
-        if (stateId) {
-          await handleSelectState(stateId);
-        }
-        if (districtId) {
-          await handleSelectDistrict(districtId);
-        }
-        if (pincodeId) {
-          await handleSelectPincode(pincodeId);
-        }
-        if (locationId) {
-          setSelectedLocationId(locationId);
-        }
-      }
     };
 
     void init();
@@ -199,6 +124,13 @@ export default function CreatePartner(): JSX.Element {
       isMounted = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (sameAsMobile) {
+      setWhatsappCode(mobileCode);
+      setWhatsappNumber(mobileNumber);
+    }
+  }, [sameAsMobile, mobileCode, mobileNumber]);
 
   const handleSelectCountry = async (countryId: string) => {
     setSelectedCountryId(countryId);
@@ -210,10 +142,7 @@ export default function CreatePartner(): JSX.Element {
     setPincodes([]);
     setLocations([]);
 
-    if (!countryId) {
-      return;
-    }
-
+    if (!countryId) return;
     const loadedStates = await locationService.getStatesByCountry(countryId);
     setStates(loadedStates);
   };
@@ -226,10 +155,7 @@ export default function CreatePartner(): JSX.Element {
     setPincodes([]);
     setLocations([]);
 
-    if (!stateId) {
-      return;
-    }
-
+    if (!stateId) return;
     const loadedDistricts = await locationService.getDistrictsByState(stateId);
     setDistricts(loadedDistricts);
   };
@@ -240,13 +166,8 @@ export default function CreatePartner(): JSX.Element {
     setPincodes([]);
     setLocations([]);
 
-    if (!districtId) {
-      return;
-    }
-
-    const loadedPincodes = await locationService.getPincodesByDistrict(
-      districtId,
-    );
+    if (!districtId) return;
+    const loadedPincodes = await locationService.getPincodesByDistrict(districtId);
     setPincodes(loadedPincodes);
   };
 
@@ -255,13 +176,8 @@ export default function CreatePartner(): JSX.Element {
     setSelectedLocationId("");
     setLocations([]);
 
-    if (!pincodeId) {
-      return;
-    }
-
-    const loadedLocations = await locationService.getLocationsByPincode(
-      pincodeId,
-    );
+    if (!pincodeId) return;
+    const loadedLocations = await locationService.getLocationsByPincode(pincodeId);
     setLocations(loadedLocations);
   };
 
@@ -279,12 +195,14 @@ export default function CreatePartner(): JSX.Element {
 
     if (!mobileNumber.trim()) {
       newFieldErrors.mobileNumber = "Mobile number is required.";
-    } else if (!/^[0-9]{7,15}$/.test(mobileNumber.trim())) {
-      newFieldErrors.mobileNumber = "Enter a valid mobile number.";
     }
 
-    if (!role) {
-      newFieldErrors.role = "Role is required.";
+    if (!sameAsMobile && !whatsappNumber.trim()) {
+      newFieldErrors.whatsappNumber = "WhatsApp number is required.";
+    }
+
+    if (!email.trim()) {
+      newFieldErrors.email = "Email ID is required.";
     }
 
     if (!username.trim()) {
@@ -303,65 +221,6 @@ export default function CreatePartner(): JSX.Element {
       newFieldErrors.confirmPassword = "Passwords must match.";
     }
 
-    if (role === "state_head") {
-      if (!selectedCountryId) {
-        newFieldErrors.countryId = "Country is required for State Head.";
-      }
-      if (!selectedStateId) {
-        newFieldErrors.stateId = "State is required for State Head.";
-      }
-    }
-
-    if (role === "district_head") {
-      if (!selectedCountryId) {
-        newFieldErrors.countryId = "Country is required for District Head.";
-      }
-      if (!selectedStateId) {
-        newFieldErrors.stateId = "State is required for District Head.";
-      }
-      if (!selectedDistrictId) {
-        newFieldErrors.districtId = "District is required for District Head.";
-      }
-    }
-
-    if (role === "pincode_head") {
-      if (!selectedCountryId) {
-        newFieldErrors.countryId = "Country is required for PIN Code Head.";
-      }
-      if (!selectedStateId) {
-        newFieldErrors.stateId = "State is required for PIN Code Head.";
-      }
-      if (!selectedDistrictId) {
-        newFieldErrors.districtId = "District is required for PIN Code Head.";
-      }
-      if (!selectedPincodeId) {
-        newFieldErrors.pincodeId = "PIN Code is required for PIN Code Head.";
-      }
-    }
-
-    if (role === "pincode_partner") {
-      if (!selectedCountryId) {
-        newFieldErrors.countryId =
-          "Country is required for PIN Code Partner assignment.";
-      }
-      if (!selectedStateId) {
-        newFieldErrors.stateId =
-          "State is required for PIN Code Partner assignment.";
-      }
-      if (!selectedDistrictId) {
-        newFieldErrors.districtId =
-          "District is required for PIN Code Partner assignment.";
-      }
-      if (!selectedPincodeId) {
-        newFieldErrors.pincodeId =
-          "PIN Code is required for PIN Code Partner assignment.";
-      }
-      if (!selectedLocationId) {
-        newFieldErrors.locationId =
-          "Location is required for PIN Code Partner assignment.";
-      }
-    }
-
     if (Object.keys(newFieldErrors).length > 0) {
       setFieldErrors(newFieldErrors);
       setSubmitError("Please fix the highlighted fields and try again.");
@@ -377,20 +236,22 @@ export default function CreatePartner(): JSX.Element {
     setSubmitting(true);
 
     try {
+      const fullMobile = `${mobileCode.trim()}${mobileNumber.trim()}`;
+      const fullWhatsapp = sameAsMobile 
+        ? fullMobile 
+        : `${whatsappCode.trim()}${whatsappNumber.trim()}`;
+
       const response = await partnerService.createPartner(
         {
           fullName: fullName.trim(),
-          dobDay,
-          dobMonth,
-          dobYear,
-          mobileNumber: mobileNumber.trim(),
-          role: role as PartnerRoleValue,
+          mobileNumber: fullMobile,
+          whatsappNumber: fullWhatsapp,
+          email: email.trim(),
           countryId: selectedCountryId || undefined,
           stateId: selectedStateId || undefined,
           districtId: selectedDistrictId || undefined,
           pincodeId: selectedPincodeId || undefined,
-          locationId:
-            role === "pincode_partner" ? selectedLocationId || undefined : undefined,
+          locationId: selectedLocationId || undefined,
           uplineUsername: uplineUsername.trim() || undefined,
           username: username.trim(),
           password,
@@ -454,8 +315,7 @@ export default function CreatePartner(): JSX.Element {
               Create Partner
             </h1>
             <p className="text-sm text-muted-foreground">
-              Onboard a new partner with role, upline, and territory assignment
-              in one place.
+              Onboard a new partner with their details, address, and set login credentials.
             </p>
           </header>
 
@@ -463,8 +323,7 @@ export default function CreatePartner(): JSX.Element {
             <CardHeader>
               <CardTitle>Partner Details</CardTitle>
               <CardDescription>
-                Fill in basic details, assign role and territory, and set login
-                credentials.
+                Fill in basic details, address details, and set login credentials.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -483,7 +342,7 @@ export default function CreatePartner(): JSX.Element {
                   <h2 className="text-sm font-semibold">Basic Details</h2>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="full-name">Full Name</Label>
+                      <Label htmlFor="full-name">Full Name *</Label>
                       <Input
                         id="full-name"
                         value={fullName}
@@ -496,269 +355,210 @@ export default function CreatePartner(): JSX.Element {
                         </p>
                       )}
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="mobile-number">Mobile Number</Label>
+                      <Label htmlFor="email">Email ID *</Label>
                       <Input
-                        id="mobile-number"
-                        value={mobileNumber}
-                        onChange={(event) =>
-                          setMobileNumber(event.target.value)
-                        }
-                        placeholder="Enter mobile number"
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="Enter valid email ID"
                       />
+                      {fieldErrors.email && (
+                        <p className="text-xs text-destructive">
+                          {fieldErrors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="mobile-number">Mobile Number *</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={mobileCode}
+                          onChange={(event) => setMobileCode(event.target.value)}
+                          placeholder="+91"
+                          className="w-20"
+                        />
+                        <Input
+                          id="mobile-number"
+                          value={mobileNumber}
+                          onChange={(event) => setMobileNumber(event.target.value)}
+                          placeholder="Enter mobile number"
+                          className="flex-1"
+                        />
+                      </div>
                       {fieldErrors.mobileNumber && (
                         <p className="text-xs text-destructive">
                           {fieldErrors.mobileNumber}
                         </p>
                       )}
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Date of Birth</Label>
-                    <div className="grid gap-2 grid-cols-3">
-                      <Select
-                        value={dobDay}
-                        onValueChange={(value) => setDobDay(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="DD" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {days.map((day) => (
-                            <SelectItem key={day} value={day}>
-                              {day}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={dobMonth}
-                        onValueChange={(value) => setDobMonth(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="MM" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {months.map((month) => (
-                            <SelectItem key={month.value} value={month.value}>
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={dobYear}
-                        onValueChange={(value) => setDobYear(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="YYYY" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {years.map((year) => (
-                            <SelectItem key={year} value={year}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="whatsapp-number">WhatsApp Number *</Label>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="same-as-mobile" 
+                            checked={sameAsMobile}
+                            onCheckedChange={(checked) => setSameAsMobile(checked === true)}
+                          />
+                          <label
+                            htmlFor="same-as-mobile"
+                            className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            Same as Mobile Number
+                          </label>
+                        </div>
+                      </div>
+                      {!sameAsMobile && (
+                        <div className="flex gap-2">
+                          <Input
+                            value={whatsappCode}
+                            onChange={(event) => setWhatsappCode(event.target.value)}
+                            placeholder="+91"
+                            className="w-20"
+                          />
+                          <Input
+                            id="whatsapp-number"
+                            value={whatsappNumber}
+                            onChange={(event) => setWhatsappNumber(event.target.value)}
+                            placeholder="Enter WhatsApp number"
+                            className="flex-1"
+                          />
+                        </div>
+                      )}
+                      {sameAsMobile && (
+                        <div className="flex gap-2 opacity-60 pointer-events-none">
+                          <Input value={mobileCode} readOnly className="w-20" />
+                          <Input value={mobileNumber} readOnly className="flex-1" />
+                        </div>
+                      )}
+                      {fieldErrors.whatsappNumber && (
+                        <p className="text-xs text-destructive">
+                          {fieldErrors.whatsappNumber}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </section>
 
                 <section className="space-y-4">
-                  <h2 className="text-sm font-semibold">
-                    Role &amp; Territory
-                  </h2>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select
-                      value={role}
-                      onValueChange={(value) =>
-                        setRole(value as PartnerRoleValue)
-                      }
-                    >
-                      <SelectTrigger id="role">
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {partnerRoles.map((item) => (
-                          <SelectItem key={item.value} value={item.value}>
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {fieldErrors.role && (
-                      <p className="text-xs text-destructive">
-                        {fieldErrors.role}
-                      </p>
-                    )}
-                  </div>
-
-                  {role && role !== "investor" && (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="country">Country</Label>
-                        <Select
-                          value={selectedCountryId}
-                          onValueChange={(value) => handleSelectCountry(value)}
-                        >
-                          <SelectTrigger id="country">
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {countries.map((country) => (
-                              <SelectItem
-                                key={country.id}
-                                value={country.id as string}
-                              >
-                                {country.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {fieldErrors.countryId && (
-                          <p className="text-xs text-destructive">
-                            {fieldErrors.countryId}
-                          </p>
-                        )}
-                      </div>
-                      {(role === "state_head" ||
-                        role === "district_head" ||
-                        role === "pincode_head" ||
-                        role === "pincode_partner") && (
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State</Label>
-                          <Select
-                            value={selectedStateId}
-                            onValueChange={(value) => handleSelectState(value)}
-                          >
-                            <SelectTrigger id="state">
-                              <SelectValue placeholder="Select state" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {states.map((state) => (
-                                <SelectItem
-                                  key={state.id}
-                                  value={state.id as string}
-                                >
-                                  {state.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {fieldErrors.stateId && (
-                            <p className="text-xs text-destructive">
-                              {fieldErrors.stateId}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {(role === "district_head" ||
-                        role === "pincode_head" ||
-                        role === "pincode_partner") && (
-                        <div className="space-y-2">
-                          <Label htmlFor="district">District</Label>
-                          <Select
-                            value={selectedDistrictId}
-                            onValueChange={(value) =>
-                              handleSelectDistrict(value)
-                            }
-                          >
-                            <SelectTrigger id="district">
-                              <SelectValue placeholder="Select district" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {districts.map((district) => (
-                                <SelectItem
-                                  key={district.id}
-                                  value={district.id as string}
-                                >
-                                  {district.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {fieldErrors.districtId && (
-                            <p className="text-xs text-destructive">
-                              {fieldErrors.districtId}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {(role === "pincode_head" ||
-                        role === "pincode_partner") && (
-                        <div className="space-y-2">
-                          <Label htmlFor="pincode">PIN Code</Label>
-                          <Select
-                            value={selectedPincodeId}
-                            onValueChange={(value) => handleSelectPincode(value)}
-                          >
-                            <SelectTrigger id="pincode">
-                              <SelectValue placeholder="Select PIN code" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {pincodes.map((pincode) => (
-                                <SelectItem
-                                  key={pincode.id}
-                                  value={pincode.id as string}
-                                >
-                                  {pincode.code}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {fieldErrors.pincodeId && (
-                            <p className="text-xs text-destructive">
-                              {fieldErrors.pincodeId}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      {role === "pincode_partner" && (
-                        <div className="space-y-2">
-                          <Label htmlFor="location">Location / Area</Label>
-                          <Select
-                            value={selectedLocationId}
-                            onValueChange={(value) => setSelectedLocationId(value)}
-                          >
-                            <SelectTrigger id="location">
-                              <SelectValue placeholder="Select location" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {locations.map((location) => (
-                                <SelectItem
-                                  key={location.id}
-                                  value={location.id as string}
-                                >
-                                  {location.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {fieldErrors.locationId && (
-                            <p className="text-xs text-destructive">
-                              {fieldErrors.locationId}
-                            </p>
-                          )}
-                        </div>
-                      )}
+                  <h2 className="text-sm font-semibold">Address Details</h2>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Select
+                        value={selectedCountryId}
+                        onValueChange={(value) => handleSelectCountry(value)}
+                      >
+                        <SelectTrigger id="country">
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map((country) => (
+                            <SelectItem key={country.id} value={country.id as string}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State</Label>
+                      <Select
+                        value={selectedStateId}
+                        onValueChange={(value) => handleSelectState(value)}
+                        disabled={!selectedCountryId}
+                      >
+                        <SelectTrigger id="state">
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {states.map((state) => (
+                            <SelectItem key={state.id} value={state.id as string}>
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="district">District</Label>
+                      <Select
+                        value={selectedDistrictId}
+                        onValueChange={(value) => handleSelectDistrict(value)}
+                        disabled={!selectedStateId}
+                      >
+                        <SelectTrigger id="district">
+                          <SelectValue placeholder="Select district" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districts.map((district) => (
+                            <SelectItem key={district.id} value={district.id as string}>
+                              {district.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pincode">PIN Code</Label>
+                      <Select
+                        value={selectedPincodeId}
+                        onValueChange={(value) => handleSelectPincode(value)}
+                        disabled={!selectedDistrictId}
+                      >
+                        <SelectTrigger id="pincode">
+                          <SelectValue placeholder="Select PIN code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pincodes.map((pincode) => (
+                            <SelectItem key={pincode.id} value={pincode.id as string}>
+                              {pincode.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location / Area</Label>
+                      <Select
+                        value={selectedLocationId}
+                        onValueChange={(value) => setSelectedLocationId(value)}
+                        disabled={!selectedPincodeId}
+                      >
+                        <SelectTrigger id="location">
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locations.map((location) => (
+                            <SelectItem key={location.id} value={location.id as string}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </section>
 
                 <section className="space-y-4">
                   <h2 className="text-sm font-semibold">Upline</h2>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-w-md">
                     <Label htmlFor="upline-username">
                       Upline Username (optional)
                     </Label>
                     <Input
                       id="upline-username"
                       value={uplineUsername}
-                      onChange={(event) =>
-                        setUplineUsername(event.target.value)
-                      }
+                      onChange={(event) => setUplineUsername(event.target.value)}
                       placeholder="Leave blank to default to Admin"
                     />
                     {fieldErrors.uplineUsername && (
@@ -773,7 +573,7 @@ export default function CreatePartner(): JSX.Element {
                   <h2 className="text-sm font-semibold">Login Credentials</h2>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username">Username *</Label>
                       <Input
                         id="username"
                         value={username}
@@ -787,7 +587,7 @@ export default function CreatePartner(): JSX.Element {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">Password *</Label>
                       <Input
                         id="password"
                         type="password"
@@ -802,14 +602,12 @@ export default function CreatePartner(): JSX.Element {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Label htmlFor="confirm-password">Confirm Password *</Label>
                       <Input
                         id="confirm-password"
                         type="password"
                         value={confirmPassword}
-                        onChange={(event) =>
-                          setConfirmPassword(event.target.value)
-                        }
+                        onChange={(event) => setConfirmPassword(event.target.value)}
                         placeholder="Re-enter password"
                       />
                       {fieldErrors.confirmPassword && (

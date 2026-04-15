@@ -1,20 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/integrations/supabase/client";
 
-type PartnerRoleValue =
-  | "investor"
-  | "state_head"
-  | "district_head"
-  | "pincode_head"
-  | "pincode_partner";
-
 interface CreatePartnerBody {
   fullName?: string;
-  dobDay?: string;
-  dobMonth?: string;
-  dobYear?: string;
   mobileNumber?: string;
-  role?: PartnerRoleValue;
+  whatsappNumber?: string;
+  email?: string;
   countryId?: string;
   stateId?: string;
   districtId?: string;
@@ -29,20 +20,6 @@ interface ApiResponseBody {
   success: boolean;
   message?: string;
   fieldErrors?: Record<string, string>;
-}
-
-const partnerRoles: PartnerRoleValue[] = [
-  "investor",
-  "state_head",
-  "district_head",
-  "pincode_head",
-  "pincode_partner",
-];
-
-const INTERNAL_EMAIL_DOMAIN = "partners.app.example.com";
-
-function normalizeUsername(username: string): string {
-  return username.trim().toLowerCase();
 }
 
 async function getAdminProfileId(
@@ -102,85 +79,6 @@ async function resolveUplineProfileId(
   return data.id as string;
 }
 
-async function checkTerritoryConflict(
-  role: PartnerRoleValue | undefined,
-  body: CreatePartnerBody,
-): Promise<string | null> {
-  if (!role) {
-    return null;
-  }
-
-  if (role === "state_head") {
-    if (!body.stateId) {
-      return "State is required for State Head.";
-    }
-    const { data, error } = await supabase
-      .from("territory_assignments")
-      .select("id")
-      .eq("role", "state_head")
-      .eq("state_id", body.stateId)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (!error && data) {
-      return "This State Head position is already assigned.";
-    }
-  }
-
-  if (role === "district_head") {
-    if (!body.districtId) {
-      return "District is required for District Head.";
-    }
-    const { data, error } = await supabase
-      .from("territory_assignments")
-      .select("id")
-      .eq("role", "district_head")
-      .eq("district_id", body.districtId)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (!error && data) {
-      return "This District Head position is already assigned.";
-    }
-  }
-
-  if (role === "pincode_head") {
-    if (!body.pincodeId) {
-      return "PIN Code is required for PIN Code Head.";
-    }
-    const { data, error } = await supabase
-      .from("territory_assignments")
-      .select("id")
-      .eq("role", "pincode_head")
-      .eq("pincode_id", body.pincodeId)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (!error && data) {
-      return "This PIN Code Head position is already assigned.";
-    }
-  }
-
-  if (role === "pincode_partner") {
-    if (!body.locationId) {
-      return "Location is required for PIN Code Partner.";
-    }
-    const { data, error } = await supabase
-      .from("territory_assignments")
-      .select("id")
-      .eq("role", "pincode_partner")
-      .eq("location_id", body.locationId)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (!error && data) {
-      return "This PIN Code Partner position is already assigned.";
-    }
-  }
-
-  return null;
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponseBody>,
@@ -222,11 +120,10 @@ export default async function handler(
 
   const fullName = (body.fullName ?? "").trim();
   const mobileNumber = (body.mobileNumber ?? "").trim();
-  const rawUsername = (body.username ?? "").trim();
-  const username = rawUsername;
-  const normalizedUsername = normalizeUsername(rawUsername);
+  const whatsappNumber = (body.whatsappNumber ?? "").trim();
+  const email = (body.email ?? "").trim();
+  const username = (body.username ?? "").trim();
   const password = body.password ?? "";
-  const role = body.role;
 
   if (!fullName) {
     fieldErrors.fullName = "Full name is required.";
@@ -234,12 +131,20 @@ export default async function handler(
 
   if (!mobileNumber) {
     fieldErrors.mobileNumber = "Mobile number is required.";
-  } else if (!/^[0-9]{7,15}$/.test(mobileNumber)) {
+  } else if (!/^[0-9+]{7,18}$/.test(mobileNumber)) {
     fieldErrors.mobileNumber = "Enter a valid mobile number.";
   }
 
-  if (!role || !partnerRoles.includes(role)) {
-    fieldErrors.role = "Select a valid role.";
+  if (!whatsappNumber) {
+    fieldErrors.whatsappNumber = "WhatsApp number is required.";
+  } else if (!/^[0-9+]{7,18}$/.test(whatsappNumber)) {
+    fieldErrors.whatsappNumber = "Enter a valid WhatsApp number.";
+  }
+
+  if (!email) {
+    fieldErrors.email = "Email ID is required.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fieldErrors.email = "Enter a valid email address.";
   }
 
   if (!username) {
@@ -250,65 +155,6 @@ export default async function handler(
     fieldErrors.password = "Password is required.";
   } else if (password.length < 8) {
     fieldErrors.password = "Password must be at least 8 characters long.";
-  }
-
-  if (role === "state_head") {
-    if (!body.countryId) {
-      fieldErrors.countryId = "Country is required for State Head.";
-    }
-    if (!body.stateId) {
-      fieldErrors.stateId = "State is required for State Head.";
-    }
-  }
-
-  if (role === "district_head") {
-    if (!body.countryId) {
-      fieldErrors.countryId = "Country is required for District Head.";
-    }
-    if (!body.stateId) {
-      fieldErrors.stateId = "State is required for District Head.";
-    }
-    if (!body.districtId) {
-      fieldErrors.districtId = "District is required for District Head.";
-    }
-  }
-
-  if (role === "pincode_head") {
-    if (!body.countryId) {
-      fieldErrors.countryId = "Country is required for PIN Code Head.";
-    }
-    if (!body.stateId) {
-      fieldErrors.stateId = "State is required for PIN Code Head.";
-    }
-    if (!body.districtId) {
-      fieldErrors.districtId = "District is required for PIN Code Head.";
-    }
-    if (!body.pincodeId) {
-      fieldErrors.pincodeId = "PIN Code is required for PIN Code Head.";
-    }
-  }
-
-  if (role === "pincode_partner") {
-    if (!body.countryId) {
-      fieldErrors.countryId =
-        "Country is required for PIN Code Partner assignment.";
-    }
-    if (!body.stateId) {
-      fieldErrors.stateId =
-        "State is required for PIN Code Partner assignment.";
-    }
-    if (!body.districtId) {
-      fieldErrors.districtId =
-        "District is required for PIN Code Partner assignment.";
-    }
-    if (!body.pincodeId) {
-      fieldErrors.pincodeId =
-        "PIN Code is required for PIN Code Partner assignment.";
-    }
-    if (!body.locationId) {
-      fieldErrors.locationId =
-        "Location is required for PIN Code Partner assignment.";
-    }
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -329,9 +175,26 @@ export default async function handler(
   if (existingMobile) {
     res.status(400).json({
       success: false,
-      message: "Mobile number already exists.",
+      message: "Mobile number already registered.",
       fieldErrors: {
-        mobileNumber: "Mobile number already exists.",
+        mobileNumber: "Mobile number already registered.",
+      },
+    });
+    return;
+  }
+
+  const { data: existingEmail } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existingEmail) {
+    res.status(400).json({
+      success: false,
+      message: "Email ID already registered.",
+      fieldErrors: {
+        email: "Email ID already registered.",
       },
     });
     return;
@@ -354,17 +217,6 @@ export default async function handler(
     return;
   }
 
-  if (role) {
-    const conflictMessage = await checkTerritoryConflict(role, body);
-    if (conflictMessage) {
-      res.status(400).json({
-        success: false,
-        message: conflictMessage,
-      });
-      return;
-    }
-  }
-
   const uplineProfileId = await resolveUplineProfileId(body.uplineUsername);
   if (!uplineProfileId) {
     res.status(400).json({
@@ -377,11 +229,8 @@ export default async function handler(
     return;
   }
 
-  const email = `${normalizedUsername}@${INTERNAL_EMAIL_DOMAIN}`;
-
   console.log("CreatePartner: creating auth user", {
     username,
-    normalizedUsername,
     email,
   });
 
@@ -392,7 +241,8 @@ export default async function handler(
       data: {
         full_name: fullName,
         mobile_number: mobileNumber,
-        role,
+        whatsapp_number: whatsappNumber,
+        role: "partner",
         username,
       },
     },
@@ -418,7 +268,8 @@ export default async function handler(
       full_name: fullName,
       username,
       mobile_number: mobileNumber,
-      role,
+      whatsapp_number: whatsappNumber,
+      role: "partner",
       upline_profile_id: uplineProfileId,
       email,
     })
@@ -438,19 +289,12 @@ export default async function handler(
     return;
   }
 
-  if (role && role !== "investor") {
-    const territoryPayload: {
-      profile_id: string;
-      role: PartnerRoleValue;
-      country_id: string | null;
-      state_id: string | null;
-      district_id: string | null;
-      pincode_id: string | null;
-      location_id: string | null;
-      is_active: boolean;
-    } = {
+  const hasAddress = body.countryId || body.stateId || body.districtId || body.pincodeId || body.locationId;
+  
+  if (hasAddress) {
+    const territoryPayload = {
       profile_id: profileData.id as string,
-      role,
+      role: "partner",
       country_id: body.countryId ?? null,
       state_id: body.stateId ?? null,
       district_id: body.districtId ?? null,
@@ -468,12 +312,6 @@ export default async function handler(
         territoryError,
         profileId: profileData.id,
       });
-      res.status(500).json({
-        success: false,
-        message:
-          "Partner was created, but territory assignment failed. Please review the Territory Management page.",
-      });
-      return;
     }
   }
 

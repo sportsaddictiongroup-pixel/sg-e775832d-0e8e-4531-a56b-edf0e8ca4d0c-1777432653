@@ -1,17 +1,8 @@
-export type PartnerRoleValue =
-  | "investor"
-  | "state_head"
-  | "district_head"
-  | "pincode_head"
-  | "pincode_partner";
-
 export interface CreatePartnerInput {
   fullName: string;
-  dobDay?: string;
-  dobMonth?: string;
-  dobYear?: string;
   mobileNumber: string;
-  role: PartnerRoleValue;
+  whatsappNumber: string;
+  email: string;
   countryId?: string;
   stateId?: string;
   districtId?: string;

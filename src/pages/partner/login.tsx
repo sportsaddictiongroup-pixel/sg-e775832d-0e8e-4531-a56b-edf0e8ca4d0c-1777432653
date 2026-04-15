@@ -12,29 +12,11 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 
-const partnerRoles = [
-  { label: "Investor", value: "investor" },
-  { label: "State Head", value: "state_head" },
-  { label: "District Head", value: "district_head" },
-  { label: "PIN Code Head", value: "pincode_head" },
-  { label: "PIN Code Partner", value: "pincode_partner" },
-] as const;
-
-type PartnerRoleValue = (typeof partnerRoles)[number]["value"];
-
 export default function PartnerLogin(): JSX.Element {
   const router = useRouter();
-  const [role, setRole] = useState<PartnerRoleValue | "">("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -45,10 +27,6 @@ export default function PartnerLogin(): JSX.Element {
     setError(null);
 
     const trimmedUsername = username.trim();
-    if (!role) {
-      setError("Please select a role.");
-      return;
-    }
     if (!trimmedUsername || !password) {
       setError("Please enter both username and password.");
       return;
@@ -77,14 +55,6 @@ export default function PartnerLogin(): JSX.Element {
         return;
       }
 
-      if (profile.role !== role) {
-        await authService.signOut();
-        setError(
-          "The selected role does not match this account. Please choose the correct role.",
-        );
-        return;
-      }
-
       router.push("/partner");
     } catch {
       setError("Unable to sign in at the moment. Please try again.");
@@ -102,7 +72,7 @@ export default function PartnerLogin(): JSX.Element {
             <CardHeader>
               <CardTitle>Partner Login</CardTitle>
               <CardDescription>
-                Select your role and sign in with your credentials.
+                Sign in with your credentials.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -112,26 +82,6 @@ export default function PartnerLogin(): JSX.Element {
                 </p>
               )}
               <form className="space-y-4" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={role}
-                    onValueChange={(value) =>
-                      setRole(value as PartnerRoleValue)
-                    }
-                  >
-                    <SelectTrigger id="role">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {partnerRoles.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <Input

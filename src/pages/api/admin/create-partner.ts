@@ -277,7 +277,7 @@ export default async function handler(
 
   const newUser = signUpData.user;
 
-  const { data: profileData, error: profileError } = await supabase
+  const { data: profileData, error: profileError } = await supabaseAdmin
     .from("profiles")
     .insert({
       id: newUser.id,
@@ -293,14 +293,26 @@ export default async function handler(
     .maybeSingle();
 
   if (profileError || !profileData) {
+    const errorMessage = profileError?.message || "Unknown database error";
     console.error("CreatePartner: profile insert failed", {
-      profileError,
+      error: profileError,
+      message: errorMessage,
+      details: profileError?.details,
+      hint: profileError?.hint,
       newUserId: newUser.id,
     });
+
+    // Rollback: safe cleanup so repeated retries do not leave broken orphan users
+    const { error: rollbackError } = await supabaseAdmin.auth.admin.deleteUser(newUser.id);
+    if (rollbackError) {
+      console.error("CreatePartner: Failed to rollback orphan auth user", rollbackError);
+    } else {
+      console.log("CreatePartner: Safely rolled back auth user after profile failure.");
+    }
+
     res.status(500).json({
       success: false,
-      message:
-        "User was created in authentication, but profile creation failed. Please contact support.",
+      message: `Profile creation failed (${errorMessage}). The login account was rolled back safely.`,
     });
     return;
   }
@@ -319,15 +331,27 @@ export default async function handler(
       is_active: true,
     };
 
-    const { error: territoryError } = await supabase
+    const { error: territoryError } = await supabaseAdmin
       .from("territory_assignments")
       .insert(territoryPayload);
 
     if (territoryError) {
       console.error("CreatePartner: territory assignment insert failed", {
-        territoryError,
+        error: territoryError,
+        message: territoryError.message,
         profileId: profileData.id,
       });
+
+      // Rollback: delete profile and auth user
+      await supabaseAdmin.from("profiles").delete().eq("id", profileData.id);
+      await supabaseAdmin.auth.admin.deleteUser(newUser.id);
+      console.log("CreatePartner: Safely rolled back profile and auth user after territory failure.");
+
+      res.status(500).json({
+        success: false,
+        message: `Territory assignment failed (${territoryError.message}). The account was rolled back safely.`,
+      });
+      return;
     }
   }
 

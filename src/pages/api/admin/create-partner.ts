@@ -313,44 +313,6 @@ export default async function handler(
     return;
   }
 
-  const hasAddress = body.countryId || body.stateId || body.districtId || body.pincodeId || body.locationId;
-  
-  if (hasAddress) {
-    const territoryPayload = {
-      profile_id: profileData.id as string,
-      role: "partner",
-      country_id: body.countryId ?? null,
-      state_id: body.stateId ?? null,
-      district_id: body.districtId ?? null,
-      pincode_id: body.pincodeId ?? null,
-      location_id: body.locationId ?? null,
-      is_active: true,
-    };
-
-    const { error: territoryError } = await supabaseAdmin
-      .from("territory_assignments")
-      .insert(territoryPayload);
-
-    if (territoryError) {
-      console.error("CreatePartner: territory assignment insert failed", {
-        error: territoryError,
-        message: territoryError.message,
-        profileId: profileData.id,
-      });
-
-      // Rollback: delete profile and auth user
-      await supabaseAdmin.from("profiles").delete().eq("id", profileData.id);
-      await supabaseAdmin.auth.admin.deleteUser(newUser.id);
-      console.log("CreatePartner: Safely rolled back profile and auth user after territory failure.");
-
-      res.status(500).json({
-        success: false,
-        message: `Territory assignment failed (${territoryError.message}). The account was rolled back safely.`,
-      });
-      return;
-    }
-  }
-
   res.status(200).json({
     success: true,
     message: "Partner created successfully.",

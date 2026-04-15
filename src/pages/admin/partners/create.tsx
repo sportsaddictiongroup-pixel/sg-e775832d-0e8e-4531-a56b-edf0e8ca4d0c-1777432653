@@ -375,12 +375,18 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="mobile-number">Mobile Number *</Label>
                       <div className="flex gap-2">
-                        <Input
-                          value={mobileCode}
-                          onChange={(event) => setMobileCode(event.target.value)}
-                          placeholder="+91"
-                          className="w-20"
-                        />
+                        <Select value={mobileCode} onValueChange={setMobileCode}>
+                          <SelectTrigger className="w-[130px]">
+                            <SelectValue placeholder="Code" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="+91">+91 (India)</SelectItem>
+                            <SelectItem value="+977">+977 (Nepal)</SelectItem>
+                            <SelectItem value="+94">+94 (Sri Lanka)</SelectItem>
+                            <SelectItem value="+971">+971 (UAE)</SelectItem>
+                            <SelectItem value="+60">+60 (Malaysia)</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Input
                           id="mobile-number"
                           value={mobileNumber}
@@ -415,12 +421,18 @@ export default function CreatePartner(): JSX.Element {
                       </div>
                       {!sameAsMobile && (
                         <div className="flex gap-2">
-                          <Input
-                            value={whatsappCode}
-                            onChange={(event) => setWhatsappCode(event.target.value)}
-                            placeholder="+91"
-                            className="w-20"
-                          />
+                          <Select value={whatsappCode} onValueChange={setWhatsappCode}>
+                            <SelectTrigger className="w-[130px]">
+                              <SelectValue placeholder="Code" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="+91">+91 (India)</SelectItem>
+                              <SelectItem value="+977">+977 (Nepal)</SelectItem>
+                              <SelectItem value="+94">+94 (Sri Lanka)</SelectItem>
+                              <SelectItem value="+971">+971 (UAE)</SelectItem>
+                              <SelectItem value="+60">+60 (Malaysia)</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <Input
                             id="whatsapp-number"
                             value={whatsappNumber}
@@ -432,7 +444,7 @@ export default function CreatePartner(): JSX.Element {
                       )}
                       {sameAsMobile && (
                         <div className="flex gap-2 opacity-60 pointer-events-none">
-                          <Input value={mobileCode} readOnly className="w-20" />
+                          <Input value={mobileCode} readOnly className="w-[130px]" />
                           <Input value={mobileNumber} readOnly className="flex-1" />
                         </div>
                       )}
@@ -451,7 +463,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
                       <Select
-                        value={selectedCountryId}
+                        value={selectedCountryId || undefined}
                         onValueChange={(value) => handleSelectCountry(value)}
                       >
                         <SelectTrigger id="country">
@@ -470,7 +482,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
                       <Select
-                        value={selectedStateId}
+                        value={selectedStateId || undefined}
                         onValueChange={(value) => handleSelectState(value)}
                         disabled={!selectedCountryId}
                       >
@@ -490,7 +502,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="district">District</Label>
                       <Select
-                        value={selectedDistrictId}
+                        value={selectedDistrictId || undefined}
                         onValueChange={(value) => handleSelectDistrict(value)}
                         disabled={!selectedStateId}
                       >
@@ -510,7 +522,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="pincode">PIN Code</Label>
                       <Select
-                        value={selectedPincodeId}
+                        value={selectedPincodeId || undefined}
                         onValueChange={(value) => handleSelectPincode(value)}
                         disabled={!selectedDistrictId}
                       >
@@ -530,7 +542,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="location">Location / Area</Label>
                       <Select
-                        value={selectedLocationId}
+                        value={selectedLocationId || undefined}
                         onValueChange={(value) => setSelectedLocationId(value)}
                         disabled={!selectedPincodeId}
                       >

@@ -281,10 +281,7 @@ export default async function handler(
     .from("profiles")
     .insert({
       id: newUser.id,
-      full_name: fullName,
-      username,
-      mobile_number: mobileNumber,
-      whatsapp_number: whatsappNumber,
+      username: username,
       role: "partner",
       upline_profile_id: uplineProfileId,
     })

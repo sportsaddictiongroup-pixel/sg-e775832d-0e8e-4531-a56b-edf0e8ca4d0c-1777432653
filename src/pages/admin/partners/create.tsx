@@ -463,7 +463,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
                       <Select
-                        value={selectedCountryId || undefined}
+                        value={selectedCountryId ? String(selectedCountryId) : undefined}
                         onValueChange={(value) => handleSelectCountry(value)}
                       >
                         <SelectTrigger id="country">
@@ -471,7 +471,7 @@ export default function CreatePartner(): JSX.Element {
                         </SelectTrigger>
                         <SelectContent>
                           {countries.map((country) => (
-                            <SelectItem key={country.id} value={country.id as string}>
+                            <SelectItem key={country.id} value={String(country.id)}>
                               {country.name}
                             </SelectItem>
                           ))}
@@ -482,7 +482,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
                       <Select
-                        value={selectedStateId || undefined}
+                        value={selectedStateId ? String(selectedStateId) : undefined}
                         onValueChange={(value) => handleSelectState(value)}
                         disabled={!selectedCountryId}
                       >
@@ -491,7 +491,7 @@ export default function CreatePartner(): JSX.Element {
                         </SelectTrigger>
                         <SelectContent>
                           {states.map((state) => (
-                            <SelectItem key={state.id} value={state.id as string}>
+                            <SelectItem key={state.id} value={String(state.id)}>
                               {state.name}
                             </SelectItem>
                           ))}
@@ -502,7 +502,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="district">District</Label>
                       <Select
-                        value={selectedDistrictId || undefined}
+                        value={selectedDistrictId ? String(selectedDistrictId) : undefined}
                         onValueChange={(value) => handleSelectDistrict(value)}
                         disabled={!selectedStateId}
                       >
@@ -511,7 +511,7 @@ export default function CreatePartner(): JSX.Element {
                         </SelectTrigger>
                         <SelectContent>
                           {districts.map((district) => (
-                            <SelectItem key={district.id} value={district.id as string}>
+                            <SelectItem key={district.id} value={String(district.id)}>
                               {district.name}
                             </SelectItem>
                           ))}
@@ -522,7 +522,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="pincode">PIN Code</Label>
                       <Select
-                        value={selectedPincodeId || undefined}
+                        value={selectedPincodeId ? String(selectedPincodeId) : undefined}
                         onValueChange={(value) => handleSelectPincode(value)}
                         disabled={!selectedDistrictId}
                       >
@@ -531,7 +531,7 @@ export default function CreatePartner(): JSX.Element {
                         </SelectTrigger>
                         <SelectContent>
                           {pincodes.map((pincode) => (
-                            <SelectItem key={pincode.id} value={pincode.id as string}>
+                            <SelectItem key={pincode.id} value={String(pincode.id)}>
                               {pincode.code}
                             </SelectItem>
                           ))}
@@ -542,7 +542,7 @@ export default function CreatePartner(): JSX.Element {
                     <div className="space-y-2">
                       <Label htmlFor="location">Location / Area</Label>
                       <Select
-                        value={selectedLocationId || undefined}
+                        value={selectedLocationId ? String(selectedLocationId) : undefined}
                         onValueChange={(value) => setSelectedLocationId(value)}
                         disabled={!selectedPincodeId}
                       >
@@ -551,7 +551,7 @@ export default function CreatePartner(): JSX.Element {
                         </SelectTrigger>
                         <SelectContent>
                           {locations.map((location) => (
-                            <SelectItem key={location.id} value={location.id as string}>
+                            <SelectItem key={location.id} value={String(location.id)}>
                               {location.name}
                             </SelectItem>
                           ))}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -776,6 +777,13 @@ export default function TerritoryManagement(): JSX.Element {
       <SEO title="Territory Management" description="Drill down to manage territory assignments and vacancies." />
       <main className="min-h-screen bg-background text-foreground px-4 py-8">
         <div className="mx-auto w-full max-w-6xl space-y-6">
+          <div className="flex items-center">
+            <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
+              <Link href="/admin">
+                ← Back to Dashboard
+              </Link>
+            </Button>
+          </div>
           <header className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Admin Portal</p>
             <h1 className="font-heading text-2xl md:text-3xl font-semibold">Territory Management</h1>

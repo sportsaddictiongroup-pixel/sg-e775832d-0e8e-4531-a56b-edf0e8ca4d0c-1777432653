@@ -417,35 +417,83 @@ export default function TerritoryManagement(): JSX.Element {
 
     const { territoryId, positionType, levelColumn } = assignModalData;
 
-    // 1. Deactivate old assignments for this specific position and territory
-    await (supabase.from("territory_assignments") as any)
-      .update({ is_active: false })
-      .eq(levelColumn, territoryId)
-      .eq("role", positionType)
-      .eq("is_active", true);
+    try {
+      // 1. Check if an assignment already exists to avoid UNIQUE constraint violations
+      const { data: existing, error: fetchError } = await supabase
+        .from("territory_assignments")
+        .select("id")
+        .eq(levelColumn as any, territoryId)
+        .maybeSingle();
 
-    // 2. Insert the new active assignment
-    const payload: any = {
-      profile_id: selectedPartnerId,
-      role: positionType,
-      is_active: true,
-    };
-    payload[levelColumn] = territoryId;
+      if (fetchError) {
+        console.error("Error fetching existing assignment:", fetchError);
+        throw fetchError;
+      }
 
-    const { error } = await (supabase.from("territory_assignments") as any)
-      .insert(payload);
+      let dbError;
 
-    setIsSubmittingAssignment(false);
+      if (existing) {
+        // 2a. Update existing assignment row
+        const { error: updateError } = await (supabase.from("territory_assignments") as any)
+          .update({
+            profile_id: selectedPartnerId,
+            role: positionType,
+            is_active: true,
+            assigned_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        
+        dbError = updateError;
+      } else {
+        // 2b. Insert completely new assignment
+        const payload: any = {
+          profile_id: selectedPartnerId,
+          role: positionType,
+          is_active: true,
+        };
+        payload[levelColumn] = territoryId;
 
-    if (!error) {
+        // Populate parent hierarchy using current UI selections
+        if (levelColumn === 'location_id') {
+          payload.pincode_id = selectedPincodeId || null;
+          payload.district_id = selectedDistrictId || null;
+          payload.state_id = selectedStateId || null;
+          payload.country_id = selectedCountryId || null;
+        } else if (levelColumn === 'pincode_id') {
+          payload.district_id = selectedDistrictId || null;
+          payload.state_id = selectedStateId || null;
+          payload.country_id = selectedCountryId || null;
+        } else if (levelColumn === 'district_id') {
+          payload.state_id = selectedStateId || null;
+          payload.country_id = selectedCountryId || null;
+        } else if (levelColumn === 'state_id') {
+          payload.country_id = selectedCountryId || null;
+        }
+
+        const { error: insertError } = await (supabase.from("territory_assignments") as any)
+          .insert(payload);
+        
+        dbError = insertError;
+      }
+
+      if (dbError) {
+        console.error("Database assignment error:", dbError);
+        throw dbError;
+      }
+
       setIsAssignModalOpen(false);
+
       // Refresh the current view to show the new assignment
       if (levelColumn === "state_id") void loadStateAssignments(states);
       if (levelColumn === "district_id") void loadDistrictAssignments(districts);
       if (levelColumn === "pincode_id") void loadPincodeAssignments(pincodes);
       if (levelColumn === "location_id") void loadLocationAssignments(locations);
-    } else {
-      alert("Failed to assign partner. Please try again.");
+
+    } catch (err: any) {
+      console.error("Assignment save failed:", err);
+      alert(`Failed to assign partner: ${err.message || err.details || "Unknown database error"}`);
+    } finally {
+      setIsSubmittingAssignment(false);
     }
   };
 

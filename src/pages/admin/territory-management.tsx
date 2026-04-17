@@ -433,8 +433,7 @@ export default function TerritoryManagement(): JSX.Element {
     };
     payload[levelColumn] = territoryId;
 
-    const { error } = await supabase
-      .from("territory_assignments")
+    const { error } = await (supabase.from("territory_assignments") as any)
       .insert(payload);
 
     setIsSubmittingAssignment(false);

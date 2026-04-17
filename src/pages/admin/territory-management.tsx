@@ -141,9 +141,10 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
       .select("state_id, profile_id")
-      .eq("role", "state_head")
-      .eq("is_active", true)
-      .in("state_id", ids);
+      .in("state_id", ids)
+      .is("district_id", null)
+      .is("pincode_id", null)
+      .is("location_id", null);
 
     if (error || !assignments) return setStateAssignments({});
 
@@ -182,9 +183,9 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
       .select("district_id, profile_id")
-      .eq("role", "district_head")
-      .eq("is_active", true)
-      .in("district_id", ids);
+      .in("district_id", ids)
+      .is("pincode_id", null)
+      .is("location_id", null);
 
     if (error || !assignments) return setDistrictAssignments({});
 
@@ -223,9 +224,8 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
       .select("pincode_id, profile_id")
-      .eq("role", "pincode_head")
-      .eq("is_active", true)
-      .in("pincode_id", ids);
+      .in("pincode_id", ids)
+      .is("location_id", null);
 
     if (error || !assignments) return setPincodeAssignments({});
 
@@ -264,8 +264,6 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: assignments, error } = await supabase
       .from("territory_assignments")
       .select("location_id, profile_id")
-      .eq("role", "pincode_partner")
-      .eq("is_active", true)
       .in("location_id", ids);
 
     if (error || !assignments) return setLocationAssignments({});
@@ -419,10 +417,15 @@ export default function TerritoryManagement(): JSX.Element {
 
     try {
       // 1. Check if an assignment already exists to avoid UNIQUE constraint violations
-      const { data: existing, error: fetchError } = await (supabase.from("territory_assignments") as any)
+      let query = (supabase.from("territory_assignments") as any)
         .select("id")
-        .eq(levelColumn, territoryId)
-        .maybeSingle();
+        .eq(levelColumn, territoryId);
+
+      if (levelColumn === 'state_id') query = query.is('district_id', null).is('pincode_id', null).is('location_id', null);
+      if (levelColumn === 'district_id') query = query.is('pincode_id', null).is('location_id', null);
+      if (levelColumn === 'pincode_id') query = query.is('location_id', null);
+
+      const { data: existing, error: fetchError } = await query.maybeSingle();
 
       if (fetchError) {
         console.error("Error fetching existing assignment:", fetchError);
@@ -435,10 +438,7 @@ export default function TerritoryManagement(): JSX.Element {
         // 2a. Update existing assignment row
         const { error: updateError } = await (supabase.from("territory_assignments") as any)
           .update({
-            profile_id: selectedPartnerId,
-            role: positionType,
-            is_active: true,
-            assigned_at: new Date().toISOString(),
+            profile_id: selectedPartnerId
           })
           .eq("id", existing.id);
         
@@ -447,26 +447,27 @@ export default function TerritoryManagement(): JSX.Element {
         // 2b. Insert completely new assignment
         const payload: any = {
           profile_id: selectedPartnerId,
-          role: positionType,
-          is_active: true,
+          country_id: selectedCountryId || null,
+          state_id: null,
+          district_id: null,
+          pincode_id: null,
+          location_id: null
         };
-        payload[levelColumn] = territoryId;
 
-        // Populate parent hierarchy using current UI selections
-        if (levelColumn === 'location_id') {
-          payload.pincode_id = selectedPincodeId || null;
-          payload.district_id = selectedDistrictId || null;
-          payload.state_id = selectedStateId || null;
-          payload.country_id = selectedCountryId || null;
-        } else if (levelColumn === 'pincode_id') {
-          payload.district_id = selectedDistrictId || null;
-          payload.state_id = selectedStateId || null;
-          payload.country_id = selectedCountryId || null;
+        if (levelColumn === 'state_id') {
+          payload.state_id = territoryId;
         } else if (levelColumn === 'district_id') {
           payload.state_id = selectedStateId || null;
-          payload.country_id = selectedCountryId || null;
-        } else if (levelColumn === 'state_id') {
-          payload.country_id = selectedCountryId || null;
+          payload.district_id = territoryId;
+        } else if (levelColumn === 'pincode_id') {
+          payload.state_id = selectedStateId || null;
+          payload.district_id = selectedDistrictId || null;
+          payload.pincode_id = territoryId;
+        } else if (levelColumn === 'location_id') {
+          payload.state_id = selectedStateId || null;
+          payload.district_id = selectedDistrictId || null;
+          payload.pincode_id = selectedPincodeId || null;
+          payload.location_id = territoryId;
         }
 
         const { error: insertError } = await (supabase.from("territory_assignments") as any)

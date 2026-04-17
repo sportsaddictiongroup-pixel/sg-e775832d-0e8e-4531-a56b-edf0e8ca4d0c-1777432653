@@ -418,10 +418,9 @@ export default function TerritoryManagement(): JSX.Element {
     const { territoryId, positionType, levelColumn } = assignModalData;
 
     // 1. Deactivate old assignments for this specific position and territory
-    await supabase
-      .from("territory_assignments")
+    await (supabase.from("territory_assignments") as any)
       .update({ is_active: false })
-      .eq(levelColumn as any, territoryId)
+      .eq(levelColumn, territoryId)
       .eq("role", positionType)
       .eq("is_active", true);
 

@@ -87,6 +87,11 @@ export default function TerritoryManagement(): JSX.Element {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
 
+  // Unassign Modal State
+  const [isUnassignModalOpen, setIsUnassignModalOpen] = useState(false);
+  const [unassignModalData, setUnassignModalData] = useState<any>(null);
+  const [isSubmittingUnassign, setIsSubmittingUnassign] = useState(false);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -497,6 +502,58 @@ export default function TerritoryManagement(): JSX.Element {
     }
   };
 
+  const openUnassignModal = (item: any, levelColumn: string, assignment: AssignmentInfo) => {
+    setUnassignModalData({
+      territoryId: item.id,
+      territoryName: item.name || item.code,
+      levelColumn,
+      username: assignment.username
+    });
+    setIsUnassignModalOpen(true);
+  };
+
+  const handleUnassignPartner = async () => {
+    if (!unassignModalData) return;
+    setIsSubmittingUnassign(true);
+    const { territoryId, levelColumn } = unassignModalData;
+
+    try {
+      let query = (supabase.from("territory_assignments") as any)
+        .delete()
+        .eq(levelColumn, territoryId);
+
+      // Level-specific row matching to ensure we don't accidentally delete child assignments
+      if (levelColumn === 'state_id') {
+        query = query.is('district_id', null).is('pincode_id', null).is('location_id', null);
+      } else if (levelColumn === 'district_id') {
+        query = query.is('pincode_id', null).is('location_id', null);
+      } else if (levelColumn === 'pincode_id') {
+        query = query.is('location_id', null);
+      }
+
+      const { error } = await query;
+
+      if (error) {
+        console.error("Database unassign error:", error);
+        throw error;
+      }
+
+      setIsUnassignModalOpen(false);
+
+      // Refresh the table
+      if (levelColumn === "state_id") void loadStateAssignments(states);
+      if (levelColumn === "district_id") void loadDistrictAssignments(districts);
+      if (levelColumn === "pincode_id") void loadPincodeAssignments(pincodes);
+      if (levelColumn === "location_id") void loadLocationAssignments(locations);
+
+    } catch (err: any) {
+      console.error("Unassign failed:", err);
+      alert(`Failed to unassign partner: ${err.message || err.details || "Unknown database error"}`);
+    } finally {
+      setIsSubmittingUnassign(false);
+    }
+  };
+
   const renderTable = (
     title: string,
     description: string,
@@ -563,21 +620,48 @@ export default function TerritoryManagement(): JSX.Element {
                       </TableCell>
                       <TableCell>{assignment?.username || "—"}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant={isAssigned ? "secondary" : "outline"}
-                          onClick={() => openAssignModal(
-                            item,
-                            positionName,
-                            positionType,
-                            levelColumn,
-                            getCreateUrl(item),
-                            isAssigned,
-                            assignment
-                          )}
-                        >
-                          {isAssigned ? "Change Partner" : "Assign Partner"}
-                        </Button>
+                        {isAssigned ? (
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => openAssignModal(
+                                item,
+                                positionName,
+                                positionType,
+                                levelColumn,
+                                getCreateUrl(item),
+                                isAssigned,
+                                assignment
+                              )}
+                            >
+                              Change Partner
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => openUnassignModal(item, levelColumn, assignment)}
+                            >
+                              Unassign
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openAssignModal(
+                              item,
+                              positionName,
+                              positionType,
+                              levelColumn,
+                              getCreateUrl(item),
+                              isAssigned,
+                              assignment
+                            )}
+                          >
+                            Assign Partner
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -853,6 +937,35 @@ export default function TerritoryManagement(): JSX.Element {
                 {isSubmittingAssignment ? "Saving..." : (assignModalData?.isAssigned ? "Confirm Change" : "Confirm Assign")}
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isUnassignModalOpen} onOpenChange={setIsUnassignModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Unassign</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to unassign this partner from this position?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Partner to unassign</p>
+              <p className="text-sm font-semibold">{unassignModalData?.username}</p>
+              <p className="text-xs font-medium text-muted-foreground mt-2 mb-1">From Territory</p>
+              <p className="text-sm font-semibold">{unassignModalData?.territoryName}</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUnassignModalOpen(false)} disabled={isSubmittingUnassign}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleUnassignPartner} disabled={isSubmittingUnassign}>
+              {isSubmittingUnassign ? "Unassigning..." : "Confirm Unassign"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -421,19 +421,21 @@ export default function TerritoryManagement(): JSX.Element {
     await supabase
       .from("territory_assignments")
       .update({ is_active: false })
-      .eq(levelColumn, territoryId)
+      .eq(levelColumn as any, territoryId)
       .eq("role", positionType)
       .eq("is_active", true);
 
     // 2. Insert the new active assignment
+    const payload: any = {
+      profile_id: selectedPartnerId,
+      role: positionType,
+      is_active: true,
+    };
+    payload[levelColumn] = territoryId;
+
     const { error } = await supabase
       .from("territory_assignments")
-      .insert({
-        profile_id: selectedPartnerId,
-        role: positionType,
-        [levelColumn]: territoryId,
-        is_active: true,
-      });
+      .insert(payload);
 
     setIsSubmittingAssignment(false);
 

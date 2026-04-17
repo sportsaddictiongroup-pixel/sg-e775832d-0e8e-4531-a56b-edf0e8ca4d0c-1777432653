@@ -543,8 +543,7 @@ export default function TerritoryManagement(): JSX.Element {
                   <TableHead>Territory</TableHead>
                   <TableHead>Position</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>Partner</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -563,9 +562,6 @@ export default function TerritoryManagement(): JSX.Element {
                         </Badge>
                       </TableCell>
                       <TableCell>{assignment?.username || "—"}</TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {assignment?.profileId || "—"}
-                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
@@ -804,7 +800,6 @@ export default function TerritoryManagement(): JSX.Element {
               <div className="rounded-md bg-muted p-3">
                 <p className="text-xs font-medium text-muted-foreground mb-1">Current Assignment</p>
                 <p className="text-sm font-semibold">{assignModalData.currentUsername}</p>
-                <p className="text-xs font-mono text-muted-foreground">{assignModalData.currentProfileId}</p>
               </div>
             )}
 
@@ -837,9 +832,6 @@ export default function TerritoryManagement(): JSX.Element {
                   <p className="text-xs text-muted-foreground mb-1">Selected Partner Preview:</p>
                   <p className="text-sm font-medium">
                     {partners.find((p) => p.id === selectedPartnerId)?.username}
-                  </p>
-                  <p className="text-xs font-mono text-muted-foreground break-all">
-                    {selectedPartnerId}
                   </p>
                 </div>
               )}

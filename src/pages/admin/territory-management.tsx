@@ -419,10 +419,9 @@ export default function TerritoryManagement(): JSX.Element {
 
     try {
       // 1. Check if an assignment already exists to avoid UNIQUE constraint violations
-      const { data: existing, error: fetchError } = await supabase
-        .from("territory_assignments")
+      const { data: existing, error: fetchError } = await (supabase.from("territory_assignments") as any)
         .select("id")
-        .eq(levelColumn as any, territoryId)
+        .eq(levelColumn, territoryId)
         .maybeSingle();
 
       if (fetchError) {

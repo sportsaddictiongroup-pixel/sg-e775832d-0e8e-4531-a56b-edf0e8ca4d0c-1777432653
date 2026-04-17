@@ -27,6 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { authService } from "@/services/authService";
 import {
   locationService,
@@ -70,6 +78,14 @@ export default function TerritoryManagement(): JSX.Element {
   const [districtAssignments, setDistrictAssignments] = useState<Record<string, AssignmentInfo>>({});
   const [pincodeAssignments, setPincodeAssignments] = useState<Record<string, AssignmentInfo>>({});
   const [locationAssignments, setLocationAssignments] = useState<Record<string, AssignmentInfo>>({});
+
+  // Modal State
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [assignModalData, setAssignModalData] = useState<any>(null);
+  const [partners, setPartners] = useState<{ id: string; username: string }[]>([]);
+  const [partnerSearch, setPartnerSearch] = useState("");
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
+  const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -359,12 +375,88 @@ export default function TerritoryManagement(): JSX.Element {
     setTableSearch("");
   };
 
+  const loadPartners = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .order("username");
+    if (data) setPartners(data);
+  };
+
+  const openAssignModal = (
+    item: any,
+    positionName: string,
+    positionType: string,
+    levelColumn: string,
+    createUrl: string,
+    isAssigned: boolean,
+    assignment?: AssignmentInfo
+  ) => {
+    setAssignModalData({
+      territoryId: item.id,
+      territoryName: item.name || item.code,
+      positionName,
+      positionType,
+      levelColumn,
+      createUrl,
+      isAssigned,
+      currentUsername: assignment?.username,
+      currentProfileId: assignment?.profileId,
+    });
+    setSelectedPartnerId("");
+    setPartnerSearch("");
+    setIsAssignModalOpen(true);
+    if (partners.length === 0) {
+      void loadPartners();
+    }
+  };
+
+  const handleAssignPartner = async () => {
+    if (!selectedPartnerId || !assignModalData) return;
+    setIsSubmittingAssignment(true);
+
+    const { territoryId, positionType, levelColumn } = assignModalData;
+
+    // 1. Deactivate old assignments for this specific position and territory
+    await supabase
+      .from("territory_assignments")
+      .update({ is_active: false })
+      .eq(levelColumn, territoryId)
+      .eq("role", positionType)
+      .eq("is_active", true);
+
+    // 2. Insert the new active assignment
+    const { error } = await supabase
+      .from("territory_assignments")
+      .insert({
+        profile_id: selectedPartnerId,
+        role: positionType,
+        [levelColumn]: territoryId,
+        is_active: true,
+      });
+
+    setIsSubmittingAssignment(false);
+
+    if (!error) {
+      setIsAssignModalOpen(false);
+      // Refresh the current view to show the new assignment
+      if (levelColumn === "state_id") void loadStateAssignments(states);
+      if (levelColumn === "district_id") void loadDistrictAssignments(districts);
+      if (levelColumn === "pincode_id") void loadPincodeAssignments(pincodes);
+      if (levelColumn === "location_id") void loadLocationAssignments(locations);
+    } else {
+      alert("Failed to assign partner. Please try again.");
+    }
+  };
+
   const renderTable = (
     title: string,
     description: string,
     items: any[],
     assignmentsMap: Record<string, AssignmentInfo>,
+    positionName: string,
     positionType: string,
+    levelColumn: string,
     getCreateUrl: (item: any) => string
   ) => {
     const filtered = items.filter((item) => {
@@ -415,8 +507,8 @@ export default function TerritoryManagement(): JSX.Element {
 
                   return (
                     <TableRow key={item.id as string}>
-                      <TableCell>{item.name || item.code}</TableCell>
-                      <TableCell>{positionType}</TableCell>
+                      <TableCell className="font-medium">{item.name || item.code}</TableCell>
+                      <TableCell>{positionName}</TableCell>
                       <TableCell>
                         <Badge variant={isAssigned ? "default" : "outline"}>
                           {isAssigned ? "Assigned" : "Vacant"}
@@ -430,7 +522,15 @@ export default function TerritoryManagement(): JSX.Element {
                         <Button
                           size="sm"
                           variant={isAssigned ? "secondary" : "outline"}
-                          onClick={() => router.push(getCreateUrl(item))}
+                          onClick={() => openAssignModal(
+                            item,
+                            positionName,
+                            positionType,
+                            levelColumn,
+                            getCreateUrl(item),
+                            isAssigned,
+                            assignment
+                          )}
                         >
                           {isAssigned ? "Change Partner" : "Assign Partner"}
                         </Button>
@@ -456,6 +556,8 @@ export default function TerritoryManagement(): JSX.Element {
         specificLocation,
         locationAssignments,
         "Area Head",
+        "pincode_partner",
+        "location_id",
         (item) => `/admin/partners/create?role=pincode_partner&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${selectedPincodeId}&locationId=${item.id}`
       );
     }
@@ -468,6 +570,8 @@ export default function TerritoryManagement(): JSX.Element {
         locations,
         locationAssignments,
         "Area Head",
+        "pincode_partner",
+        "location_id",
         (item) => `/admin/partners/create?role=pincode_partner&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${selectedPincodeId}&locationId=${item.id}`
       );
     }
@@ -480,6 +584,8 @@ export default function TerritoryManagement(): JSX.Element {
         pincodes,
         pincodeAssignments,
         "PIN Head",
+        "pincode_head",
+        "pincode_id",
         (item) => `/admin/partners/create?role=pincode_head&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${selectedDistrictId}&pincodeId=${item.id}`
       );
     }
@@ -492,6 +598,8 @@ export default function TerritoryManagement(): JSX.Element {
         districts,
         districtAssignments,
         "District Head",
+        "district_head",
+        "district_id",
         (item) => `/admin/partners/create?role=district_head&countryId=${selectedCountryId}&stateId=${selectedStateId}&districtId=${item.id}`
       );
     }
@@ -504,6 +612,8 @@ export default function TerritoryManagement(): JSX.Element {
         states,
         stateAssignments,
         "State Head",
+        "state_head",
+        "state_id",
         (item) => `/admin/partners/create?role=state_head&countryId=${selectedCountryId}&stateId=${item.id}`
       );
     }
@@ -623,6 +733,89 @@ export default function TerritoryManagement(): JSX.Element {
           {renderActiveView()}
         </div>
       </main>
+
+      <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{assignModalData?.isAssigned ? "Change Partner" : "Assign Partner"}</DialogTitle>
+            <DialogDescription>
+              Select an existing partner to assign to this territory position.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-3 items-center gap-4 border-b pb-4">
+              <span className="text-sm font-medium text-muted-foreground">Territory</span>
+              <span className="col-span-2 text-sm font-semibold">{assignModalData?.territoryName}</span>
+              
+              <span className="text-sm font-medium text-muted-foreground">Position</span>
+              <span className="col-span-2 text-sm font-semibold">{assignModalData?.positionName}</span>
+            </div>
+
+            {assignModalData?.isAssigned && (
+              <div className="rounded-md bg-muted p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Current Assignment</p>
+                <p className="text-sm font-semibold">{assignModalData.currentUsername}</p>
+                <p className="text-xs font-mono text-muted-foreground">{assignModalData.currentProfileId}</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Select Partner</label>
+              <Input
+                placeholder="Search by username..."
+                value={partnerSearch}
+                onChange={(e) => setPartnerSearch(e.target.value)}
+                className="h-9"
+              />
+              <Select value={selectedPartnerId} onValueChange={setSelectedPartnerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a partner..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {partners
+                    .filter((p) => p.username?.toLowerCase().includes(partnerSearch.toLowerCase()))
+                    .slice(0, 50)
+                    .map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.username}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+
+              {selectedPartnerId && (
+                <div className="mt-2 rounded-md border p-3 bg-card">
+                  <p className="text-xs text-muted-foreground mb-1">Selected Partner Preview:</p>
+                  <p className="text-sm font-medium">
+                    {partners.find((p) => p.id === selectedPartnerId)?.username}
+                  </p>
+                  <p className="text-xs font-mono text-muted-foreground break-all">
+                    {selectedPartnerId}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center gap-3">
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="px-0 text-muted-foreground h-auto" 
+              onClick={() => router.push(assignModalData?.createUrl || "")}
+            >
+              Create New Partner Instead
+            </Button>
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => setIsAssignModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleAssignPartner} disabled={!selectedPartnerId || isSubmittingAssignment}>
+                {isSubmittingAssignment ? "Saving..." : (assignModalData?.isAssigned ? "Confirm Change" : "Confirm Assign")}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

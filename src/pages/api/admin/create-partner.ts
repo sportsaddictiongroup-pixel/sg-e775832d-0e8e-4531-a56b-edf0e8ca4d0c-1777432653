@@ -36,7 +36,20 @@ async function getAdminProfileId(
     return null;
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { createClient } = await import("@supabase/supabase-js");
+  const scopedClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    }
+  );
+
+  const { data: profile, error: profileError } = await scopedClient
     .from("profiles")
     .select("id, role")
     .eq("id", user.id)

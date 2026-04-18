@@ -236,11 +236,6 @@ export default function NetworkTreePage() {
     return rawRole.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
-  const getShortId = (id: string) => {
-    if (!id) return "—";
-    return id.split('-')[0].toUpperCase();
-  };
-
   if (authLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-background">
@@ -460,7 +455,7 @@ export default function NetworkTreePage() {
               
               <div className="grid grid-cols-3 items-center gap-4 border-t pt-4">
                 <span className="text-sm font-medium text-muted-foreground">User ID</span>
-                <span className="col-span-2 text-sm font-mono text-xs">{viewProfileUser.id}</span>
+                <span className="col-span-2 text-sm">{viewProfileUser.username}</span>
               </div>
 
               <div className="grid grid-cols-3 items-center gap-4 border-t pt-4">

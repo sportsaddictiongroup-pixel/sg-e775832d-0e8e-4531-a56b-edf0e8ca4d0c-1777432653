@@ -85,7 +85,7 @@ export default function NetworkTreePage() {
   // Data States
   const [allUsers, setAllUsers] = useState<ProfileExt[]>([]);
   const [userMap, setUserMap] = useState<Map<string, ProfileExt>>(new Map());
-  const [assignmentsMap, setAssignmentsMap] = useState<Map<string, string>>(new Map());
+  const [assignmentsMap, setAssignmentsMap] = useState<Map<string, boolean>>(new Map());
   const [loadingData, setLoadingData] = useState(true);
 
   // Search State
@@ -130,7 +130,7 @@ export default function NetworkTreePage() {
 
       const { data: assignmentsData } = await supabase
         .from("territory_assignments")
-        .select("profile_id, role");
+        .select("profile_id");
 
       if (isMounted && profilesData) {
         setAllUsers(profilesData);
@@ -140,10 +140,10 @@ export default function NetworkTreePage() {
         setUserMap(uMap);
 
         if (assignmentsData) {
-          const aMap = new Map<string, string>();
+          const aMap = new Map<string, boolean>();
           assignmentsData.forEach(a => {
-            if (a.profile_id && a.role) {
-              aMap.set(a.profile_id, a.role);
+            if (a.profile_id) {
+              aMap.set(a.profile_id, true);
             }
           });
           setAssignmentsMap(aMap);
@@ -317,10 +317,10 @@ export default function NetworkTreePage() {
                       </TableHeader>
                       <TableBody>
                         {filteredUsers.map(u => {
-                          const territoryRole = assignmentsMap.get(u.id);
+                          const isAssigned = assignmentsMap.get(u.id);
                           const uplineName = u.upline_profile_id ? userMap.get(u.upline_profile_id)?.username : null;
                           const displayUpline = uplineName || (u.role === 'admin' ? "—" : "Admin");
-                          const displayPos = formatRole(territoryRole);
+                          const displayPos = isAssigned ? formatRole(u.role) : null;
 
                           return (
                             <TableRow key={u.id}>
@@ -476,7 +476,7 @@ export default function NetworkTreePage() {
               <div className="grid grid-cols-3 items-center gap-4 border-t pt-4">
                 <span className="text-sm font-medium text-muted-foreground">Position</span>
                 <span className="col-span-2 text-sm font-medium">
-                  {formatRole(assignmentsMap.get(viewProfileUser.id)) || "Unassigned"}
+                  {assignmentsMap.get(viewProfileUser.id) ? formatRole(viewProfileUser.role) : "Unassigned"}
                 </span>
               </div>
 

@@ -325,15 +325,10 @@ export default function NetworkTreePage() {
                           return (
                             <TableRow key={u.id}>
                               <TableCell>
-                                <div className="flex flex-col">
-                                  <span className="font-semibold">{u.full_name || u.username}</span>
-                                  {u.full_name && <span className="text-xs text-muted-foreground">{u.username}</span>}
-                                </div>
+                                <span className="font-semibold">{u.full_name || u.username}</span>
                               </TableCell>
                               <TableCell>
-                                <Badge variant="secondary" className="font-mono text-[10px]">
-                                  {getShortId(u.id)}
-                                </Badge>
+                                <span className="text-sm text-muted-foreground">{u.username}</span>
                               </TableCell>
                               <TableCell>
                                 <span className="text-sm font-medium">{displayUpline}</span>

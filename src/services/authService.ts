@@ -107,7 +107,6 @@ export const authService = {
       console.log("Auth: signInWithPassword - response", { email, data, error });
 
       if (error) {
-        console.error("Auth: signInWithPassword - Supabase error", error);
         return {
           user: null,
           error: { message: error.message, code: error.status?.toString() },

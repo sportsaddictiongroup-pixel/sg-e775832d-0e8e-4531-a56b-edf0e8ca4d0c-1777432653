@@ -168,7 +168,7 @@ export default async function handler(
     return;
   }
 
-  const { data: existingMobile } = await supabase
+  const { data: existingMobile } = await (supabase as any)
     .from("partner_details")
     .select("profile_id")
     .eq("mobile_number", mobileNumber)
@@ -315,7 +315,7 @@ export default async function handler(
     return;
   }
 
-  const { error: pdError } = await supabaseAdmin
+  const { error: pdError } = await (supabaseAdmin as any)
     .from("partner_details")
     .insert({
       profile_id: newUser.id,

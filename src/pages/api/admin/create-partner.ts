@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface CreatePartnerBody {
   fullName?: string;
+  mobileCountryCode?: string;
   mobileNumber?: string;
+  whatsappCountryCode?: string;
   whatsappNumber?: string;
   email?: string;
   countryId?: string;
@@ -167,17 +169,17 @@ export default async function handler(
   }
 
   const { data: existingMobile } = await supabase
-    .from("profiles")
-    .select("id")
+    .from("partner_details")
+    .select("profile_id")
     .eq("mobile_number", mobileNumber)
     .maybeSingle();
 
   if (existingMobile) {
     res.status(400).json({
       success: false,
-      message: "Mobile number already registered.",
+      message: "Mobile number already exists",
       fieldErrors: {
-        mobileNumber: "Mobile number already registered.",
+        mobileNumber: "Mobile number already exists",
       },
     });
     return;
@@ -309,6 +311,46 @@ export default async function handler(
     res.status(500).json({
       success: false,
       message: `Profile creation failed (${errorMessage}). The login account was rolled back safely.`,
+    });
+    return;
+  }
+
+  const { error: pdError } = await supabaseAdmin
+    .from("partner_details")
+    .insert({
+      profile_id: newUser.id,
+      full_name: fullName,
+      mobile_country_code: body.mobileCountryCode || null,
+      mobile_number: mobileNumber,
+      whatsapp_country_code: body.whatsappCountryCode || null,
+      whatsapp_number: whatsappNumber,
+      email: email,
+      country_id: body.countryId || null,
+      state_id: body.stateId || null,
+      district_id: body.districtId || null,
+      pincode_id: body.pincodeId || null,
+      location_id: body.locationId || null
+    });
+
+  if (pdError) {
+    const errorMessage = pdError?.message || "Unknown database error";
+    console.error("CreatePartner: partner_details insert failed", {
+      error: pdError,
+      message: errorMessage,
+      newUserId: newUser.id,
+    });
+
+    // Rollback: safe cleanup
+    const { error: rollbackError } = await supabaseAdmin.auth.admin.deleteUser(newUser.id);
+    if (rollbackError) {
+      console.error("CreatePartner: Failed to rollback orphan auth user after partner_details error", rollbackError);
+    } else {
+      console.log("CreatePartner: Safely rolled back auth user after partner_details failure.");
+    }
+
+    res.status(500).json({
+      success: false,
+      message: `Partner details creation failed (${errorMessage}). The login account was rolled back safely.`,
     });
     return;
   }

@@ -172,7 +172,7 @@ export default function NetworkTreePage() {
     try {
       const { data: l1 } = await supabase
         .from('profiles')
-        .select('id, username, role, upline_profile_id')
+        .select('id, username, full_name, role, upline_profile_id')
         .eq('upline_profile_id', rootUser.id);
         
       if (!l1 || l1.length === 0) {
@@ -181,26 +181,26 @@ export default function NetworkTreePage() {
       }
 
       const l1Ids = l1.map(p => p.id);
-      const { data: l2 } = await supabase.from('profiles').select('id, username, role, upline_profile_id').in('upline_profile_id', l1Ids);
+      const { data: l2 } = await supabase.from('profiles').select('id, username, full_name, role, upline_profile_id').in('upline_profile_id', l1Ids);
       const l2Ids = l2?.map(p => p.id) || [];
 
       let l3: any[] = [];
       if (l2Ids.length > 0) {
-        const { data } = await supabase.from('profiles').select('id, username, role, upline_profile_id').in('upline_profile_id', l2Ids);
+        const { data } = await supabase.from('profiles').select('id, username, full_name, role, upline_profile_id').in('upline_profile_id', l2Ids);
         l3 = data || [];
       }
       const l3Ids = l3.map(p => p.id);
 
       let l4: any[] = [];
       if (l3Ids.length > 0) {
-        const { data } = await supabase.from('profiles').select('id, username, role, upline_profile_id').in('upline_profile_id', l3Ids);
+        const { data } = await supabase.from('profiles').select('id, username, full_name, role, upline_profile_id').in('upline_profile_id', l3Ids);
         l4 = data || [];
       }
       const l4Ids = l4.map(p => p.id);
 
       let l5: any[] = [];
       if (l4Ids.length > 0) {
-        const { data } = await supabase.from('profiles').select('id, username, role, upline_profile_id').in('upline_profile_id', l4Ids);
+        const { data } = await supabase.from('profiles').select('id, username, full_name, role, upline_profile_id').in('upline_profile_id', l4Ids);
         l5 = data || [];
       }
 

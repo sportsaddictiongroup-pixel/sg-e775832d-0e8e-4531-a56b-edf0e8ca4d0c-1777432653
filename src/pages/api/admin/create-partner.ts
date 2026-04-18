@@ -315,27 +315,29 @@ export default async function handler(
     return;
   }
 
-  const { error: pdError } = await (supabaseAdmin as any)
-    .from("partner_details")
-    .insert({
-      profile_id: newUser.id,
-      full_name: fullName,
-      mobile_country_code: body.mobileCountryCode || null,
-      mobile_number: mobileNumber,
-      whatsapp_country_code: body.whatsappCountryCode || null,
-      whatsapp_number: whatsappNumber,
-      email: email,
-      country_id: body.countryId || null,
-      state_id: body.stateId || null,
-      district_id: body.districtId || null,
-      pincode_id: body.pincodeId || null,
-      location_id: body.locationId || null
-    });
+  try {
+    const { error: pdError } = await (supabaseAdmin as any)
+      .from("partner_details")
+      .insert({
+        profile_id: newUser.id,
+        full_name: fullName,
+        mobile_country_code: body.mobileCountryCode || null,
+        mobile_number: mobileNumber,
+        whatsapp_country_code: body.whatsappCountryCode || null,
+        whatsapp_number: whatsappNumber,
+        email: email,
+        country_id: body.countryId || null,
+        state_id: body.stateId || null,
+        district_id: body.districtId || null,
+        pincode_id: body.pincodeId || null,
+        location_id: body.locationId || null
+      });
 
-  if (pdError) {
-    const errorMessage = pdError?.message || "Unknown database error";
+    if (pdError) throw pdError;
+  } catch (err: any) {
+    const errorMessage = err?.message || "Unknown database error";
     console.error("CreatePartner: partner_details insert failed", {
-      error: pdError,
+      error: err,
       message: errorMessage,
       newUserId: newUser.id,
     });
@@ -346,6 +348,15 @@ export default async function handler(
       console.error("CreatePartner: Failed to rollback orphan auth user after partner_details error", rollbackError);
     } else {
       console.log("CreatePartner: Safely rolled back auth user after partner_details failure.");
+    }
+
+    if (errorMessage.includes("partner_details_mobile_number_key")) {
+      res.status(400).json({
+        success: false,
+        message: "Mobile number already exists",
+        fieldErrors: { mobileNumber: "Mobile number already exists" }
+      });
+      return;
     }
 
     res.status(500).json({

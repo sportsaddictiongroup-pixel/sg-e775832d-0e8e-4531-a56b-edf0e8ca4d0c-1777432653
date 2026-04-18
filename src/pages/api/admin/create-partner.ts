@@ -64,10 +64,24 @@ async function getAdminProfileId(
 
 async function resolveUplineProfileId(
   uplineUsername: string | undefined,
+  accessToken: string,
 ): Promise<string | null> {
+  const { createClient } = await import("@supabase/supabase-js");
+  const scopedClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    }
+  );
+
   if (uplineUsername && uplineUsername.trim().length > 0) {
     const trimmed = uplineUsername.trim();
-    const { data, error } = await supabase
+    const { data, error } = await scopedClient
       .from("profiles")
       .select("id")
       .eq("username", trimmed)
@@ -80,7 +94,7 @@ async function resolveUplineProfileId(
     return data.id as string;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await scopedClient
     .from("profiles")
     .select("id")
     .eq("role", "admin")
@@ -232,7 +246,7 @@ export default async function handler(
     return;
   }
 
-  const uplineProfileId = await resolveUplineProfileId(body.uplineUsername);
+  const uplineProfileId = await resolveUplineProfileId(body.uplineUsername, token);
   if (!uplineProfileId) {
     res.status(400).json({
       success: false,

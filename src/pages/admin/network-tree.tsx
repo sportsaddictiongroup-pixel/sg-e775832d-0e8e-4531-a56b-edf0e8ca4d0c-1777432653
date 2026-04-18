@@ -320,10 +320,13 @@ export default function NetworkTreePage() {
                           return (
                             <TableRow key={u.id}>
                               <TableCell>
-                                <span className="font-semibold">{u.full_name || u.username}</span>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold">{u.full_name || u.username}</span>
+                                  {u.full_name && <span className="text-xs text-muted-foreground">{u.username}</span>}
+                                </div>
                               </TableCell>
                               <TableCell>
-                                <span className="text-sm text-muted-foreground">{u.username}</span>
+                                <span className="text-sm font-medium text-muted-foreground">{u.username}</span>
                               </TableCell>
                               <TableCell>
                                 <span className="text-sm font-medium">{displayUpline}</span>

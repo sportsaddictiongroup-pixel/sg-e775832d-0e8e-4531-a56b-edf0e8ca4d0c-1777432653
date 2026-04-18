@@ -27,6 +27,8 @@ type ProfileExt = {
   role?: string;
   upline_profile_id?: string;
   partner_details?: any;
+  display_full_name?: string;
+  display_user_id?: string;
   [key: string]: any;
 };
 
@@ -144,10 +146,27 @@ export default function NetworkTreePage() {
         .select("profile_id");
 
       if (isMounted && profilesData) {
-        setAllUsers(profilesData);
+        const normalizedProfiles = profilesData.map(u => {
+          const display_full_name = u.partner_details?.[0]?.full_name || u.full_name || u.username;
+          const display_user_id = u.username;
+          
+          const normalized = {
+            ...u,
+            display_full_name,
+            display_user_id
+          };
+
+          if (u.username === 'SAN1010') {
+            console.log("NETWORK_ROW_DEBUG", normalized);
+          }
+
+          return normalized;
+        });
+
+        setAllUsers(normalizedProfiles);
         
         const uMap = new Map<string, ProfileExt>();
-        profilesData.forEach(p => uMap.set(p.id, p));
+        normalizedProfiles.forEach(p => uMap.set(p.id, p));
         setUserMap(uMap);
 
         if (assignmentsData) {
@@ -170,8 +189,8 @@ export default function NetworkTreePage() {
   const filteredUsers = allUsers.filter(u => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    const un = (u.username || '').toLowerCase();
-    const fn = (u.partner_details?.[0]?.full_name || u.full_name || '').toLowerCase();
+    const un = (u.display_user_id || '').toLowerCase();
+    const fn = (u.display_full_name || '').toLowerCase();
     const idStr = (u.id || '').toLowerCase();
     return un.includes(q) || fn.includes(q) || idStr.includes(q);
   });
@@ -327,18 +346,17 @@ export default function NetworkTreePage() {
                           const uplineName = u.upline_profile_id ? userMap.get(u.upline_profile_id)?.username : null;
                           const displayUpline = uplineName || (u.role === 'admin' ? "—" : "Admin");
                           const displayPos = isAssigned ? formatRole(u.role) : null;
-                          const fullName = u.partner_details?.[0]?.full_name || u.full_name;
 
                           return (
                             <TableRow key={u.id}>
                               <TableCell>
                                 <div className="flex flex-col">
-                                  <span className="font-semibold">{fullName || u.username}</span>
-                                  {fullName && <span className="text-xs text-muted-foreground">{u.username}</span>}
+                                  <span className="font-semibold">{u.display_full_name}</span>
+                                  {u.display_full_name !== u.display_user_id && <span className="text-xs text-muted-foreground">{u.display_user_id}</span>}
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <span className="text-sm font-medium text-muted-foreground">{u.username}</span>
+                                <span className="text-sm font-medium text-muted-foreground">{u.display_user_id}</span>
                               </TableCell>
                               <TableCell>
                                 <span className="text-sm font-medium">{displayUpline}</span>
@@ -390,7 +408,7 @@ export default function NetworkTreePage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">
-                      {selectedRoot.partner_details?.[0]?.full_name || selectedRoot.full_name || selectedRoot.username}
+                      {selectedRoot.display_full_name}
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="default" className="bg-primary/80 hover:bg-primary/80">Root User</Badge>
@@ -465,21 +483,14 @@ export default function NetworkTreePage() {
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="text-sm font-medium text-muted-foreground">Partner</span>
                 <div className="col-span-2 flex flex-col">
-                  {(() => {
-                    const fullName = viewProfileUser.partner_details?.[0]?.full_name || viewProfileUser.full_name;
-                    return (
-                      <>
-                        <span className="text-sm font-semibold">{fullName || viewProfileUser.username}</span>
-                        {fullName && <span className="text-xs text-muted-foreground">{viewProfileUser.username}</span>}
-                      </>
-                    );
-                  })()}
+                  <span className="text-sm font-semibold">{viewProfileUser.display_full_name}</span>
+                  {viewProfileUser.display_full_name !== viewProfileUser.display_user_id && <span className="text-xs text-muted-foreground">{viewProfileUser.display_user_id}</span>}
                 </div>
               </div>
               
               <div className="grid grid-cols-3 items-center gap-4 border-t pt-4">
                 <span className="text-sm font-medium text-muted-foreground">User ID</span>
-                <span className="col-span-2 text-sm">{viewProfileUser.username}</span>
+                <span className="col-span-2 text-sm">{viewProfileUser.display_user_id}</span>
               </div>
 
               <div className="grid grid-cols-3 items-center gap-4 border-t pt-4">

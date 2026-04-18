@@ -146,7 +146,7 @@ export default function NetworkTreePage() {
         .select("profile_id");
 
       if (isMounted && profilesData) {
-        const normalizedProfiles = profilesData.map(u => {
+        const normalizedProfiles = profilesData.map((u: any) => {
           const display_full_name = u.partner_details?.[0]?.full_name || u.full_name || u.username;
           const display_user_id = u.username;
           

@@ -331,14 +331,6 @@ export default function NetworkTree(): JSX.Element {
           <p className="text-xs text-muted-foreground font-mono mt-2 px-3 py-1 rounded-md bg-background/80 shadow-sm border border-muted-foreground/10">
             {partner.user_id}
           </p>
-          <div className="flex flex-col gap-1.5 mt-4 items-center w-full px-4">
-            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 shadow-sm border-muted-foreground/20 bg-background/60 w-full justify-center">
-              Role: {formatRole(partner.role)}
-            </Badge>
-            <Badge variant={partner.position === "Unassigned" ? "outline" : "secondary"} className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 shadow-sm w-full justify-center ${partner.position !== "Unassigned" ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground'}`}>
-              Pos: {partner.position !== "Unassigned" ? formatRole(partner.position) : "Unassigned"}
-            </Badge>
-          </div>
           {partner.direct_downlines_count > 0 && (
             <div className={`mt-5 flex items-center text-[11px] font-bold px-4 py-1.5 rounded-full border shadow-sm ${theme.count}`}>
               <Users className="h-3.5 w-3.5 mr-2 opacity-80" />
@@ -491,12 +483,6 @@ export default function NetworkTree(): JSX.Element {
                         <Badge variant="outline" className="font-mono text-[11px] bg-muted/40 px-3 py-1 rounded-md shadow-sm border-muted-foreground/20">
                           {selectedPartner.user_id}
                         </Badge>
-                        <Badge variant={getRoleBadgeVariant(selectedPartner.role)} className="text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-md shadow-sm">
-                          Role: {formatRole(selectedPartner.role)}
-                        </Badge>
-                        <Badge variant={selectedPartner.position === "Unassigned" ? "outline" : "secondary"} className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-md shadow-sm ${selectedPartner.position !== "Unassigned" ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground'}`}>
-                          Pos: {selectedPartner.position !== "Unassigned" ? formatRole(selectedPartner.position) : "Unassigned"}
-                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -605,7 +591,6 @@ export default function NetworkTree(): JSX.Element {
                             <TableHeader className="bg-muted/20">
                               <TableRow className="hover:bg-transparent border-b-muted-foreground/10">
                                 <TableHead className="h-14 py-4 px-8 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Partner Name</TableHead>
-                                <TableHead className="h-14 py-4 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Role & Position</TableHead>
                                 <TableHead className="h-14 py-4 text-center font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Direct Downlines</TableHead>
                                 <TableHead className="h-14 py-4 text-right pr-8 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Explore</TableHead>
                               </TableRow>
@@ -616,16 +601,6 @@ export default function NetworkTree(): JSX.Element {
                                   <TableCell className="py-5 px-8">
                                     <div className="font-extrabold text-foreground text-sm group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">{p.partner_name}</div>
                                     <div className="text-xs font-mono text-muted-foreground mt-1.5 opacity-80 bg-muted/30 inline-block px-2 py-0.5 rounded">{p.user_id}</div>
-                                  </TableCell>
-                                  <TableCell className="py-5">
-                                    <div className="flex flex-col items-start gap-1.5">
-                                      <Badge variant="outline" className="font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 bg-background shadow-sm border-muted-foreground/20">
-                                        R: {formatRole(p.role)}
-                                      </Badge>
-                                      <Badge variant={p.position === "Unassigned" ? "outline" : "secondary"} className={`font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 shadow-sm ${p.position !== "Unassigned" ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground bg-muted/20'}`}>
-                                        P: {p.position !== "Unassigned" ? formatRole(p.position) : "Unassigned"}
-                                      </Badge>
-                                    </div>
                                   </TableCell>
                                   <TableCell className="text-center py-5">
                                     <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border shadow-sm">
@@ -639,7 +614,7 @@ export default function NetworkTree(): JSX.Element {
                                       onClick={() => handleOpenNode(p)}
                                     >
                                       View Tree
-                                      <ChevronRight className="h-4 w-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+                                      <ChevronRight className="h-5 w-5 ml-2 transition-transform group-hover:translate-x-1" />
                                     </Button>
                                   </TableCell>
                                 </TableRow>
@@ -843,10 +818,9 @@ export default function NetworkTree(): JSX.Element {
                     <Table>
                       <TableHeader className="bg-muted/20">
                         <TableRow className="hover:bg-transparent border-b-muted-foreground/10">
-                          <TableHead className="h-14 py-4 px-8 w-[25%] font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Partner Name</TableHead>
-                          <TableHead className="h-14 py-4 w-[15%] font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Role & Position</TableHead>
-                          <TableHead className="h-14 py-4 w-[20%] font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Upline</TableHead>
-                          <TableHead className="h-14 py-4 w-[15%] text-center font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Direct Downlines</TableHead>
+                          <TableHead className="h-14 py-4 px-8 w-[30%] font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Partner Name</TableHead>
+                          <TableHead className="h-14 py-4 w-[25%] font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Upline</TableHead>
+                          <TableHead className="h-14 py-4 w-[20%] text-center font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Direct Downlines</TableHead>
                           <TableHead className="h-14 py-4 w-[25%] text-right pr-8 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -858,20 +832,10 @@ export default function NetworkTree(): JSX.Element {
                               <div className="text-xs font-mono text-muted-foreground mt-1.5 opacity-80 bg-muted/30 inline-block px-2 py-0.5 rounded">{p.user_id}</div>
                             </TableCell>
                             <TableCell className="py-5">
-                              <div className="flex flex-col items-start gap-1.5">
-                                <Badge variant="outline" className="font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 bg-background shadow-sm border-muted-foreground/20">
-                                  R: {formatRole(p.role)}
-                                </Badge>
-                                <Badge variant={p.position === "Unassigned" ? "outline" : "secondary"} className={`font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 shadow-sm ${p.position !== "Unassigned" ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground bg-muted/20'}`}>
-                                  P: {p.position !== "Unassigned" ? formatRole(p.position) : "Unassigned"}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-5">
                               {p.upline_username ? (
                                 <div className="text-sm font-semibold text-muted-foreground bg-muted/20 inline-block px-3 py-1 rounded-md">{p.upline_username}</div>
                               ) : (
-                                <span className="text-xs text-muted-foreground/40 italic font-bold">—</span>
+                                <span className="text-xs text-muted-foreground/40 italic font-medium">—</span>
                               )}
                             </TableCell>
                             <TableCell className="text-center py-5">

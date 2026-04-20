@@ -72,6 +72,7 @@ type Profile = Tables<"profiles">;
 interface AssignmentInfo {
   profileId: string;
   username: string;
+  fullName?: string;
 }
 
 export default function TerritoryManagement(): JSX.Element {
@@ -107,7 +108,7 @@ export default function TerritoryManagement(): JSX.Element {
   // Assign Modal State
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assignModalData, setAssignModalData] = useState<any>(null);
-  const [partners, setPartners] = useState<{ id: string; username: string }[]>([]);
+  const [partners, setPartners] = useState<{ id: string; username: string; fullName?: string }[]>([]);
   const [partnerSearch, setPartnerSearch] = useState("");
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
@@ -185,7 +186,7 @@ export default function TerritoryManagement(): JSX.Element {
 
     const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, partner_details(full_name)")
       .in("id", profileIds);
 
     if (!profilesData) return setStateAssignments({});
@@ -200,7 +201,13 @@ export default function TerritoryManagement(): JSX.Element {
 
       const profile = profilesMap.get(profileId);
       if (profile) {
-        map[stateId] = { profileId, username: (profile.username as string) ?? "" };
+        const pd = (profile as any).partner_details;
+        const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : "";
+        map[stateId] = { 
+          profileId, 
+          username: (profile.username as string) ?? "",
+          fullName: fullName || ""
+        };
       }
     }
     setStateAssignments(map);
@@ -226,7 +233,7 @@ export default function TerritoryManagement(): JSX.Element {
 
     const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, partner_details(full_name)")
       .in("id", profileIds);
 
     if (!profilesData) return setDistrictAssignments({});
@@ -241,7 +248,13 @@ export default function TerritoryManagement(): JSX.Element {
 
       const profile = profilesMap.get(profileId);
       if (profile) {
-        map[districtId] = { profileId, username: (profile.username as string) ?? "" };
+        const pd = (profile as any).partner_details;
+        const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : "";
+        map[districtId] = { 
+          profileId, 
+          username: (profile.username as string) ?? "",
+          fullName: fullName || ""
+        };
       }
     }
     setDistrictAssignments(map);
@@ -266,7 +279,7 @@ export default function TerritoryManagement(): JSX.Element {
 
     const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, partner_details(full_name)")
       .in("id", profileIds);
 
     if (!profilesData) return setPincodeAssignments({});
@@ -281,7 +294,13 @@ export default function TerritoryManagement(): JSX.Element {
 
       const profile = profilesMap.get(profileId);
       if (profile) {
-        map[pincodeId] = { profileId, username: (profile.username as string) ?? "" };
+        const pd = (profile as any).partner_details;
+        const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : "";
+        map[pincodeId] = { 
+          profileId, 
+          username: (profile.username as string) ?? "",
+          fullName: fullName || ""
+        };
       }
     }
     setPincodeAssignments(map);
@@ -305,7 +324,7 @@ export default function TerritoryManagement(): JSX.Element {
 
     const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, partner_details(full_name)")
       .in("id", profileIds);
 
     if (!profilesData) return setLocationAssignments({});
@@ -320,7 +339,13 @@ export default function TerritoryManagement(): JSX.Element {
 
       const profile = profilesMap.get(profileId);
       if (profile) {
-        map[locationId] = { profileId, username: (profile.username as string) ?? "" };
+        const pd = (profile as any).partner_details;
+        const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : "";
+        map[locationId] = { 
+          profileId, 
+          username: (profile.username as string) ?? "",
+          fullName: fullName || ""
+        };
       }
     }
     setLocationAssignments(map);
@@ -414,9 +439,21 @@ export default function TerritoryManagement(): JSX.Element {
   const loadPartners = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, username")
+      .select("id, username, partner_details(full_name)")
       .order("username");
-    if (data) setPartners(data);
+      
+    if (data) {
+      const formattedPartners = data.map(p => {
+        const pd = (p as any).partner_details;
+        const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : "";
+        return {
+          id: p.id as string,
+          username: p.username as string,
+          fullName: fullName || ""
+        };
+      });
+      setPartners(formattedPartners);
+    }
   };
 
   // --- MODAL LOGIC ---
@@ -439,6 +476,7 @@ export default function TerritoryManagement(): JSX.Element {
       createUrl,
       isAssigned,
       currentUsername: assignment?.username,
+      currentFullName: assignment?.fullName,
       currentProfileId: assignment?.profileId,
     });
     setSelectedPartnerId("");
@@ -528,7 +566,8 @@ export default function TerritoryManagement(): JSX.Element {
       territoryId: item.id,
       territoryName: item.name || item.code,
       levelColumn,
-      username: assignment.username
+      username: assignment.username,
+      fullName: assignment.fullName
     });
     setIsUnassignModalOpen(true);
   };
@@ -623,7 +662,9 @@ export default function TerritoryManagement(): JSX.Element {
       if (!tableSearch) return true;
       const assignment = assignmentsMap[item.id as string];
       if (!assignment || !assignment.username) return false;
-      return assignment.username.toLowerCase().includes(tableSearch.toLowerCase());
+      const searchStr = tableSearch.toLowerCase();
+      return assignment.username.toLowerCase().includes(searchStr) || 
+             (assignment.fullName && assignment.fullName.toLowerCase().includes(searchStr));
     });
 
     return (
@@ -697,10 +738,14 @@ export default function TerritoryManagement(): JSX.Element {
                             <div className="flex items-center gap-2">
                               <div className="h-7 w-7 rounded-full bg-muted border flex items-center justify-center shrink-0">
                                 <span className="text-[10px] font-bold text-muted-foreground">
-                                  {assignment.username.substring(0, 2).toUpperCase()}
+                                  {assignment.fullName 
+                                    ? assignment.fullName.substring(0, 2).toUpperCase() 
+                                    : assignment.username.substring(0, 2).toUpperCase()}
                                 </span>
                               </div>
-                              <span className="text-sm font-medium">{assignment.username}</span>
+                              <span className="text-sm font-medium">
+                                {assignment.fullName ? `${assignment.fullName} (${assignment.username})` : assignment.username}
+                              </span>
                             </div>
                           ) : (
                             <span className="text-sm text-muted-foreground/60 italic">—</span>
@@ -1020,7 +1065,9 @@ export default function TerritoryManagement(): JSX.Element {
                 <p className="text-xs font-bold text-amber-700/70 uppercase tracking-wider mb-1 dark:text-amber-500">Current Assignment</p>
                 <p className="text-sm font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
                   <UserCheck className="h-4 w-4" />
-                  {assignModalData.currentUsername}
+                  {assignModalData.currentFullName 
+                    ? `${assignModalData.currentFullName} (${assignModalData.currentUsername})` 
+                    : assignModalData.currentUsername}
                 </p>
               </div>
             )}
@@ -1030,7 +1077,7 @@ export default function TerritoryManagement(): JSX.Element {
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search partner by username..."
+                  placeholder="Search partner by name or username..."
                   value={partnerSearch}
                   onChange={(e) => setPartnerSearch(e.target.value)}
                   className="h-10 pl-9"
@@ -1042,11 +1089,14 @@ export default function TerritoryManagement(): JSX.Element {
                 </SelectTrigger>
                 <SelectContent>
                   {partners
-                    .filter((p) => p.username?.toLowerCase().includes(partnerSearch.toLowerCase()))
+                    .filter((p) => 
+                      p.username?.toLowerCase().includes(partnerSearch.toLowerCase()) || 
+                      p.fullName?.toLowerCase().includes(partnerSearch.toLowerCase())
+                    )
                     .slice(0, 50)
                     .map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.username}
+                        {p.fullName ? `${p.fullName} (${p.username})` : p.username}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -1057,7 +1107,11 @@ export default function TerritoryManagement(): JSX.Element {
                   <div>
                     <p className="text-[10px] uppercase font-bold tracking-wider text-primary/70 mb-0.5">Selected Preview</p>
                     <p className="text-sm font-bold text-primary">
-                      {partners.find((p) => p.id === selectedPartnerId)?.username}
+                      {(() => {
+                        const selected = partners.find((p) => p.id === selectedPartnerId);
+                        if (!selected) return "";
+                        return selected.fullName ? `${selected.fullName} (${selected.username})` : selected.username;
+                      })()}
                     </p>
                   </div>
                   <UserCheck className="h-5 w-5 text-primary opacity-50" />
@@ -1102,7 +1156,11 @@ export default function TerritoryManagement(): JSX.Element {
           <div className="py-4">
             <div className="rounded-lg bg-muted/50 border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Target Partner</p>
-              <p className="text-sm font-bold mb-4">{unassignModalData?.username}</p>
+              <p className="text-sm font-bold mb-4">
+                {unassignModalData?.fullName 
+                  ? `${unassignModalData?.fullName} (${unassignModalData?.username})` 
+                  : unassignModalData?.username}
+              </p>
               
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Target Territory</p>
               <p className="text-sm font-bold">{unassignModalData?.territoryName}</p>

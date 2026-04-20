@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { 
   Search, 
   MapPin, 
-  Map, 
+  Map as MapIcon, 
   Users, 
   Building, 
   Layers, 
@@ -814,7 +814,7 @@ export default function TerritoryManagement(): JSX.Element {
             <Card className="bg-primary/5 border-primary/10 shadow-none">
               <CardContent className="p-5 flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0">
-                  <Map className="h-5 w-5" />
+                  <MapIcon className="h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Territories</p>

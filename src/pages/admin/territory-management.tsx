@@ -644,7 +644,7 @@ export default function TerritoryManagement(): JSX.Element {
   ) => {
     if (!dependencyId) {
       return (
-        <Card className="border-dashed bg-muted/30">
+        <Card className="border-dashed bg-muted/30 rounded-2xl">
           <CardContent className="py-16 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm mb-4">
               <MapPin className="h-6 w-6 text-muted-foreground" />
@@ -667,15 +667,61 @@ export default function TerritoryManagement(): JSX.Element {
              (assignment.fullName && assignment.fullName.toLowerCase().includes(searchStr));
     });
 
+    const getTheme = (level: string) => {
+      switch(level) {
+        case 'state_id': return {
+          border: 'border-l-blue-500',
+          headerBg: 'bg-blue-50/50 dark:bg-blue-950/20',
+          iconBg: 'bg-blue-100 dark:bg-blue-900/50',
+          iconColor: 'text-blue-600 dark:text-blue-400',
+          titleColor: 'text-blue-900 dark:text-blue-100',
+          topBar: 'bg-blue-500',
+          btnAssign: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+        };
+        case 'district_id': return {
+          border: 'border-l-emerald-500',
+          headerBg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
+          iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
+          iconColor: 'text-emerald-600 dark:text-emerald-400',
+          titleColor: 'text-emerald-900 dark:text-emerald-100',
+          topBar: 'bg-emerald-500',
+          btnAssign: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+        };
+        case 'pincode_id': return {
+          border: 'border-l-purple-500',
+          headerBg: 'bg-purple-50/50 dark:bg-purple-950/20',
+          iconBg: 'bg-purple-100 dark:bg-purple-900/50',
+          iconColor: 'text-purple-600 dark:text-purple-400',
+          titleColor: 'text-purple-900 dark:text-purple-100',
+          topBar: 'bg-purple-500',
+          btnAssign: 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
+        };
+        case 'location_id': return {
+          border: 'border-l-orange-500',
+          headerBg: 'bg-orange-50/50 dark:bg-orange-950/20',
+          iconBg: 'bg-orange-100 dark:bg-orange-900/50',
+          iconColor: 'text-orange-600 dark:text-orange-400',
+          titleColor: 'text-orange-900 dark:text-orange-100',
+          topBar: 'bg-orange-500',
+          btnAssign: 'bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
+        };
+        default: return { border: 'border-l-primary', headerBg: 'bg-muted/10', iconBg: 'bg-primary/10', iconColor: 'text-primary', titleColor: 'text-foreground', topBar: 'bg-primary', btnAssign: 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm' };
+      }
+    };
+    const theme = getTheme(levelColumn);
+
     return (
-      <Card className="shadow-sm border-muted animate-in fade-in duration-300">
-        <CardHeader className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 pb-6 border-b bg-muted/10">
+      <Card className="shadow-lg border-muted animate-in fade-in duration-300 overflow-hidden rounded-2xl">
+        <div className={`h-1.5 w-full ${theme.topBar}`}></div>
+        <CardHeader className={`flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 pb-6 border-b border-l-4 ${theme.border} ${theme.headerBg}`}>
           <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
+            <CardTitle className={`text-xl font-heading font-bold flex items-center gap-3 ${theme.titleColor}`}>
+              <div className={`p-2.5 rounded-xl shadow-sm ${theme.iconBg}`}>
+                <Layers className={`h-5 w-5 ${theme.iconColor}`} />
+              </div>
               {positionName} Assignments
             </CardTitle>
-            <CardDescription className="mt-1">
+            <CardDescription className="mt-1.5 text-sm font-medium opacity-80">
               Manage partners assigned to territories at this level.
             </CardDescription>
           </div>
@@ -683,28 +729,28 @@ export default function TerritoryManagement(): JSX.Element {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search assigned partner..."
-              className="pl-9 bg-background"
+              className="pl-9 bg-background border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-lg shadow-sm h-10"
               value={tableSearch}
               onChange={(e) => setTableSearch(e.target.value)}
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 bg-card">
           {filtered.length === 0 ? (
-            <div className="py-16 text-center">
-              <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-medium text-foreground">No territories found.</p>
-              <p className="text-xs text-muted-foreground mt-1">Adjust your search or filter criteria.</p>
+            <div className="py-20 text-center">
+              <Users className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+              <p className="text-base font-semibold text-foreground">No territories found.</p>
+              <p className="text-sm text-muted-foreground mt-1">Adjust your search or filter criteria.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[30%] h-12">Territory Name</TableHead>
-                    <TableHead className="w-[20%] h-12">Status</TableHead>
-                    <TableHead className="w-[25%] h-12">Assigned Partner</TableHead>
-                    <TableHead className="text-right w-[25%] pr-6 h-12">Actions</TableHead>
+                <TableHeader className="bg-muted/20">
+                  <TableRow className="hover:bg-transparent border-b-muted-foreground/10">
+                    <TableHead className="w-[30%] h-14 font-semibold text-muted-foreground uppercase tracking-wider text-xs">Territory Name</TableHead>
+                    <TableHead className="w-[20%] h-14 font-semibold text-muted-foreground uppercase tracking-wider text-xs">Status</TableHead>
+                    <TableHead className="w-[25%] h-14 font-semibold text-muted-foreground uppercase tracking-wider text-xs">Assigned Partner</TableHead>
+                    <TableHead className="text-right w-[25%] pr-8 h-14 font-semibold text-muted-foreground uppercase tracking-wider text-xs">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -713,51 +759,51 @@ export default function TerritoryManagement(): JSX.Element {
                     const isAssigned = !!assignment;
 
                     return (
-                      <TableRow key={item.id as string} className="hover:bg-muted/20 transition-colors">
-                        <TableCell className="font-medium">
+                      <TableRow key={item.id as string} className="hover:bg-muted/30 even:bg-muted/5 transition-colors border-b-muted-foreground/10">
+                        <TableCell className="font-medium py-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                              <Building className="h-4 w-4 text-primary" />
+                            <div className="h-9 w-9 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0 shadow-sm">
+                              <Building className="h-4 w-4 text-primary/70" />
                             </div>
-                            {item.name || item.code}
+                            <span className="font-semibold text-foreground/90">{item.name || item.code}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4">
                           {isAssigned ? (
-                            <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-200/30">
+                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800 rounded-full px-3 py-1 shadow-sm font-semibold">
                               Assigned
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-muted-foreground bg-muted/50 border-dashed">
+                            <Badge variant="outline" className="bg-rose-50 text-rose-600 border-rose-200 border-dashed dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800 rounded-full px-3 py-1 font-semibold">
                               Vacant
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4">
                           {isAssigned ? (
-                            <div className="flex items-center gap-2">
-                              <div className="h-7 w-7 rounded-full bg-muted border flex items-center justify-center shrink-0">
-                                <span className="text-[10px] font-bold text-muted-foreground">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-sm">
+                                <span className="text-[10px] font-bold text-primary">
                                   {assignment.fullName 
                                     ? assignment.fullName.substring(0, 2).toUpperCase() 
                                     : assignment.username.substring(0, 2).toUpperCase()}
                                 </span>
                               </div>
-                              <span className="text-sm font-medium">
+                              <span className="text-sm font-bold text-foreground/90">
                                 {assignment.fullName ? `${assignment.fullName} (${assignment.username})` : assignment.username}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground/60 italic">—</span>
+                            <span className="text-sm text-muted-foreground/50 italic font-medium">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right pr-6">
+                        <TableCell className="text-right pr-8 py-4">
                           {isAssigned ? (
                             <div className="flex justify-end items-center gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 shadow-sm"
+                                className="h-9 rounded-full px-4 shadow-sm border-muted-foreground/20 hover:bg-muted hover:text-foreground font-semibold transition-all"
                                 onClick={() => openAssignModal(
                                   item,
                                   positionName,
@@ -774,7 +820,7 @@ export default function TerritoryManagement(): JSX.Element {
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="h-9 w-9 rounded-full text-rose-600 hover:text-rose-700 hover:bg-rose-100 dark:hover:bg-rose-950/50 transition-colors"
                                 title="Unassign"
                                 onClick={() => openUnassignModal(item, levelColumn, assignment)}
                               >
@@ -784,8 +830,7 @@ export default function TerritoryManagement(): JSX.Element {
                           ) : (
                             <Button
                               size="sm"
-                              variant="default"
-                              className="h-8 shadow-sm bg-primary/90 hover:bg-primary"
+                              className={`h-9 rounded-full px-5 font-semibold transition-all hover:-translate-y-0.5 ${theme.btnAssign}`}
                               onClick={() => openAssignModal(
                                 item,
                                 positionName,
@@ -892,17 +937,17 @@ export default function TerritoryManagement(): JSX.Element {
           </div>
 
           {/* HIERARCHY FILTERS */}
-          <Card className="shadow-sm border-muted">
+          <Card className="shadow-md border-muted rounded-2xl overflow-hidden mb-6">
             <CardHeader className="pb-4 border-b bg-muted/10">
-              <CardTitle className="text-base">Hierarchy Context Filters</CardTitle>
-              <CardDescription>Select geographies from top to bottom to drill down.</CardDescription>
+              <CardTitle className="text-base font-bold font-heading">Hierarchy Context Filters</CardTitle>
+              <CardDescription className="font-medium">Select geographies from top to bottom to drill down.</CardDescription>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+            <CardContent className="pt-5 pb-6">
+              <div className="grid gap-5 md:grid-cols-3 lg:grid-cols-5">
                 <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Country</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Country</span>
                   <Select value={selectedCountryId || undefined} onValueChange={handleSelectCountry}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-lg shadow-sm h-11">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -913,9 +958,9 @@ export default function TerritoryManagement(): JSX.Element {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">State</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">State</span>
                   <Select value={selectedStateId || undefined} onValueChange={handleSelectState} disabled={!selectedCountryId}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-lg shadow-sm h-11">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -926,9 +971,9 @@ export default function TerritoryManagement(): JSX.Element {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">District</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">District</span>
                   <Select value={selectedDistrictId || undefined} onValueChange={handleSelectDistrict} disabled={!selectedStateId}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-lg shadow-sm h-11">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -939,9 +984,9 @@ export default function TerritoryManagement(): JSX.Element {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">PIN Code</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">PIN Code</span>
                   <Select value={selectedPincodeId || undefined} onValueChange={handleSelectPincode} disabled={!selectedDistrictId}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-lg shadow-sm h-11">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -952,9 +997,9 @@ export default function TerritoryManagement(): JSX.Element {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Location / Area</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Location / Area</span>
                   <Select value={selectedLocationId || undefined} onValueChange={handleSelectLocation} disabled={!selectedPincodeId}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-lg shadow-sm h-11">
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -969,18 +1014,18 @@ export default function TerritoryManagement(): JSX.Element {
           </Card>
 
           {/* ROLE TABS */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-auto p-1.5 bg-muted/60 border rounded-lg">
-              <TabsTrigger value="state" className="py-2.5 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1.5 bg-muted/30 border border-muted-foreground/10 rounded-full shadow-inner">
+              <TabsTrigger value="state" className="py-3 text-sm font-bold rounded-full transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground hover:bg-muted/50">
                 State Heads
               </TabsTrigger>
-              <TabsTrigger value="district" className="py-2.5 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all">
+              <TabsTrigger value="district" className="py-3 text-sm font-bold rounded-full transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground hover:bg-muted/50">
                 District Heads
               </TabsTrigger>
-              <TabsTrigger value="pincode" className="py-2.5 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all">
+              <TabsTrigger value="pincode" className="py-3 text-sm font-bold rounded-full transition-all data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground hover:bg-muted/50">
                 PIN Code Heads
               </TabsTrigger>
-              <TabsTrigger value="location" className="py-2.5 text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all">
+              <TabsTrigger value="location" className="py-3 text-sm font-bold rounded-full transition-all data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground hover:bg-muted/50">
                 PIN Code Partners
               </TabsTrigger>
             </TabsList>

@@ -31,7 +31,8 @@ import {
   ChevronLeft,
   Home,
   FolderTree,
-  Info
+  Info,
+  Layers
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +69,7 @@ export default function NetworkTree(): JSX.Element {
   const [drilldownPath, setDrilldownPath] = useState<NormalizedPartner[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [downlinesPage, setDownlinesPage] = useState(1);
+  const [genPages, setGenPages] = useState<number[]>([1, 1, 1, 1, 1]);
 
   useEffect(() => {
     let isMounted = true;
@@ -202,6 +204,7 @@ export default function NetworkTree(): JSX.Element {
     setDrilldownPath((prev) => [...prev, partner]);
     setActiveTab("overview");
     setDownlinesPage(1);
+    setGenPages([1, 1, 1, 1, 1]);
   };
 
   const handleBreadcrumbClick = (index: number) => {
@@ -215,7 +218,34 @@ export default function NetworkTree(): JSX.Element {
     }
     setActiveTab("overview");
     setDownlinesPage(1);
+    setGenPages([1, 1, 1, 1, 1]);
   };
+
+  // --- MLM GENERATION LOGIC ---
+
+  const mlmGenerations = useMemo(() => {
+    if (!selectedProfileId) return [];
+    
+    const gens: NormalizedPartner[][] = [];
+    let currentLevel = childrenMap.get(selectedProfileId) || [];
+
+    // Strictly compute up to 5 levels (Level 1 to Level 5)
+    for (let i = 0; i < 5; i++) {
+      gens.push(currentLevel);
+      
+      let nextLevel: NormalizedPartner[] = [];
+      // Only iterate if there are people in the current level
+      if (currentLevel.length > 0) {
+        for (const p of currentLevel) {
+          const children = childrenMap.get(p.profile_id) || [];
+          nextLevel = nextLevel.concat(children);
+        }
+      }
+      currentLevel = nextLevel;
+    }
+    // Level 6+ is naturally excluded because the loop breaks at i=4
+    return gens;
+  }, [selectedProfileId, childrenMap]);
 
   // --- RENDERERS ---
 
@@ -403,14 +433,15 @@ export default function NetworkTree(): JSX.Element {
                 </CardContent>
               </Card>
 
-              {/* Tabs: Overview vs Direct Downlines */}
+              {/* Tabs: Overview vs Direct Downlines vs Generations */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
-                  <TabsTrigger value="overview">Overview Preview</TabsTrigger>
-                  <TabsTrigger value="downlines">
+                <TabsList className="grid w-full sm:w-[600px] grid-cols-3">
+                  <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview Preview</TabsTrigger>
+                  <TabsTrigger value="downlines" className="text-xs sm:text-sm">
                     Direct Downlines
-                    <Badge variant="secondary" className="ml-2 bg-background">{selectedPartner.direct_downlines_count}</Badge>
+                    <Badge variant="secondary" className="ml-1.5 sm:ml-2 bg-background hidden sm:inline-flex">{selectedPartner.direct_downlines_count}</Badge>
                   </TabsTrigger>
+                  <TabsTrigger value="generations" className="text-xs sm:text-sm">5-Level MLM View</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="overview" className="mt-4">
@@ -550,6 +581,130 @@ export default function NetworkTree(): JSX.Element {
                       )}
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="generations" className="mt-4 space-y-6">
+                  {mlmGenerations.map((levelPartners, index) => {
+                    const levelNum = index + 1;
+                    const total = levelPartners.length;
+                    const page = genPages[index];
+                    const totalPages = Math.ceil(total / DOWNLINES_PER_PAGE) || 1;
+                    const paginated = levelPartners.slice(
+                      (page - 1) * DOWNLINES_PER_PAGE,
+                      page * DOWNLINES_PER_PAGE
+                    );
+
+                    return (
+                      <Card key={`gen-level-${levelNum}`} className="shadow-sm border-muted overflow-hidden">
+                        <CardHeader className="bg-muted/10 border-b py-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                              <CardTitle className="text-base flex items-center gap-2">
+                                <Layers className="h-4 w-4 text-primary" />
+                                Generation Level {levelNum}
+                              </CardTitle>
+                              <CardDescription>
+                                {total === 0 
+                                  ? "No partners at this level" 
+                                  : `${total} partner${total !== 1 ? 's' : ''} in this generation`}
+                              </CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          {total === 0 ? (
+                            <div className="py-8 text-center">
+                              <p className="text-sm text-muted-foreground">No downlines found at Level {levelNum}.</p>
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader className="bg-muted/30">
+                                  <TableRow className="hover:bg-transparent">
+                                    <TableHead className="h-12">Partner Name</TableHead>
+                                    <TableHead className="h-12">Role</TableHead>
+                                    <TableHead className="h-12 text-center">Direct Downlines</TableHead>
+                                    <TableHead className="h-12 text-right pr-6">Explore</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {paginated.map((p) => (
+                                    <TableRow key={p.profile_id} className="hover:bg-muted/20 transition-colors">
+                                      <TableCell>
+                                        <div className="font-medium text-foreground">{p.partner_name}</div>
+                                        <div className="text-xs font-mono text-muted-foreground mt-0.5">{p.user_id}</div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge variant={getRoleBadgeVariant(p.role)} className="font-medium">
+                                          {formatRole(p.role)}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        <Badge variant="secondary" className="bg-muted text-muted-foreground border-transparent font-mono">
+                                          {p.direct_downlines_count}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-right pr-6">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-8 hover:bg-primary/10 hover:text-primary"
+                                          onClick={() => handleOpenNode(p)}
+                                        >
+                                          Open Node
+                                          <ChevronRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                              
+                              {/* Pagination Controls per Generation Level */}
+                              {totalPages > 1 && (
+                                <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/5">
+                                  <p className="text-xs text-muted-foreground font-medium">
+                                    Showing <strong className="text-foreground">{(page - 1) * DOWNLINES_PER_PAGE + 1}</strong> to <strong className="text-foreground">{Math.min(page * DOWNLINES_PER_PAGE, total)}</strong> of <strong className="text-foreground">{total}</strong>
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const newPages = [...genPages];
+                                        newPages[index] = Math.max(1, page - 1);
+                                        setGenPages(newPages);
+                                      }}
+                                      disabled={page === 1}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <div className="text-xs font-medium px-2">
+                                      Page {page} of {totalPages}
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const newPages = [...genPages];
+                                        newPages[index] = Math.min(totalPages, page + 1);
+                                        setGenPages(newPages);
+                                      }}
+                                      disabled={page === totalPages}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </TabsContent>
               </Tabs>
             </div>

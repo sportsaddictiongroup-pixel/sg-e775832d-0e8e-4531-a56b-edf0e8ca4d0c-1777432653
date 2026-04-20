@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import { ArrowLeft, Globe, ChevronRight } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { authService } from "@/services/authService";
@@ -196,13 +198,13 @@ function DeleteConfirmDialog({
 
 const getCountryCardClasses = (name: string): string => {
   const map: Record<string, string> = {
-    India: "bg-blue-50 border-blue-200",
-    Malaysia: "bg-emerald-50 border-emerald-200",
-    "Sri Lanka": "bg-amber-50 border-amber-200",
-    UAE: "bg-teal-50 border-teal-200",
-    Nepal: "bg-purple-50 border-purple-200",
+    India: "bg-blue-50/80 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 hover:bg-blue-100 hover:border-blue-300 dark:hover:bg-blue-900/60",
+    Malaysia: "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 hover:border-emerald-300 dark:hover:bg-emerald-900/60",
+    "Sri Lanka": "bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 hover:bg-amber-100 hover:border-amber-300 dark:hover:bg-amber-900/60",
+    UAE: "bg-teal-50/80 dark:bg-teal-950/30 border-teal-200 dark:border-teal-900/50 text-teal-700 dark:text-teal-400 hover:bg-teal-100 hover:border-teal-300 dark:hover:bg-teal-900/60",
+    Nepal: "bg-purple-50/80 dark:bg-purple-950/30 border-purple-200 dark:border-purple-900/50 text-purple-700 dark:text-purple-400 hover:bg-purple-100 hover:border-purple-300 dark:hover:bg-purple-900/60",
   };
-  return map[name] ?? "bg-muted/40";
+  return map[name] ?? "bg-muted/40 border-border text-foreground hover:bg-muted/60";
 };
 
 interface DeleteDialogContext {
@@ -717,28 +719,35 @@ export function LocationManagement(): JSX.Element {
       ];
 
       return (
-        <section className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {staticCountries.map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => {
-                  void handleStaticCountryClick(name);
-                }}
-                className={`flex flex-col rounded-xl border p-4 text-left shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${getCountryCardClasses(
-                  name,
-                )}`}
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Country
-                </p>
-                <p className="mt-2 text-xl font-semibold">{name}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Tap to manage states
-                </p>
-              </button>
-            ))}
+        <section className="space-y-6 animate-in fade-in duration-300">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {staticCountries.map((name) => {
+              const classes = getCountryCardClasses(name);
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => {
+                    void handleStaticCountryClick(name);
+                  }}
+                  className={`group flex flex-col rounded-2xl border-2 p-6 text-left shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${classes}`}
+                >
+                  <div className="flex items-center justify-between w-full mb-6">
+                    <div className="p-3 rounded-xl bg-background shadow-sm border border-black/5 dark:border-white/5">
+                      <Globe className="h-6 w-6" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
+                  </div>
+                  <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-1.5">
+                    Country
+                  </p>
+                  <p className="text-2xl font-bold font-heading tracking-tight">{name}</p>
+                  <p className="mt-2 text-sm opacity-80 font-medium">
+                    Tap to manage states
+                  </p>
+                </button>
+              );
+            })}
           </div>
         </section>
       );
@@ -1207,21 +1216,29 @@ export function LocationManagement(): JSX.Element {
 
   return (
     <main className="min-h-screen bg-background text-foreground px-4 py-8">
-      <div className="mx-auto w-full max-w-6xl space-y-6">
-        <header className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Admin Portal
-          </p>
-          <h1 className="font-heading text-2xl md:text-3xl font-semibold">
-            Location Management
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Drill down from countries to states, districts, PIN codes, and
-            locations. All data is loaded live from Supabase.
-          </p>
+      <div className="mx-auto w-full max-w-6xl space-y-8">
+        <header className="space-y-4">
+          <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
+            <Link href="/admin">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-3">
+              Admin Portal
+            </div>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight">
+              Location Management
+            </h1>
+            <p className="text-base text-muted-foreground mt-2 max-w-2xl">
+              Drill down from countries to states, districts, PIN codes, and
+              locations. All data is loaded live from Supabase.
+            </p>
+          </div>
         </header>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-4 rounded-xl bg-muted/30 border border-muted">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

@@ -99,7 +99,7 @@ export default function NetworkTree(): JSX.Element {
         // 2. Fetch all profiles with their details safely
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, username, role, upline_profile_id, created_at, partner_details(full_name), territory_assignments(role, is_active)");
+          .select("id, username, role, upline_profile_id, created_at, partner_details(full_name), territory_assignments(*)");
 
         if (error) throw error;
         if (!isMounted) return;
@@ -115,7 +115,19 @@ export default function NetworkTree(): JSX.Element {
           let position = "Unassigned";
           if (row.territory_assignments && Array.isArray(row.territory_assignments)) {
             const active = row.territory_assignments.find((a: any) => a.is_active);
-            if (active && active.role) position = active.role;
+            if (active) {
+              if (active.location_id) {
+                position = "pincode_partner";
+              } else if (active.pincode_id) {
+                position = row.role === "pincode_partner" ? "pincode_partner" : "pincode_head";
+              } else if (active.district_id) {
+                position = "district_head";
+              } else if (active.state_id) {
+                position = "state_head";
+              } else {
+                position = "Assigned";
+              }
+            }
           }
 
           pMap.set(row.id as string, {

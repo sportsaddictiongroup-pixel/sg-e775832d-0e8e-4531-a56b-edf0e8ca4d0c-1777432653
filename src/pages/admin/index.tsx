@@ -3,13 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -99,10 +93,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Onboard a new partner and securely assign their role, upline, and territory.",
       href: "/admin/partners/create",
       icon: UserPlus,
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-950/30",
-      borderColor: "border-blue-100 dark:border-blue-900/50",
-      hoverBg: "hover:bg-blue-100/50 dark:hover:bg-blue-900/20",
+      cardWrapper: "border-blue-200 dark:border-blue-900/60 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-blue-500/15 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/20",
+      iconWrapper: "bg-blue-600 dark:bg-blue-500 shadow-md shadow-blue-500/20 text-white",
+      buttonClass: "bg-background hover:bg-blue-50 border-blue-200 text-blue-700 dark:bg-background dark:hover:bg-blue-900/40 dark:border-blue-800 dark:text-blue-400",
       buttonText: "Create Partner",
     },
     {
@@ -110,10 +103,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Maintain the hierarchical master data for countries, states, districts, and PINs.",
       href: "/admin/locations",
       icon: MapPin,
-      color: "text-emerald-600 dark:text-emerald-400",
-      bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
-      borderColor: "border-emerald-100 dark:border-emerald-900/50",
-      hoverBg: "hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20",
+      cardWrapper: "border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-emerald-500/15 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-950/20",
+      iconWrapper: "bg-emerald-600 dark:bg-emerald-500 shadow-md shadow-emerald-500/20 text-white",
+      buttonClass: "bg-background hover:bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-background dark:hover:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-400",
       buttonText: "Manage Locations",
     },
     {
@@ -121,10 +113,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Monitor assignment statuses, view vacancies, and manage partner positioning.",
       href: "/admin/territory-management",
       icon: MapIcon,
-      color: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-50 dark:bg-purple-950/30",
-      borderColor: "border-purple-100 dark:border-purple-900/50",
-      hoverBg: "hover:bg-purple-100/50 dark:hover:bg-purple-900/20",
+      cardWrapper: "border-purple-200 dark:border-purple-900/60 hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-purple-500/15 bg-gradient-to-b from-purple-50/50 to-transparent dark:from-purple-950/20",
+      iconWrapper: "bg-purple-600 dark:bg-purple-500 shadow-md shadow-purple-500/20 text-white",
+      buttonClass: "bg-background hover:bg-purple-50 border-purple-200 text-purple-700 dark:bg-background dark:hover:bg-purple-900/40 dark:border-purple-800 dark:text-purple-400",
       buttonText: "Manage Territories",
     },
     {
@@ -132,10 +123,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Navigate the 5-level MLM generation hierarchy and explore scalable downlines.",
       href: "/admin/network-tree",
       icon: Network,
-      color: "text-amber-600 dark:text-amber-400",
-      bgColor: "bg-amber-50 dark:bg-amber-950/30",
-      borderColor: "border-amber-100 dark:border-amber-900/50",
-      hoverBg: "hover:bg-amber-100/50 dark:hover:bg-amber-900/20",
+      cardWrapper: "border-amber-200 dark:border-amber-900/60 hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-amber-500/15 bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-950/20",
+      iconWrapper: "bg-amber-500 dark:bg-amber-600 shadow-md shadow-amber-500/20 text-white",
+      buttonClass: "bg-background hover:bg-amber-50 border-amber-200 text-amber-700 dark:bg-background dark:hover:bg-amber-900/40 dark:border-amber-800 dark:text-amber-400",
       buttonText: "Explore Network",
     },
   ];
@@ -144,7 +134,7 @@ export default function AdminDashboard(): JSX.Element {
     <>
       <SEO title="Admin Dashboard" description="Admin overview" />
       <main className="min-h-screen bg-background text-foreground px-4 py-8 overflow-x-hidden">
-        <div className="mx-auto w-full max-w-6xl space-y-10">
+        <div className="mx-auto w-full max-w-6xl space-y-8">
           {/* HEADER SECTION */}
           <header className="relative overflow-hidden rounded-2xl bg-muted/30 border border-muted p-8 md:p-10">
             <div className="relative z-10 space-y-4 max-w-2xl">
@@ -168,38 +158,34 @@ export default function AdminDashboard(): JSX.Element {
           </header>
 
           {/* FEATURES GRID */}
-          <section className="grid gap-6 sm:gap-8 md:grid-cols-2">
+          <section className="grid gap-5 sm:gap-6 md:grid-cols-2">
             {features.map((feature, idx) => {
               const Icon = feature.icon;
               return (
                 <Card 
                   key={idx} 
-                  className={`overflow-hidden border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${feature.borderColor} bg-background group flex flex-col`}
+                  className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group flex flex-col p-5 sm:p-6 border-2 ${feature.cardWrapper}`}
                 >
-                  <CardHeader className={`${feature.bgColor} pb-6 border-b border-transparent transition-colors duration-300`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 bg-background rounded-xl shadow-sm border border-black/5 dark:border-white/5 ${feature.color} transition-transform duration-300 group-hover:scale-110`}>
-                        <Icon className="h-6 w-6" strokeWidth={2.5} />
-                      </div>
-                      <CardTitle className="text-xl font-heading font-bold text-foreground">
-                        {feature.title}
-                      </CardTitle>
+                  <div className="flex items-center gap-4 mb-3.5">
+                    <div className={`p-2.5 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${feature.iconWrapper}`}>
+                      <Icon className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-6 flex flex-col flex-1">
-                    <CardDescription className="text-sm text-muted-foreground leading-relaxed mb-8 flex-1">
-                      {feature.description}
-                    </CardDescription>
-                    <Link href={feature.href} className="mt-auto block">
-                      <Button 
-                        variant="outline" 
-                        className={`w-full justify-between h-12 font-semibold shadow-sm border-muted ${feature.hoverBg} ${feature.color}`}
-                      >
-                        {feature.buttonText}
-                        <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-                      </Button>
-                    </Link>
-                  </CardContent>
+                    <h3 className="text-lg font-heading font-bold text-foreground tracking-tight">
+                      {feature.title}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">
+                    {feature.description}
+                  </p>
+                  <Link href={feature.href} className="mt-auto block">
+                    <Button 
+                      variant="outline" 
+                      className={`w-full justify-between h-10 font-semibold shadow-sm transition-colors ${feature.buttonClass}`}
+                    >
+                      {feature.buttonText}
+                      <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </Link>
                 </Card>
               );
             })}

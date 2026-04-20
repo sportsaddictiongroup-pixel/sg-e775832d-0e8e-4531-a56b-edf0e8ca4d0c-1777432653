@@ -99,7 +99,7 @@ export default function NetworkTree(): JSX.Element {
         const pMap = new Map<string, NormalizedPartner>();
         const cMap = new Map<string, NormalizedPartner[]>();
 
-        (data || []).forEach((row) => {
+        (data || []).forEach((row: any) => {
           const pd = row.partner_details;
           const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : null;
 

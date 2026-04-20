@@ -93,9 +93,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Onboard a new partner and securely assign their role, upline, and territory.",
       href: "/admin/partners/create",
       icon: UserPlus,
-      cardWrapper: "border-blue-200 dark:border-blue-900/60 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-blue-500/15 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-950/20",
-      iconWrapper: "bg-blue-600 dark:bg-blue-500 shadow-md shadow-blue-500/20 text-white",
-      buttonClass: "bg-background hover:bg-blue-50 border-blue-200 text-blue-700 dark:bg-background dark:hover:bg-blue-900/40 dark:border-blue-800 dark:text-blue-400",
+      cardWrapper: "border-blue-300/70 dark:border-blue-800 hover:border-blue-500 dark:hover:border-blue-500 bg-blue-50/40 hover:bg-blue-50/80 dark:bg-blue-950/20 dark:hover:bg-blue-900/30 hover:shadow-xl hover:shadow-blue-500/10",
+      iconWrapper: "bg-blue-600 dark:bg-blue-500 text-white shadow-sm shadow-blue-600/20",
+      buttonClass: "bg-blue-100 hover:bg-blue-600 text-blue-800 hover:text-white border-transparent dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white",
       buttonText: "Create Partner",
     },
     {
@@ -103,9 +103,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Maintain the hierarchical master data for countries, states, districts, and PINs.",
       href: "/admin/locations",
       icon: MapPin,
-      cardWrapper: "border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-emerald-500/15 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-950/20",
-      iconWrapper: "bg-emerald-600 dark:bg-emerald-500 shadow-md shadow-emerald-500/20 text-white",
-      buttonClass: "bg-background hover:bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-background dark:hover:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-400",
+      cardWrapper: "border-emerald-300/70 dark:border-emerald-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-emerald-50/40 hover:bg-emerald-50/80 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 hover:shadow-xl hover:shadow-emerald-500/10",
+      iconWrapper: "bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm shadow-emerald-600/20",
+      buttonClass: "bg-emerald-100 hover:bg-emerald-600 text-emerald-800 hover:text-white border-transparent dark:bg-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-600 dark:hover:text-white",
       buttonText: "Manage Locations",
     },
     {
@@ -113,9 +113,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Monitor assignment statuses, view vacancies, and manage partner positioning.",
       href: "/admin/territory-management",
       icon: MapIcon,
-      cardWrapper: "border-purple-200 dark:border-purple-900/60 hover:border-purple-400 dark:hover:border-purple-500 hover:shadow-purple-500/15 bg-gradient-to-b from-purple-50/50 to-transparent dark:from-purple-950/20",
-      iconWrapper: "bg-purple-600 dark:bg-purple-500 shadow-md shadow-purple-500/20 text-white",
-      buttonClass: "bg-background hover:bg-purple-50 border-purple-200 text-purple-700 dark:bg-background dark:hover:bg-purple-900/40 dark:border-purple-800 dark:text-purple-400",
+      cardWrapper: "border-purple-300/70 dark:border-purple-800 hover:border-purple-500 dark:hover:border-purple-500 bg-purple-50/40 hover:bg-purple-50/80 dark:bg-purple-950/20 dark:hover:bg-purple-900/30 hover:shadow-xl hover:shadow-purple-500/10",
+      iconWrapper: "bg-purple-600 dark:bg-purple-500 text-white shadow-sm shadow-purple-600/20",
+      buttonClass: "bg-purple-100 hover:bg-purple-600 text-purple-800 hover:text-white border-transparent dark:bg-purple-900/50 dark:text-purple-300 dark:hover:bg-purple-600 dark:hover:text-white",
       buttonText: "Manage Territories",
     },
     {
@@ -123,9 +123,9 @@ export default function AdminDashboard(): JSX.Element {
       description: "Navigate the 5-level MLM generation hierarchy and explore scalable downlines.",
       href: "/admin/network-tree",
       icon: Network,
-      cardWrapper: "border-amber-200 dark:border-amber-900/60 hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-amber-500/15 bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-950/20",
-      iconWrapper: "bg-amber-500 dark:bg-amber-600 shadow-md shadow-amber-500/20 text-white",
-      buttonClass: "bg-background hover:bg-amber-50 border-amber-200 text-amber-700 dark:bg-background dark:hover:bg-amber-900/40 dark:border-amber-800 dark:text-amber-400",
+      cardWrapper: "border-amber-300/70 dark:border-amber-800 hover:border-amber-500 dark:hover:border-amber-500 bg-amber-50/40 hover:bg-amber-50/80 dark:bg-amber-950/20 dark:hover:bg-amber-900/30 hover:shadow-xl hover:shadow-amber-500/10",
+      iconWrapper: "bg-amber-500 dark:bg-amber-600 text-white shadow-sm shadow-amber-500/20",
+      buttonClass: "bg-amber-100 hover:bg-amber-500 text-amber-900 hover:text-white border-transparent dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-600 dark:hover:text-white",
       buttonText: "Explore Network",
     },
   ];
@@ -158,29 +158,29 @@ export default function AdminDashboard(): JSX.Element {
           </header>
 
           {/* FEATURES GRID */}
-          <section className="grid gap-5 sm:gap-6 md:grid-cols-2">
+          <section className="grid gap-4 sm:gap-5 md:grid-cols-2">
             {features.map((feature, idx) => {
               const Icon = feature.icon;
               return (
                 <Card 
                   key={idx} 
-                  className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group flex flex-col p-5 sm:p-6 border-2 ${feature.cardWrapper}`}
+                  className={`relative overflow-hidden transition-all duration-300 hover:-translate-y-1 group flex flex-col p-4 sm:p-5 border-2 ${feature.cardWrapper}`}
                 >
-                  <div className="flex items-center gap-4 mb-3.5">
-                    <div className={`p-2.5 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${feature.iconWrapper}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`p-2 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${feature.iconWrapper}`}>
                       <Icon className="h-5 w-5" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-lg font-heading font-bold text-foreground tracking-tight">
+                    <h3 className="text-base sm:text-lg font-heading font-bold text-foreground tracking-tight">
                       {feature.title}
                     </h3>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">
                     {feature.description}
                   </p>
                   <Link href={feature.href} className="mt-auto block">
                     <Button 
                       variant="outline" 
-                      className={`w-full justify-between h-10 font-semibold shadow-sm transition-colors ${feature.buttonClass}`}
+                      className={`w-full justify-between h-9 font-semibold transition-colors ${feature.buttonClass}`}
                     >
                       {feature.buttonText}
                       <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />

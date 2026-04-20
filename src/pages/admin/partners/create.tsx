@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { ArrowLeft, User, MapPin, Network, Key, CheckCircle2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -337,42 +338,47 @@ export default function CreatePartner(): JSX.Element {
       <SEO title="Create Partner" description="Create a new partner account." />
       <main className="min-h-screen bg-background text-foreground px-4 py-8">
         <div className="mx-auto w-full max-w-5xl space-y-6">
-          <div className="flex items-center">
+          <div className="flex items-center mb-2">
             <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground" asChild>
               <Link href="/admin">
-                ← Back to Dashboard
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
               </Link>
             </Button>
           </div>
-          <header className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          <header className="space-y-3 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
               Admin Portal
-            </p>
-            <h1 className="font-heading text-2xl md:text-3xl font-semibold">
+            </div>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight">
               Create Partner
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground max-w-2xl">
               Onboard a new partner with their details, address, and set login credentials.
             </p>
           </header>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Partner Details</CardTitle>
-              <CardDescription>
+          <Card className="border-primary/10 shadow-lg overflow-hidden rounded-2xl">
+            <div className="h-2 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+            <CardHeader className="bg-muted/10 border-b pb-6 pt-8">
+              <CardTitle className="text-2xl font-heading">Partner Details</CardTitle>
+              <CardDescription className="text-base mt-1">
                 Fill in basic details, address details, and set login credentials.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-8">
               {submitError && (
                 <p className="mb-4 text-sm text-destructive" role="alert">
                   {submitError}
                 </p>
               )}
-              <form className="space-y-8" onSubmit={handleSubmit} noValidate>
-                <section className="space-y-4">
-                  <h2 className="text-sm font-semibold">Basic Details</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
+              <form className="space-y-10" onSubmit={handleSubmit} noValidate>
+                <section className="space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-2 border-b pb-3">
+                    <User className="h-4 w-4" /> 
+                    Basic Details
+                  </h2>
+                  <div className="grid gap-5 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="full-name">Full Name *</Label>
                       <Input
@@ -489,9 +495,12 @@ export default function CreatePartner(): JSX.Element {
                   </div>
                 </section>
 
-                <section className="space-y-4">
-                  <h2 className="text-sm font-semibold">Address Details</h2>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <section className="space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2 border-b pb-3">
+                    <MapPin className="h-4 w-4" /> 
+                    Address Details
+                  </h2>
+                  <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
                       <Select
@@ -593,8 +602,11 @@ export default function CreatePartner(): JSX.Element {
                   </div>
                 </section>
 
-                <section className="space-y-4">
-                  <h2 className="text-sm font-semibold">Upline</h2>
+                <section className="space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2 border-b pb-3">
+                    <Network className="h-4 w-4" /> 
+                    Upline
+                  </h2>
                   <div className="space-y-2 max-w-md">
                     <Label htmlFor="upline-username">
                       Upline Username (optional)
@@ -613,9 +625,12 @@ export default function CreatePartner(): JSX.Element {
                   </div>
                 </section>
 
-                <section className="space-y-4">
-                  <h2 className="text-sm font-semibold">Login Credentials</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
+                <section className="space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-2 border-b pb-3">
+                    <Key className="h-4 w-4" /> 
+                    Login Credentials
+                  </h2>
+                  <div className="grid gap-5 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="username">Username *</Label>
                       <Input
@@ -663,9 +678,14 @@ export default function CreatePartner(): JSX.Element {
                   </div>
                 </section>
 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? "Creating partner..." : "Create Partner"}
+                <div className="flex justify-end pt-4">
+                  <Button type="submit" disabled={submitting} className="h-11 px-8 shadow-md transition-all hover:-translate-y-0.5">
+                    {submitting ? "Creating partner..." : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-5 w-5" />
+                        Create Partner
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

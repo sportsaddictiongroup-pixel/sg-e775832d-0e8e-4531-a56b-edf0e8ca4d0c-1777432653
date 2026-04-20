@@ -710,7 +710,6 @@ export default function NetworkTree(): JSX.Element {
                                 <TableHeader className="bg-muted/20">
                                   <TableRow className="hover:bg-transparent border-b-muted-foreground/10">
                                     <TableHead className="h-14 py-4 px-8 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Partner Name</TableHead>
-                                    <TableHead className="h-14 py-4 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Role & Position</TableHead>
                                     <TableHead className="h-14 py-4 text-center font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Direct Downlines</TableHead>
                                     <TableHead className="h-14 py-4 text-right pr-8 font-bold text-muted-foreground uppercase tracking-widest text-[11px]">Explore</TableHead>
                                   </TableRow>
@@ -721,16 +720,6 @@ export default function NetworkTree(): JSX.Element {
                                       <TableCell className="py-5 px-8">
                                         <div className={`font-extrabold text-foreground text-sm transition-colors ${gTheme.textHover}`}>{p.partner_name}</div>
                                         <div className="text-xs font-mono text-muted-foreground mt-1.5 opacity-80 bg-muted/30 inline-block px-2 py-0.5 rounded">{p.user_id}</div>
-                                      </TableCell>
-                                      <TableCell className="py-5">
-                                        <div className="flex flex-col items-start gap-1.5">
-                                          <Badge variant="outline" className="font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 bg-background shadow-sm border-muted-foreground/20">
-                                            R: {formatRole(p.role)}
-                                          </Badge>
-                                          <Badge variant={p.position === "Unassigned" ? "outline" : "secondary"} className={`font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 shadow-sm ${p.position !== "Unassigned" ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground bg-muted/20'}`}>
-                                            P: {p.position !== "Unassigned" ? formatRole(p.position) : "Unassigned"}
-                                          </Badge>
-                                        </div>
                                       </TableCell>
                                       <TableCell className="text-center py-5">
                                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border shadow-sm">

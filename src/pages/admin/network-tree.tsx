@@ -249,47 +249,62 @@ export default function NetworkTree(): JSX.Element {
 
   // --- RENDERERS ---
 
-  const renderNodeCard = (partner: NormalizedPartner) => (
-    <Card className="w-56 shadow-sm border-muted transition-all hover:border-primary/30 hover:shadow-md bg-background z-10 relative">
-      <CardContent className="p-4 flex flex-col items-center text-center">
-        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-          <span className="text-sm font-bold text-primary">
-            {partner.partner_name.substring(0, 2).toUpperCase()}
-          </span>
-        </div>
-        <h4 className="text-sm font-bold text-foreground truncate w-full" title={partner.partner_name}>
-          {partner.partner_name}
-        </h4>
-        <p className="text-xs text-muted-foreground font-mono mt-0.5">{partner.user_id}</p>
-        <Badge variant={getRoleBadgeVariant(partner.role)} className="mt-2 text-[10px] px-1.5 py-0">
-          {formatRole(partner.role)}
-        </Badge>
-        {partner.direct_downlines_count > 0 && (
-          <div className="mt-3 flex items-center text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
-            <Users className="h-3 w-3 mr-1" />
-            {partner.direct_downlines_count} Direct
+  const renderNodeCard = (partner: NormalizedPartner, level: number = 0) => {
+    const getLevelTheme = (lvl: number, role: string) => {
+      if (role === "admin" || lvl === 0) return { card: "border-red-200/70 bg-red-50/30 shadow-red-900/5", iconBg: "bg-red-100 text-red-600", title: "text-red-950 dark:text-red-100", accent: "bg-red-500", count: "bg-red-100/80 text-red-700 dark:bg-red-900/50 dark:text-red-300" };
+      if (lvl === 1) return { card: "border-blue-200/70 bg-blue-50/30 shadow-blue-900/5", iconBg: "bg-blue-100 text-blue-600", title: "text-blue-950 dark:text-blue-100", accent: "bg-blue-500", count: "bg-blue-100/80 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" };
+      if (lvl === 2) return { card: "border-emerald-200/70 bg-emerald-50/30 shadow-emerald-900/5", iconBg: "bg-emerald-100 text-emerald-600", title: "text-emerald-950 dark:text-emerald-100", accent: "bg-emerald-500", count: "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" };
+      if (lvl === 3) return { card: "border-purple-200/70 bg-purple-50/30 shadow-purple-900/5", iconBg: "bg-purple-100 text-purple-600", title: "text-purple-950 dark:text-purple-100", accent: "bg-purple-500", count: "bg-purple-100/80 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300" };
+      if (lvl === 4) return { card: "border-orange-200/70 bg-orange-50/30 shadow-orange-900/5", iconBg: "bg-orange-100 text-orange-600", title: "text-orange-950 dark:text-orange-100", accent: "bg-orange-500", count: "bg-orange-100/80 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300" };
+      return { card: "border-teal-200/70 bg-teal-50/30 shadow-teal-900/5", iconBg: "bg-teal-100 text-teal-600", title: "text-teal-950 dark:text-teal-100", accent: "bg-teal-500", count: "bg-teal-100/80 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300" };
+    };
+    const theme = getLevelTheme(level, partner.role);
+
+    return (
+      <Card className={`w-56 shadow-sm border-2 transition-all hover:-translate-y-1 hover:shadow-md z-10 relative overflow-hidden rounded-2xl ${theme.card}`}>
+        <div className={`h-1.5 w-full absolute top-0 left-0 ${theme.accent}`} />
+        <CardContent className="p-5 flex flex-col items-center text-center mt-1">
+          <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-3 shadow-sm ${theme.iconBg}`}>
+            <span className="text-base font-bold">
+              {partner.partner_name.substring(0, 2).toUpperCase()}
+            </span>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+          <h4 className={`text-sm font-bold truncate w-full ${theme.title}`} title={partner.partner_name}>
+            {partner.partner_name}
+          </h4>
+          <p className="text-xs text-muted-foreground font-mono mt-1 bg-background/60 dark:bg-background/20 border border-border/50 px-2 py-0.5 rounded shadow-sm">
+            {partner.user_id}
+          </p>
+          <Badge variant={getRoleBadgeVariant(partner.role)} className="mt-3 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 shadow-sm">
+            {formatRole(partner.role)}
+          </Badge>
+          {partner.direct_downlines_count > 0 && (
+            <div className={`mt-4 flex items-center text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm ${theme.count}`}>
+              <Users className="h-3.5 w-3.5 mr-1.5 opacity-80" />
+              {partner.direct_downlines_count} Direct
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   const renderPreviewTree = (parent: NormalizedPartner, children: NormalizedPartner[]) => {
     return (
-      <div className="flex flex-col items-center py-6">
-        {renderNodeCard(parent)}
+      <div className="flex flex-col items-center py-8">
+        {renderNodeCard(parent, 0)}
         {children.length > 0 && (
           <div className="flex flex-col items-center">
             {/* Vertical drop line */}
-            <div className="w-px h-8 bg-border" />
+            <div className="w-px h-10 bg-border/80" />
             
             {/* Horizontal line container spanning all children */}
-            <div className="flex flex-row gap-6 items-start pt-6 border-t border-border relative">
+            <div className="flex flex-row gap-8 items-start pt-8 border-t-2 border-border/80 relative">
               {children.map((child) => (
                 <div key={child.profile_id} className="flex flex-col items-center relative">
                   {/* Vertical connect line going up */}
-                  <div className="w-px h-6 bg-border absolute -top-6 left-1/2 -translate-x-1/2" />
-                  {renderNodeCard(child)}
+                  <div className="w-px h-8 bg-border/80 absolute -top-8 left-1/2 -translate-x-1/2" />
+                  {renderNodeCard(child, 1)}
                 </div>
               ))}
             </div>
@@ -333,19 +348,23 @@ export default function NetworkTree(): JSX.Element {
         <div className="mx-auto w-full max-w-7xl space-y-6">
           
           {/* HEADER */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
             <div>
-              <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground mb-2" asChild>
+              <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground mb-3" asChild>
                 <Link href="/admin">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Dashboard
                 </Link>
               </Button>
-              <h1 className="font-heading text-2xl md:text-3xl font-semibold flex items-center gap-2">
-                <Network className="h-6 w-6 text-primary" />
-                Network Tree Explorer
+              <h1 className="font-heading text-3xl md:text-4xl font-bold flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl shadow-sm border border-primary/10">
+                  <Network className="h-7 w-7 text-primary" />
+                </div>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                  Network Tree Explorer
+                </span>
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-base text-muted-foreground mt-2 max-w-2xl">
                 Navigate the partner hierarchy seamlessly, built for unlimited downline scaling.
               </p>
             </div>
@@ -355,7 +374,7 @@ export default function NetworkTree(): JSX.Element {
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search partner, ID, or upline..."
-                  className="pl-9 bg-background"
+                  className="pl-9 bg-background shadow-sm border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -368,7 +387,7 @@ export default function NetworkTree(): JSX.Element {
             <div className="space-y-6 animate-in fade-in duration-300">
               
               {/* Breadcrumbs */}
-              <div className="flex items-center text-sm text-muted-foreground overflow-x-auto pb-2 scrollbar-hide whitespace-nowrap bg-muted/10 p-2 rounded-lg border">
+              <div className="flex items-center text-sm text-muted-foreground overflow-x-auto pb-2 scrollbar-hide whitespace-nowrap bg-muted/20 p-2 rounded-xl border border-border/50">
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -385,7 +404,7 @@ export default function NetworkTree(): JSX.Element {
                       variant={i === drilldownPath.length - 1 ? "secondary" : "ghost"}
                       size="sm"
                       onClick={() => handleBreadcrumbClick(i)}
-                      className={`h-8 px-3 ${i === drilldownPath.length - 1 ? 'font-bold shadow-sm' : 'hover:bg-background'}`}
+                      className={`h-8 px-3 ${i === drilldownPath.length - 1 ? 'font-bold shadow-sm bg-primary/10 text-primary hover:bg-primary/20' : 'hover:bg-background'}`}
                     >
                       {p.partner_name}
                     </Button>
@@ -394,39 +413,43 @@ export default function NetworkTree(): JSX.Element {
               </div>
 
               {/* Node Summary Card */}
-              <Card className="border-primary/20 bg-primary/5 shadow-sm">
-                <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                      <User className="h-7 w-7 text-primary" />
+              <Card className="border-border shadow-lg overflow-hidden rounded-2xl relative bg-card">
+                <div className="absolute top-0 left-0 h-full w-2 bg-gradient-to-b from-blue-500 to-purple-600" />
+                <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pl-8 sm:pl-10">
+                  <div className="flex items-center gap-5">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 border-2 border-background shadow-md flex items-center justify-center shrink-0">
+                      <User className="h-8 w-8 text-blue-700" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-foreground leading-tight">
+                      <h2 className="text-2xl font-heading font-bold text-foreground leading-tight tracking-tight">
                         {selectedPartner.partner_name}
                       </h2>
-                      <div className="flex flex-wrap items-center gap-3 mt-2">
-                        <Badge variant="secondary" className="font-mono text-xs">
+                      <div className="flex flex-wrap items-center gap-3 mt-2.5">
+                        <Badge variant="outline" className="font-mono text-xs bg-muted/30 border-muted-foreground/20">
                           {selectedPartner.user_id}
                         </Badge>
-                        <Badge variant={getRoleBadgeVariant(selectedPartner.role)} className="text-[10px] uppercase font-bold tracking-wider">
+                        <Badge variant={getRoleBadgeVariant(selectedPartner.role)} className="text-[10px] uppercase font-bold tracking-wider shadow-sm">
                           {formatRole(selectedPartner.role)}
                         </Badge>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-8 sm:border-l sm:pl-8 border-primary/10">
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Direct Downlines</p>
-                      <p className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-8 sm:border-l sm:pl-10 border-border/50 w-full sm:w-auto">
+                    <div className="bg-muted/20 p-4 rounded-xl border border-border/50 text-center sm:text-left shadow-sm">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center justify-center sm:justify-start gap-1.5">
+                        <Users className="h-3.5 w-3.5" /> Direct Downlines
+                      </p>
+                      <p className="text-3xl font-bold text-foreground leading-none">
                         {selectedPartner.direct_downlines_count}
-                        <Users className="h-5 w-5 text-muted-foreground/50" />
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Upline</p>
-                      <p className="text-sm font-medium text-foreground">
-                        {selectedPartner.upline_username || <span className="italic text-muted-foreground">Admin Root</span>}
+                    <div className="bg-muted/20 p-4 rounded-xl border border-border/50 text-center sm:text-left shadow-sm">
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center justify-center sm:justify-start gap-1.5">
+                        <User className="h-3.5 w-3.5" /> Upline
+                      </p>
+                      <p className="text-base font-semibold text-foreground truncate max-w-[120px]" title={selectedPartner.upline_username || "Admin Root"}>
+                        {selectedPartner.upline_username || <span className="italic text-muted-foreground opacity-70">Admin Root</span>}
                       </p>
                     </div>
                   </div>
@@ -435,20 +458,25 @@ export default function NetworkTree(): JSX.Element {
 
               {/* Tabs: Overview vs Direct Downlines vs Generations */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full sm:w-[600px] grid-cols-3">
-                  <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview Preview</TabsTrigger>
-                  <TabsTrigger value="downlines" className="text-xs sm:text-sm">
-                    Direct Downlines
-                    <Badge variant="secondary" className="ml-1.5 sm:ml-2 bg-background hidden sm:inline-flex">{selectedPartner.direct_downlines_count}</Badge>
+                <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-3 h-auto p-1.5 bg-muted/40 border border-border/50 rounded-full shadow-inner mb-2">
+                  <TabsTrigger value="overview" className="py-2.5 px-6 text-sm font-bold rounded-full transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground">
+                    Overview Preview
                   </TabsTrigger>
-                  <TabsTrigger value="generations" className="text-xs sm:text-sm">5-Level MLM View</TabsTrigger>
+                  <TabsTrigger value="downlines" className="py-2.5 px-6 text-sm font-bold rounded-full transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground">
+                    Direct Downlines
+                    <Badge variant="secondary" className="ml-2 bg-background/20 text-current border-none shadow-sm hidden sm:inline-flex">{selectedPartner.direct_downlines_count}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="generations" className="py-2.5 px-6 text-sm font-bold rounded-full transition-all data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground">
+                    5-Level MLM View
+                  </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="overview" className="mt-4">
-                  <Card className="shadow-sm border-muted overflow-hidden">
-                    <CardHeader className="bg-muted/10 border-b pb-4">
+                <TabsContent value="overview" className="mt-6">
+                  <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
+                    <div className="h-1.5 w-full bg-blue-500"></div>
+                    <CardHeader className="bg-blue-50/40 dark:bg-blue-950/20 border-b pb-5">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <FolderTree className="h-4 w-4 text-primary" />
+                        <FolderTree className="h-4 w-4 text-blue-600" />
                         Visual Node Preview
                       </CardTitle>
                       <CardDescription>
@@ -462,7 +490,7 @@ export default function NetworkTree(): JSX.Element {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center p-12 text-center max-w-md mx-auto">
-                          <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+                          <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4 shadow-sm">
                             <Info className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                           </div>
                           <h3 className="text-lg font-bold text-foreground mb-2">High Volume Downline</h3>
@@ -470,7 +498,7 @@ export default function NetworkTree(): JSX.Element {
                             This node has <strong className="text-foreground">{selectedChildren.length}</strong> direct downlines. 
                             To ensure optimal performance and prevent browser lag, the visual horizontal tree preview is disabled for nodes with more than {PREVIEW_THRESHOLD} children.
                           </p>
-                          <Button onClick={() => setActiveTab("downlines")}>
+                          <Button onClick={() => setActiveTab("downlines")} className="shadow-sm rounded-full px-6">
                             View in Direct Downlines List
                             <ChevronRight className="h-4 w-4 ml-2" />
                           </Button>
@@ -480,13 +508,14 @@ export default function NetworkTree(): JSX.Element {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="downlines" className="mt-4">
-                  <Card className="shadow-sm border-muted">
-                    <CardHeader className="bg-muted/10 border-b pb-4">
+                <TabsContent value="downlines" className="mt-6">
+                  <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
+                    <div className="h-1.5 w-full bg-emerald-500"></div>
+                    <CardHeader className="bg-emerald-50/40 dark:bg-emerald-950/20 border-b pb-5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                           <CardTitle className="text-base flex items-center gap-2">
-                            <Users className="h-4 w-4 text-primary" />
+                            <Users className="h-4 w-4 text-emerald-600" />
                             Direct Downlines
                           </CardTitle>
                           <CardDescription>
@@ -506,38 +535,37 @@ export default function NetworkTree(): JSX.Element {
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader className="bg-muted/30">
-                              <TableRow className="hover:bg-transparent">
-                                <TableHead className="h-12">Partner Name</TableHead>
-                                <TableHead className="h-12">Role</TableHead>
-                                <TableHead className="h-12 text-center">Direct Downlines</TableHead>
-                                <TableHead className="h-12 text-right pr-6">Explore</TableHead>
+                              <TableRow className="hover:bg-transparent border-b-muted/40">
+                                <TableHead className="h-12 py-3 px-6">Partner Name</TableHead>
+                                <TableHead className="h-12 py-3">Role</TableHead>
+                                <TableHead className="h-12 py-3 text-center">Direct Downlines</TableHead>
+                                <TableHead className="h-12 py-3 text-right pr-6">Explore</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               {paginatedChildren.map((p) => (
-                                <TableRow key={p.profile_id} className="hover:bg-muted/20 transition-colors">
-                                  <TableCell>
-                                    <div className="font-medium text-foreground">{p.partner_name}</div>
-                                    <div className="text-xs font-mono text-muted-foreground mt-0.5">{p.user_id}</div>
+                                <TableRow key={p.profile_id} className="hover:bg-muted/30 even:bg-muted/5 transition-colors border-b-muted/40">
+                                  <TableCell className="py-4 px-6">
+                                    <div className="font-semibold text-foreground">{p.partner_name}</div>
+                                    <div className="text-[11px] font-mono text-muted-foreground mt-1 opacity-80">{p.user_id}</div>
                                   </TableCell>
-                                  <TableCell>
-                                    <Badge variant={getRoleBadgeVariant(p.role)} className="font-medium">
+                                  <TableCell className="py-4">
+                                    <Badge variant={getRoleBadgeVariant(p.role)} className="font-bold uppercase tracking-wider text-[10px] shadow-sm">
                                       {formatRole(p.role)}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell className="text-center">
-                                    <Badge variant="secondary" className="bg-muted text-muted-foreground border-transparent font-mono">
+                                  <TableCell className="text-center py-4">
+                                    <Badge variant="secondary" className="bg-background text-muted-foreground border border-border shadow-sm font-mono px-2 py-0.5">
                                       {p.direct_downlines_count}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell className="text-right pr-6">
+                                  <TableCell className="text-right pr-6 py-4">
                                     <Button
                                       size="sm"
-                                      variant="ghost"
-                                      className="h-8 hover:bg-primary/10 hover:text-primary"
+                                      className="h-9 rounded-full px-5 shadow-sm bg-primary hover:bg-primary/90 hover:-translate-y-0.5 transition-all font-semibold"
                                       onClick={() => handleOpenNode(p)}
                                     >
-                                      Open Node
+                                      View Tree
                                       <ChevronRight className="h-4 w-4 ml-1" />
                                     </Button>
                                   </TableCell>
@@ -558,11 +586,11 @@ export default function NetworkTree(): JSX.Element {
                                   size="sm"
                                   onClick={() => setDownlinesPage(p => Math.max(1, p - 1))}
                                   disabled={downlinesPage === 1}
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 rounded-full shadow-sm"
                                 >
                                   <ChevronLeft className="h-4 w-4" />
                                 </Button>
-                                <div className="text-xs font-medium px-2">
+                                <div className="text-xs font-bold px-2">
                                   Page {downlinesPage} of {totalPages}
                                 </div>
                                 <Button
@@ -570,7 +598,7 @@ export default function NetworkTree(): JSX.Element {
                                   size="sm"
                                   onClick={() => setDownlinesPage(p => Math.min(totalPages, p + 1))}
                                   disabled={downlinesPage === totalPages}
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 rounded-full shadow-sm"
                                 >
                                   <ChevronRight className="h-4 w-4" />
                                 </Button>
@@ -583,7 +611,7 @@ export default function NetworkTree(): JSX.Element {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="generations" className="mt-4 space-y-6">
+                <TabsContent value="generations" className="mt-6 space-y-8">
                   {mlmGenerations.map((levelPartners, index) => {
                     const levelNum = index + 1;
                     const total = levelPartners.length;
@@ -594,13 +622,23 @@ export default function NetworkTree(): JSX.Element {
                       page * DOWNLINES_PER_PAGE
                     );
 
+                    const getGenColor = (lvl: number) => {
+                      if (lvl === 1) return { bar: "bg-blue-500", header: "bg-blue-50/40 dark:bg-blue-950/20", icon: "text-blue-600" };
+                      if (lvl === 2) return { bar: "bg-emerald-500", header: "bg-emerald-50/40 dark:bg-emerald-950/20", icon: "text-emerald-600" };
+                      if (lvl === 3) return { bar: "bg-purple-500", header: "bg-purple-50/40 dark:bg-purple-950/20", icon: "text-purple-600" };
+                      if (lvl === 4) return { bar: "bg-orange-500", header: "bg-orange-50/40 dark:bg-orange-950/20", icon: "text-orange-600" };
+                      return { bar: "bg-teal-500", header: "bg-teal-50/40 dark:bg-teal-950/20", icon: "text-teal-600" };
+                    };
+                    const gTheme = getGenColor(levelNum);
+
                     return (
-                      <Card key={`gen-level-${levelNum}`} className="shadow-sm border-muted overflow-hidden">
-                        <CardHeader className="bg-muted/10 border-b py-4">
+                      <Card key={`gen-level-${levelNum}`} className="shadow-lg border-muted overflow-hidden rounded-2xl">
+                        <div className={`h-1.5 w-full ${gTheme.bar}`}></div>
+                        <CardHeader className={`border-b py-5 ${gTheme.header}`}>
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                               <CardTitle className="text-base flex items-center gap-2">
-                                <Layers className="h-4 w-4 text-primary" />
+                                <Layers className={`h-4 w-4 ${gTheme.icon}`} />
                                 Generation Level {levelNum}
                               </CardTitle>
                               <CardDescription>
@@ -613,45 +651,44 @@ export default function NetworkTree(): JSX.Element {
                         </CardHeader>
                         <CardContent className="p-0">
                           {total === 0 ? (
-                            <div className="py-8 text-center">
-                              <p className="text-sm text-muted-foreground">No downlines found at Level {levelNum}.</p>
+                            <div className="py-8 text-center bg-muted/5">
+                              <p className="text-sm font-medium text-muted-foreground opacity-80">No downlines found at Level {levelNum}.</p>
                             </div>
                           ) : (
                             <div className="overflow-x-auto">
                               <Table>
                                 <TableHeader className="bg-muted/30">
-                                  <TableRow className="hover:bg-transparent">
-                                    <TableHead className="h-12">Partner Name</TableHead>
-                                    <TableHead className="h-12">Role</TableHead>
-                                    <TableHead className="h-12 text-center">Direct Downlines</TableHead>
-                                    <TableHead className="h-12 text-right pr-6">Explore</TableHead>
+                                  <TableRow className="hover:bg-transparent border-b-muted/40">
+                                    <TableHead className="h-12 py-3 px-6">Partner Name</TableHead>
+                                    <TableHead className="h-12 py-3">Role</TableHead>
+                                    <TableHead className="h-12 py-3 text-center">Direct Downlines</TableHead>
+                                    <TableHead className="h-12 py-3 text-right pr-6">Explore</TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                   {paginated.map((p) => (
-                                    <TableRow key={p.profile_id} className="hover:bg-muted/20 transition-colors">
-                                      <TableCell>
-                                        <div className="font-medium text-foreground">{p.partner_name}</div>
-                                        <div className="text-xs font-mono text-muted-foreground mt-0.5">{p.user_id}</div>
+                                    <TableRow key={p.profile_id} className="hover:bg-muted/30 even:bg-muted/5 transition-colors border-b-muted/40">
+                                      <TableCell className="py-4 px-6">
+                                        <div className="font-semibold text-foreground">{p.partner_name}</div>
+                                        <div className="text-[11px] font-mono text-muted-foreground mt-1 opacity-80">{p.user_id}</div>
                                       </TableCell>
-                                      <TableCell>
-                                        <Badge variant={getRoleBadgeVariant(p.role)} className="font-medium">
+                                      <TableCell className="py-4">
+                                        <Badge variant={getRoleBadgeVariant(p.role)} className="font-bold uppercase tracking-wider text-[10px] shadow-sm">
                                           {formatRole(p.role)}
                                         </Badge>
                                       </TableCell>
-                                      <TableCell className="text-center">
-                                        <Badge variant="secondary" className="bg-muted text-muted-foreground border-transparent font-mono">
+                                      <TableCell className="text-center py-4">
+                                        <Badge variant="secondary" className="bg-background text-muted-foreground border border-border shadow-sm font-mono px-2 py-0.5">
                                           {p.direct_downlines_count}
                                         </Badge>
                                       </TableCell>
-                                      <TableCell className="text-right pr-6">
+                                      <TableCell className="text-right pr-6 py-4">
                                         <Button
                                           size="sm"
-                                          variant="ghost"
-                                          className="h-8 hover:bg-primary/10 hover:text-primary"
+                                          className="h-9 rounded-full px-5 shadow-md bg-primary hover:bg-primary/90 hover:-translate-y-0.5 transition-all font-semibold"
                                           onClick={() => handleOpenNode(p)}
                                         >
-                                          Open Node
+                                          View Tree
                                           <ChevronRight className="h-4 w-4 ml-1" />
                                         </Button>
                                       </TableCell>
@@ -676,11 +713,11 @@ export default function NetworkTree(): JSX.Element {
                                         setGenPages(newPages);
                                       }}
                                       disabled={page === 1}
-                                      className="h-8 w-8 p-0"
+                                      className="h-8 w-8 p-0 rounded-full shadow-sm"
                                     >
                                       <ChevronLeft className="h-4 w-4" />
                                     </Button>
-                                    <div className="text-xs font-medium px-2">
+                                    <div className="text-xs font-bold px-2">
                                       Page {page} of {totalPages}
                                     </div>
                                     <Button
@@ -692,7 +729,7 @@ export default function NetworkTree(): JSX.Element {
                                         setGenPages(newPages);
                                       }}
                                       disabled={page === totalPages}
-                                      className="h-8 w-8 p-0"
+                                      className="h-8 w-8 p-0 rounded-full shadow-sm"
                                     >
                                       <ChevronRight className="h-4 w-4" />
                                     </Button>
@@ -710,55 +747,55 @@ export default function NetworkTree(): JSX.Element {
             </div>
           ) : (
             /* ROOT LIST VIEW */
-            <Card className="shadow-sm border-muted animate-in fade-in duration-300">
+            <Card className="shadow-lg border-muted rounded-2xl overflow-hidden animate-in fade-in duration-300">
+              <div className="h-1.5 w-full bg-primary/80"></div>
               <CardContent className="p-0">
                 {filteredPartners.length === 0 ? (
-                  <div className="py-16 text-center">
+                  <div className="py-16 text-center bg-muted/5">
                     <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-foreground">No partners found.</p>
-                    <p className="text-xs text-muted-foreground mt-1">Adjust your search criteria.</p>
+                    <p className="text-sm font-semibold text-foreground">No partners found.</p>
+                    <p className="text-xs text-muted-foreground mt-1 opacity-80">Adjust your search criteria.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader className="bg-muted/30">
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead className="h-12 w-[25%]">Partner Name</TableHead>
-                          <TableHead className="h-12 w-[15%]">Role</TableHead>
-                          <TableHead className="h-12 w-[20%]">Upline</TableHead>
-                          <TableHead className="h-12 w-[15%] text-center">Direct Downlines</TableHead>
-                          <TableHead className="h-12 w-[25%] text-right pr-6">Actions</TableHead>
+                        <TableRow className="hover:bg-transparent border-b-muted/40">
+                          <TableHead className="h-14 py-3 px-6 w-[25%] font-semibold text-muted-foreground uppercase tracking-wider text-xs">Partner Name</TableHead>
+                          <TableHead className="h-14 py-3 w-[15%] font-semibold text-muted-foreground uppercase tracking-wider text-xs">Role</TableHead>
+                          <TableHead className="h-14 py-3 w-[20%] font-semibold text-muted-foreground uppercase tracking-wider text-xs">Upline</TableHead>
+                          <TableHead className="h-14 py-3 w-[15%] text-center font-semibold text-muted-foreground uppercase tracking-wider text-xs">Direct Downlines</TableHead>
+                          <TableHead className="h-14 py-3 w-[25%] text-right pr-6 font-semibold text-muted-foreground uppercase tracking-wider text-xs">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredPartners.slice(0, 100).map((p) => (
-                          <TableRow key={p.profile_id} className="hover:bg-muted/20 transition-colors">
-                            <TableCell>
-                              <div className="font-medium text-foreground">{p.partner_name}</div>
-                              <div className="text-xs font-mono text-muted-foreground mt-0.5">{p.user_id}</div>
+                          <TableRow key={p.profile_id} className="hover:bg-muted/30 even:bg-muted/5 transition-colors border-b-muted/40">
+                            <TableCell className="py-4 px-6">
+                              <div className="font-semibold text-foreground">{p.partner_name}</div>
+                              <div className="text-[11px] font-mono text-muted-foreground mt-1 opacity-80">{p.user_id}</div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant={getRoleBadgeVariant(p.role)} className="font-medium">
+                            <TableCell className="py-4">
+                              <Badge variant={getRoleBadgeVariant(p.role)} className="font-bold uppercase tracking-wider text-[10px] shadow-sm">
                                 {formatRole(p.role)}
                               </Badge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="py-4">
                               {p.upline_username ? (
-                                <div className="text-sm text-foreground">{p.upline_username}</div>
+                                <div className="text-sm font-medium text-foreground/80">{p.upline_username}</div>
                               ) : (
-                                <span className="text-xs text-muted-foreground italic">None (Root)</span>
+                                <span className="text-xs text-muted-foreground italic opacity-70">None (Root)</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="secondary" className="bg-muted text-muted-foreground border-transparent font-mono">
+                            <TableCell className="text-center py-4">
+                              <Badge variant="secondary" className="bg-background text-muted-foreground border border-border shadow-sm font-mono px-2 py-0.5">
                                 {p.direct_downlines_count}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right pr-6">
+                            <TableCell className="text-right pr-6 py-4">
                               <Button
                                 size="sm"
-                                variant="default"
-                                className="h-8 shadow-sm bg-primary/90 hover:bg-primary"
+                                className="h-9 rounded-full px-5 shadow-md bg-primary hover:bg-primary/90 hover:-translate-y-0.5 transition-all font-semibold"
                                 onClick={() => handleOpenNode(p)}
                               >
                                 View Tree
@@ -770,7 +807,7 @@ export default function NetworkTree(): JSX.Element {
                       </TableBody>
                     </Table>
                     {filteredPartners.length > 100 && (
-                      <div className="p-4 text-center text-xs text-muted-foreground border-t bg-muted/10">
+                      <div className="p-4 text-center text-xs font-medium text-muted-foreground border-t bg-muted/10">
                         Showing top 100 results. Use the search box to find specific partners.
                       </div>
                     )}

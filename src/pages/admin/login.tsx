@@ -12,7 +12,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminLogin(): JSX.Element {
@@ -35,61 +34,78 @@ export default function AdminLogin(): JSX.Element {
     setLoading(true);
 
     try {
-      const { user, error: signInError } =
-        await authService.signInWithUsername(trimmedUsername, password);
+      // 1. Query public.profiles by exact username
+      const { data: lookupData, error: lookupError } = await supabase
+        .from("profiles")
+        .select("email, role")
+        .eq("username", trimmedUsername)
+        .maybeSingle();
 
-      if (signInError || !user) {
-        console.error("Admin login failed at auth step", {
-          signInError,
-          user,
-        });
-        setError(signInError?.message ?? "Invalid username or password.");
+      // 2. If not found -> show safe invalid login message
+      if (lookupError || !lookupData) {
+        setError("Invalid login credentials.");
+        setLoading(false);
         return;
       }
 
-      console.log("Admin login: fetching profile for user", {
-        userId: user.id,
+      // 3. Verify role is exactly 'admin' before attempting auth
+      if (lookupData.role !== "admin") {
+        setError("Invalid login credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. If email missing -> show safe config error
+      if (!lookupData.email) {
+        setError("Account configuration error.");
+        setLoading(false);
+        return;
+      }
+
+      // 5. Call supabase.auth.signInWithPassword
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: lookupData.email,
+        password: password,
       });
 
+      if (signInError || !authData.user) {
+        console.error("Admin login failed at auth step", { signInError });
+        setError("Invalid login credentials.");
+        setLoading(false);
+        return;
+      }
+
+      const user = authData.user;
+      console.log("Admin login: fetching profile for user", { userId: user.id });
+
+      // 6. After successful auth, fetch profile by authenticated user id
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
 
-      console.log("Admin login: profile fetch result", {
-        userId: user.id,
-        profile,
-        profileError,
-      });
-
       if (profileError || !profile) {
         console.error("Admin login failed while fetching profile", {
           userId: user.id,
           profileError,
-          profile,
         });
-        await authService.signOut();
-        const details =
-          profileError?.message || "No profile row returned for this account.";
-        setError(
-          "No profile found for this account (user id: " +
-            user.id +
-            "). Details: " +
-            details,
-        );
+        await supabase.auth.signOut();
+        setError("No profile found for this account.");
+        setLoading(false);
         return;
       }
 
+      // 7. Verify role is exactly 'admin'
       if (profile.role !== "admin") {
-        console.error("Admin login blocked due to non-admin role", {
-          profile,
-        });
-        await authService.signOut();
+        console.error("Admin login blocked due to non-admin role", { profile });
+        await supabase.auth.signOut();
         setError("You do not have admin access. Please use the partner login.");
+        setLoading(false);
         return;
       }
 
+      // 8. Preserve existing redirect behavior
       router.push("/admin");
     } catch (error) {
       console.error("Admin login unexpected error", error);

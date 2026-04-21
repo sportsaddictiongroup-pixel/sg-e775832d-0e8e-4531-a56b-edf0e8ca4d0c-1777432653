@@ -132,64 +132,6 @@ export const authService = {
     }
   },
 
-  async signInWithUsername(
-    username: string,
-    password: string,
-  ): Promise<{ user: AuthUser | null; error: AuthError | null }> {
-    const trimmed = username.trim();
-    if (!trimmed) {
-      return { user: null, error: { message: "Username is required" } };
-    }
-
-    try {
-      // 1 & 2. Look up the profile by username to find the linked email (case-insensitive)
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("email")
-        .ilike("username", trimmed)
-        .maybeSingle();
-
-      // 3. If no record found
-      if (profileError || !profile) {
-        return { user: null, error: { message: "Invalid login credentials" } };
-      }
-
-      // 4. If record found but email is null
-      if (!profile.email) {
-        return { user: null, error: { message: "Account configuration error" } };
-      }
-
-      // 5. If email exists, call supabase.auth.signInWithPassword directly
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: profile.email,
-        password: password,
-      });
-
-      if (error) {
-        return {
-          user: null,
-          error: { message: error.message, code: error.status?.toString() },
-        };
-      }
-
-      const authUser = data.user
-        ? {
-            id: data.user.id,
-            email: data.user.email || "",
-            user_metadata: data.user.user_metadata,
-            created_at: data.user.created_at,
-          }
-        : null;
-
-      return { user: authUser, error: null };
-    } catch (error) {
-      return {
-        user: null,
-        error: { message: "An unexpected error occurred during sign in" },
-      };
-    }
-  },
-
   async signOut(): Promise<{ error: AuthError | null }> {
     try {
       const { error } = await supabase.auth.signOut();

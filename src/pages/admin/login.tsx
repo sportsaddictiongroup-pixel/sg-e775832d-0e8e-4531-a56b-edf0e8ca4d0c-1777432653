@@ -155,9 +155,6 @@ export default function AdminLogin(): JSX.Element {
                     autoComplete="current-password"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Default admin: username "admin", password "admin123".
-                </p>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>

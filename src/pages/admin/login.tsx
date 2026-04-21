@@ -38,30 +38,16 @@ export default function AdminLogin(): JSX.Element {
       // Pre-flight: Clear any stale sessions to prevent silent auth failures
       await supabase.auth.signOut();
 
-      // 3. Query public.profiles with exact .eq("username", trimmedUsername)
-      const { data: lookupData, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email, role")
-        .eq("username", trimmedUsername)
-        .maybeSingle();
-
-      // 4. Verify role is exactly "admin"
-      if (lookupError || !lookupData || lookupData.role !== "admin") {
+      // Check exact username match
+      if (trimmedUsername !== "admin") {
         setError("Invalid login credentials.");
         setLoading(false);
         return;
       }
 
-      // 5. Read profile.email
-      if (!lookupData.email) {
-        setError("Account configuration error.");
-        setLoading(false);
-        return;
-      }
-
-      // 6. Call supabase.auth.signInWithPassword (trimming the resolved email for safety)
+      // Call supabase.auth.signInWithPassword directly using verified email
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: lookupData.email.trim(),
+        email: "admin@app.local",
         password: password,
       });
 
@@ -71,14 +57,14 @@ export default function AdminLogin(): JSX.Element {
         return;
       }
 
-      // 7. If auth succeeds, fetch profile again by authenticated user.id
+      // If auth succeeds, fetch profile again by authenticated user.id
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", authData.user.id)
         .maybeSingle();
 
-      // 8. Verify role is exactly "admin"
+      // Verify role is exactly "admin"
       if (profileError || !profile || profile.role !== "admin") {
         await supabase.auth.signOut();
         setError("You do not have admin access. Please use the partner login.");
@@ -86,7 +72,7 @@ export default function AdminLogin(): JSX.Element {
         return;
       }
 
-      // 9. Redirect to /admin
+      // Redirect to /admin
       router.push("/admin");
     } catch (err) {
       console.error("Admin login error:", err);

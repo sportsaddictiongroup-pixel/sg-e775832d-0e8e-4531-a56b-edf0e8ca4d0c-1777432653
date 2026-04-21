@@ -325,6 +325,7 @@ export default async function handler(
 
   const newUser = signUpData.user;
 
+  // CRITICAL: profiles.id MUST ALWAYS equal auth.users.id exactly
   const { data: profileData, error: profileError } = await supabaseAdmin
     .from("profiles")
     .insert({

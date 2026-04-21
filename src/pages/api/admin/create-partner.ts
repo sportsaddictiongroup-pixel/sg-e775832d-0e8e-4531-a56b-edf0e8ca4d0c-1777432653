@@ -212,9 +212,9 @@ export default async function handler(
     return;
   }
 
-  const { data: existingEmail } = await supabase
-    .from("profiles")
-    .select("id")
+  const { data: existingEmail } = await (supabase as any)
+    .from("partner_details")
+    .select("profile_id")
     .eq("email", email)
     .maybeSingle();
 
@@ -260,8 +260,27 @@ export default async function handler(
 
   console.log("CreatePartner: creating auth user", {
     username,
-    email,
+    realEmail: email,
   });
+
+  // Generate hidden unique internal email for auth
+  let internalAuthEmail = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}.${Date.now()}@partner.internal`;
+  let emailUnique = false;
+  let attempt = 0;
+  while (!emailUnique && attempt < 3) {
+    const { data: existingInternal } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", internalAuthEmail)
+      .maybeSingle();
+
+    if (!existingInternal) {
+      emailUnique = true;
+    } else {
+      attempt++;
+      internalAuthEmail = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}.${Date.now()}.${Math.floor(Math.random() * 1000)}@partner.internal`;
+    }
+  }
 
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseServiceKey) {
@@ -281,7 +300,7 @@ export default async function handler(
   );
 
   const { data: signUpData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-    email,
+    email: internalAuthEmail,
     password,
     email_confirm: true,
     user_metadata: {
@@ -311,6 +330,7 @@ export default async function handler(
     .insert({
       id: newUser.id,
       username: username,
+      email: internalAuthEmail,
       role: "partner",
       upline_profile_id: uplineProfileId,
     })

@@ -12,7 +12,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function PartnerLogin(): JSX.Element {
@@ -35,28 +34,65 @@ export default function PartnerLogin(): JSX.Element {
     setLoading(true);
 
     try {
-      const { user, error: signInError } =
-        await authService.signInWithUsername(trimmedUsername, password);
+      // 1. Query public.profiles by exact username to resolve internal email
+      const { data: lookupData, error: lookupError } = await supabase
+        .from("profiles")
+        .select("email")
+        .ilike("username", trimmedUsername)
+        .maybeSingle();
 
-      if (signInError || !user) {
-        setError(signInError?.message ?? "Invalid username or password.");
+      // 2. If no record found
+      if (lookupError || !lookupData) {
+        setError("Invalid login credentials.");
+        setLoading(false);
         return;
       }
 
+      // 3. If email missing
+      if (!lookupData.email) {
+        setError("Account configuration error.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Call supabase.auth.signInWithPassword using the resolved internal email
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: lookupData.email,
+        password: password,
+      });
+
+      if (signInError || !authData.user) {
+        setError("Invalid login credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // 5. Fetch the matching profile using auth user id to verify it's valid
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, full_name, role")
-        .eq("id", user.id)
+        .eq("id", authData.user.id)
         .maybeSingle();
 
       if (profileError || !profile) {
-        await authService.signOut();
+        await supabase.auth.signOut();
         setError("No profile found for this account.");
+        setLoading(false);
         return;
       }
 
+      // 6. Verify role (Prevent admin from logging in via partner portal)
+      if (profile.role === "admin") {
+        await supabase.auth.signOut();
+        setError("Invalid login credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // 7. Preserve existing redirect
       router.push("/partner");
-    } catch {
+    } catch (err) {
+      console.error("Partner Login Error:", err);
       setError("Unable to sign in at the moment. Please try again.");
     } finally {
       setLoading(false);

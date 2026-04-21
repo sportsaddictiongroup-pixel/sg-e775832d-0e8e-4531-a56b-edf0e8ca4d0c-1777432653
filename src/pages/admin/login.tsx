@@ -25,6 +25,7 @@ export default function AdminLogin(): JSX.Element {
     event.preventDefault();
     setError(null);
 
+    // 1 & 2. Read entered username and trim it
     const trimmedUsername = username.trim();
     if (!trimmedUsername || !password) {
       setError("Please enter both username and password.");
@@ -34,83 +35,62 @@ export default function AdminLogin(): JSX.Element {
     setLoading(true);
 
     try {
-      // 1. Query public.profiles by exact username
+      // Pre-flight: Clear any stale sessions to prevent silent auth failures
+      await supabase.auth.signOut();
+
+      // 3. Query public.profiles with exact .eq("username", trimmedUsername)
       const { data: lookupData, error: lookupError } = await supabase
         .from("profiles")
         .select("email, role")
         .eq("username", trimmedUsername)
         .maybeSingle();
 
-      // 2. If not found -> show safe invalid login message
-      if (lookupError || !lookupData) {
+      // 4. Verify role is exactly "admin"
+      if (lookupError || !lookupData || lookupData.role !== "admin") {
         setError("Invalid login credentials.");
         setLoading(false);
         return;
       }
 
-      // 3. Verify role is exactly 'admin' before attempting auth
-      if (lookupData.role !== "admin") {
-        setError("Invalid login credentials.");
-        setLoading(false);
-        return;
-      }
-
-      // 4. If email missing -> show safe config error
+      // 5. Read profile.email
       if (!lookupData.email) {
         setError("Account configuration error.");
         setLoading(false);
         return;
       }
 
-      // 5. Call supabase.auth.signInWithPassword
+      // 6. Call supabase.auth.signInWithPassword (trimming the resolved email for safety)
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: lookupData.email,
+        email: lookupData.email.trim(),
         password: password,
       });
 
       if (signInError || !authData.user) {
-        console.error("Admin login failed at auth step", { signInError });
         setError("Invalid login credentials.");
         setLoading(false);
         return;
       }
 
-      const user = authData.user;
-      console.log("Admin login: fetching profile for user", { userId: user.id });
-
-      // 6. After successful auth, fetch profile by authenticated user id
+      // 7. If auth succeeds, fetch profile again by authenticated user.id
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", user.id)
+        .select("role")
+        .eq("id", authData.user.id)
         .maybeSingle();
 
-      if (profileError || !profile) {
-        console.error("Admin login failed while fetching profile", {
-          userId: user.id,
-          profileError,
-        });
-        await supabase.auth.signOut();
-        setError("No profile found for this account.");
-        setLoading(false);
-        return;
-      }
-
-      // 7. Verify role is exactly 'admin'
-      if (profile.role !== "admin") {
-        console.error("Admin login blocked due to non-admin role", { profile });
+      // 8. Verify role is exactly "admin"
+      if (profileError || !profile || profile.role !== "admin") {
         await supabase.auth.signOut();
         setError("You do not have admin access. Please use the partner login.");
         setLoading(false);
         return;
       }
 
-      // 8. Preserve existing redirect behavior
+      // 9. Redirect to /admin
       router.push("/admin");
-    } catch (error) {
-      console.error("Admin login unexpected error", error);
+    } catch (err) {
+      console.error("Admin login error:", err);
       setError("Unable to sign in at the moment. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -129,7 +109,7 @@ export default function AdminLogin(): JSX.Element {
             </CardHeader>
             <CardContent>
               {error && (
-                <p className="mb-3 text-sm text-destructive" role="alert">
+                <p className="mb-3 text-sm text-destructive font-medium" role="alert">
                   {error}
                 </p>
               )}

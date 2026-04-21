@@ -70,7 +70,7 @@ export default function PartnerLogin(): JSX.Element {
       // 5. Fetch the matching profile using auth user id to verify it's valid
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, role")
+        .select("id, role")
         .eq("id", authData.user.id)
         .maybeSingle();
 

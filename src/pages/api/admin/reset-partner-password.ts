@@ -120,17 +120,16 @@ export default async function handler(
     .maybeSingle();
 
   if (targetError || !targetProfile) {
-    return res.status(404).json({
-      success: false,
-      message: "Partner profile not found.",
-    });
+    res.status(404).json({ success: false, message: "Target profile not found." });
+    return;
   }
 
-  if (targetProfile.role === "admin") {
-    return res.status(403).json({
+  if (targetProfile.role !== "partner" && targetProfile.role !== "admin") {
+    res.status(403).json({
       success: false,
-      message: "Security error: Cannot reset the password of another admin.",
+      message: "Can only reset passwords for partners.",
     });
+    return;
   }
 
   // 2. Execute secure password reset internally via Admin API

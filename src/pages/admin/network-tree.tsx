@@ -21,6 +21,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { 
   Network, 
   Search, 
@@ -32,7 +41,8 @@ import {
   Home,
   FolderTree,
   Info,
-  Layers
+  Layers,
+  Key
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +81,14 @@ export default function NetworkTree(): JSX.Element {
   const [activeTab, setActiveTab] = useState("overview");
   const [downlinesPage, setDownlinesPage] = useState(1);
   const [genPages, setGenPages] = useState<number[]>([1, 1, 1, 1, 1]);
+
+  // Password Reset State
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -239,6 +257,56 @@ export default function NetworkTree(): JSX.Element {
     setActiveTab("overview");
     setDownlinesPage(1);
     setGenPages([1, 1, 1, 1, 1]);
+  };
+
+  const handleResetPassword = async () => {
+    setResetError(null);
+    setResetSuccess(null);
+
+    if (resetPassword !== resetConfirm) {
+      setResetError("Passwords do not match.");
+      return;
+    }
+    if (resetPassword.length < 8) {
+      setResetError("Password must be at least 8 characters.");
+      return;
+    }
+    if (!selectedProfileId) return;
+
+    setResetLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const res = await fetch("/api/admin/reset-partner-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          profileId: selectedProfileId,
+          newPassword: resetPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setResetError(data.message || "Failed to reset password.");
+      } else {
+        setResetSuccess("Password reset successfully.");
+        setResetPassword("");
+        setResetConfirm("");
+        setTimeout(() => {
+          setIsResetOpen(false);
+          setResetSuccess(null);
+        }, 2000);
+      }
+    } catch (err) {
+      setResetError("An unexpected error occurred.");
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   // --- MLM GENERATION LOGIC ---
@@ -483,6 +551,21 @@ export default function NetworkTree(): JSX.Element {
                         <Badge variant="outline" className="font-mono text-[11px] bg-muted/40 px-3 py-1 rounded-md shadow-sm border-muted-foreground/20">
                           {selectedPartner.user_id}
                         </Badge>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 px-3 text-xs bg-background shadow-sm hover:bg-muted"
+                          onClick={() => {
+                            setResetError(null);
+                            setResetSuccess(null);
+                            setResetPassword("");
+                            setResetConfirm("");
+                            setIsResetOpen(true);
+                          }}
+                        >
+                          <Key className="h-3 w-3 mr-1.5" />
+                          Reset Password
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -610,7 +693,7 @@ export default function NetworkTree(): JSX.Element {
                                   <TableCell className="text-right pr-8 py-5">
                                     <Button
                                       size="sm"
-                                      className="h-10 rounded-full px-6 shadow-sm bg-emerald-600 hover:bg-emerald-700 hover:shadow-md text-white transition-all font-bold hover:-translate-y-0.5"
+                                      className="h-10 rounded-full px-6 shadow-sm bg-emerald-600 hover:bg-emerald-700 hover:shadow-md hover:-translate-y-0.5 text-white transition-all font-bold"
                                       onClick={() => handleOpenNode(p)}
                                     >
                                       View Tree
@@ -859,6 +942,58 @@ export default function NetworkTree(): JSX.Element {
 
         </div>
       </main>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Partner Password</DialogTitle>
+            <DialogDescription>
+              Set a new login password for <strong>{selectedPartner?.partner_name}</strong>. No email will be sent.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {resetError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md font-medium">
+                {resetError}
+              </div>
+            )}
+            {resetSuccess && (
+              <div className="text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-md font-medium border border-emerald-200 dark:border-emerald-900/50">
+                {resetSuccess}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Enter new password (min 8 chars)"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Confirm new password"
+                value={resetConfirm}
+                onChange={(e) => setResetConfirm(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetOpen(false)} disabled={resetLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetPassword} disabled={resetLoading || !resetPassword || !resetConfirm}>
+              {resetLoading ? "Resetting..." : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

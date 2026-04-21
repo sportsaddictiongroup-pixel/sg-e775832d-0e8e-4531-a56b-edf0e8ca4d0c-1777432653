@@ -136,35 +136,42 @@ export const authService = {
     username: string,
     password: string,
   ): Promise<{ user: AuthUser | null; error: AuthError | null }> {
-    const trimmed = username.trim().toLowerCase();
+    const trimmed = username.trim();
     if (!trimmed) {
       return { user: null, error: { message: "Username is required" } };
     }
 
-    const primaryEmail = `${trimmed}@partners.app.example.com`;
-    const fallbackEmail = `${trimmed}@app.local`;
+    try {
+      console.log("Auth: signInWithUsername - resolving username", { username: trimmed });
 
-    console.log("Auth: signInWithUsername - primary mapping", {
-      username: trimmed,
-      email: primaryEmail,
-    });
+      // 1. Look up the profile by username to find the linked email
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("username", trimmed)
+        .maybeSingle();
 
-    const primaryResult = await this.signIn(primaryEmail, password);
+      // 2. Safely handle not found or error
+      if (profileError || !profile) {
+        return { user: null, error: { message: "Invalid login credentials." } };
+      }
 
-    if (primaryResult.user) {
-      return primaryResult;
+      // 3. Safely handle missing email configuration
+      if (!profile.email) {
+        return { user: null, error: { message: "Account configuration error: No email linked to this username." } };
+      }
+
+      console.log("Auth: signInWithUsername - email resolved, proceeding to sign in");
+
+      // 4. Sign in with the resolved email and provided password
+      return await this.signIn(profile.email, password);
+    } catch (error) {
+      console.error("Auth: signInWithUsername - unexpected error", error);
+      return {
+        user: null,
+        error: { message: "An unexpected error occurred during sign in." },
+      };
     }
-
-    console.log("Auth: signInWithUsername - primary failed, trying fallback", {
-      username: trimmed,
-      primaryEmail,
-      fallbackEmail,
-      primaryError: primaryResult.error,
-    });
-
-    const fallbackResult = await this.signIn(fallbackEmail, password);
-
-    return fallbackResult;
   },
 
   async signOut(): Promise<{ error: AuthError | null }> {

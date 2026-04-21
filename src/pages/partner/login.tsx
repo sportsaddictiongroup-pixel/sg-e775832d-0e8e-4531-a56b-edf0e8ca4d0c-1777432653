@@ -38,7 +38,7 @@ export default function PartnerLogin(): JSX.Element {
       const { data: lookupData, error: lookupError } = await supabase
         .from("profiles")
         .select("email")
-        .ilike("username", trimmedUsername)
+        .eq("username", trimmedUsername)
         .maybeSingle();
 
       // 2. If no record found
@@ -81,8 +81,8 @@ export default function PartnerLogin(): JSX.Element {
         return;
       }
 
-      // 6. Verify role (Prevent admin from logging in via partner portal)
-      if (profile.role === "admin") {
+      // 6. Verify role (Allow login only if the resolved profile role exactly matches the intended partner role)
+      if (profile.role !== "partner") {
         await supabase.auth.signOut();
         setError("Invalid login credentials.");
         setLoading(false);

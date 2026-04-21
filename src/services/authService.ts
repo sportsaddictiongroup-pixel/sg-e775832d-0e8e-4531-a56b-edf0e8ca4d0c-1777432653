@@ -142,34 +142,50 @@ export const authService = {
     }
 
     try {
-      console.log("Auth: signInWithUsername - resolving username", { username: trimmed });
-
-      // 1. Look up the profile by username to find the linked email
+      // 1 & 2. Look up the profile by username to find the linked email (case-insensitive)
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("email")
-        .eq("username", trimmed)
+        .ilike("username", trimmed)
         .maybeSingle();
 
-      // 2. Safely handle not found or error
+      // 3. If no record found
       if (profileError || !profile) {
-        return { user: null, error: { message: "Invalid login credentials." } };
+        return { user: null, error: { message: "Invalid login credentials" } };
       }
 
-      // 3. Safely handle missing email configuration
+      // 4. If record found but email is null
       if (!profile.email) {
-        return { user: null, error: { message: "Account configuration error: No email linked to this username." } };
+        return { user: null, error: { message: "Account configuration error" } };
       }
 
-      console.log("Auth: signInWithUsername - email resolved, proceeding to sign in");
+      // 5. If email exists, call supabase.auth.signInWithPassword directly
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: profile.email,
+        password: password,
+      });
 
-      // 4. Sign in with the resolved email and provided password
-      return await this.signIn(profile.email, password);
+      if (error) {
+        return {
+          user: null,
+          error: { message: error.message, code: error.status?.toString() },
+        };
+      }
+
+      const authUser = data.user
+        ? {
+            id: data.user.id,
+            email: data.user.email || "",
+            user_metadata: data.user.user_metadata,
+            created_at: data.user.created_at,
+          }
+        : null;
+
+      return { user: authUser, error: null };
     } catch (error) {
-      console.error("Auth: signInWithUsername - unexpected error", error);
       return {
         user: null,
-        error: { message: "An unexpected error occurred during sign in." },
+        error: { message: "An unexpected error occurred during sign in" },
       };
     }
   },

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard } from "lucide-react";
+import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 
@@ -16,6 +16,11 @@ export default function AdminDashboard(): JSX.Element {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -137,17 +142,29 @@ export default function AdminDashboard(): JSX.Element {
         <div className="mx-auto w-full max-w-6xl space-y-8">
           {/* HEADER SECTION */}
           <header className="relative overflow-hidden rounded-2xl bg-muted/30 border border-muted p-8 md:p-10">
-            <div className="relative z-10 space-y-4 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
-                <LayoutDashboard className="h-4 w-4" />
-                Admin Portal
+            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start gap-6">
+              <div className="space-y-4 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Admin Portal
+                </div>
+                <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+                  Welcome{profile?.full_name ? `, ${profile.full_name}` : ""}.
+                </h1>
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  Centralized command center for managing master locations, tracking territory assignments, monitoring the partner network, and securely onboarding new members.
+                </p>
               </div>
-              <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-                Welcome{profile?.full_name ? `, ${profile.full_name}` : ""}.
-              </h1>
-              <p className="text-base text-muted-foreground leading-relaxed">
-                Centralized command center for managing master locations, tracking territory assignments, monitoring the partner network, and securely onboarding new members.
-              </p>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout} 
+                className="shrink-0 bg-background/80 backdrop-blur-sm shadow-sm hover:bg-destructive hover:text-destructive-foreground transition-colors border-muted-foreground/20 font-bold rounded-xl z-20"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
             {/* Decorative background element */}
             <div className="absolute right-0 top-0 -translate-y-1/4 translate-x-1/4 opacity-10 pointer-events-none hidden md:block">

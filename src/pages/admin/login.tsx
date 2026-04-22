@@ -38,35 +38,15 @@ export default function AdminLogin(): JSX.Element {
       // Pre-flight: Clear any stale sessions to prevent silent auth failures
       await supabase.auth.signOut();
 
-      // 1. Query public.profiles by exact username to resolve internal email and verify role
-      const { data: lookupData, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email, role")
-        .eq("username", trimmedUsername)
-        .maybeSingle();
-
-      if (lookupError || !lookupData) {
+      if (trimmedUsername !== "admin") {
         setError("Invalid login credentials.");
         setLoading(false);
         return;
       }
 
-      // Verify role is exactly "admin" before attempting authentication
-      if (lookupData.role !== "admin") {
-        setError("Invalid login credentials.");
-        setLoading(false);
-        return;
-      }
-
-      if (!lookupData.email) {
-        setError("Account configuration error.");
-        setLoading(false);
-        return;
-      }
-
-      // Call supabase.auth.signInWithPassword directly using the dynamically resolved email
+      // Call supabase.auth.signInWithPassword directly using the verified email
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: lookupData.email.trim(),
+        email: "admin@app.local",
         password: password,
       });
 

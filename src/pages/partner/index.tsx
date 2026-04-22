@@ -237,87 +237,92 @@ export default function PartnerDashboard(): JSX.Element {
       <SEO title="Partner Dashboard" description="Partner overview" />
       <main className="min-h-screen bg-background text-foreground px-4 py-8">
         <div className="mx-auto w-full max-w-5xl space-y-8">
-          <header className="space-y-2">
+          <header className="space-y-3">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
               Partner Portal
             </p>
-            <h1 className="font-heading text-3xl md:text-4xl font-extrabold tracking-tight text-blue-700 dark:text-blue-500">
-              Welcome {partnerDetails?.full_name || profile.full_name || profile.username}
-            </h1>
-            <p className="text-sm text-muted-foreground">
+            <div className="space-y-1">
+              <h1 className="font-heading text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+                Welcome
+              </h1>
+              <h2 className="font-heading text-2xl md:text-3xl font-normal text-blue-600 dark:text-blue-400">
+                {partnerDetails?.full_name || profile.full_name || profile.username}
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground pt-1">
               View your role, assigned territory, and manage your credentials.
             </p>
           </header>
 
           <section>
-            <Card className="border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/20 dark:to-background shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600" />
+            <Card className="max-w-2xl border-orange-300 dark:border-orange-800 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-orange-600" />
               
-              <CardHeader className="pb-4 border-b border-border/40 bg-background/50 backdrop-blur-sm">
-                <CardTitle className="text-lg font-bold flex items-center text-foreground">
-                  <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-md mr-3 text-blue-700 dark:text-blue-400">
-                    <User className="h-5 w-5" />
+              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                <CardTitle className="text-sm font-bold flex items-center text-foreground tracking-widest uppercase">
+                  <div className="bg-orange-100 dark:bg-orange-900/50 p-1.5 rounded-md mr-3 text-orange-700 dark:text-orange-400">
+                    <User className="h-4 w-4" />
                   </div>
-                  Profile Identity
+                  SAG NETWORK IDENTITY
                 </CardTitle>
               </CardHeader>
               
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <CardContent className="pt-5 pb-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                   {/* Personal Info */}
-                  <div className="space-y-5">
+                  <div className="space-y-4">
                     <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                         Full Name
                       </p>
-                      <p className="text-base font-semibold text-foreground">
+                      <p className="text-sm font-semibold text-foreground">
                         {partnerDetails?.full_name || "Not available"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                         User ID / Username
                       </p>
-                      <p className="text-base font-mono font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded inline-block">
+                      <p className="text-sm font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded inline-block">
                         {profile.username || "Not available"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                         Registered Mobile Number
                       </p>
-                      <p className="text-base font-semibold text-foreground">
+                      <p className="text-sm font-semibold text-foreground">
                         {partnerDetails?.mobile_number || "Not available"}
                       </p>
                     </div>
                   </div>
 
                   {/* Upline Info */}
-                  <div className="space-y-5 md:border-l md:border-border/50 md:pl-8">
+                  <div className="space-y-4 sm:border-l sm:border-border/50 sm:pl-6">
                     {upline ? (
                       <>
                         <div>
-                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 flex items-center gap-1">
                             <Network className="h-3 w-3" /> Upline Full Name
                           </p>
-                          <p className="text-base font-semibold text-foreground">
+                          <p className="text-sm font-semibold text-foreground">
                             {uplineFullName || upline.full_name || upline.username}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                             Upline User ID
                           </p>
-                          <p className="text-base font-mono font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-2 py-0.5 rounded inline-block">
+                          <p className="text-sm font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded inline-block">
                             {upline.username}
                           </p>
                         </div>
                       </>
                     ) : (
-                      <div className="flex flex-col items-start justify-center h-full text-muted-foreground bg-muted/10 p-5 rounded-xl border border-muted/50">
-                        <Network className="h-6 w-6 mb-3 opacity-40" />
-                        <p className="font-semibold text-foreground">No upline linked</p>
-                        <p className="text-xs mt-1">You are attached directly to root/admin.</p>
+                      <div className="flex flex-col items-start justify-center h-full text-muted-foreground bg-muted/10 p-4 rounded-xl border border-muted/50">
+                        <Network className="h-5 w-5 mb-2 opacity-40" />
+                        <p className="text-sm font-semibold text-foreground">No upline linked</p>
+                        <p className="text-[10px] mt-1">You are attached directly to root/admin.</p>
                       </div>
                     )}
                   </div>

@@ -395,23 +395,23 @@ export default function NetworkTree(): JSX.Element {
     const theme = getLevelTheme(level, partner.role);
 
     return (
-      <Card className={`w-48 h-[160px] shadow-sm hover:shadow-md z-10 relative overflow-hidden rounded-2xl border-2 ${theme.card} transition-all duration-300 hover:-translate-y-1`}>
-        <div className={`h-1.5 w-full absolute top-0 left-0 ${theme.accent}`} />
-        <CardContent className="p-4 flex flex-col items-center text-center mt-1 h-full">
-          <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-2 shadow-sm shrink-0 ${theme.iconBg}`}>
-            <span className="text-lg font-black tracking-tight">
+      <Card className={`w-36 h-[124px] shadow-sm hover:shadow-md z-10 relative overflow-hidden rounded-2xl border-2 ${theme.card} transition-all duration-200 hover:-translate-y-0.5`}>
+        <div className={`h-1 w-full absolute top-0 left-0 ${theme.accent}`} />
+        <CardContent className="p-3 flex flex-col items-center text-center h-full mt-1">
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center mb-1.5 shadow-sm shrink-0 ${theme.iconBg}`}>
+            <span className="text-base font-black tracking-tight">
               {partner.partner_name.substring(0, 2).toUpperCase()}
             </span>
           </div>
-          <h4 className={`text-sm font-extrabold truncate w-full ${theme.title}`} title={partner.partner_name}>
+          <h4 className={`text-xs font-extrabold truncate w-full ${theme.title}`} title={partner.partner_name}>
             {partner.partner_name}
           </h4>
-          <p className="text-[11px] text-muted-foreground font-mono mt-1 px-2 py-0.5 rounded bg-background/80 shadow-sm border border-muted-foreground/10 truncate max-w-[90%]" title={partner.user_id}>
+          <p className="text-[9px] text-muted-foreground font-mono mt-0.5 px-1.5 py-0.5 rounded bg-background/80 shadow-sm border border-muted-foreground/10 truncate max-w-[95%]" title={partner.user_id}>
             {partner.user_id}
           </p>
           {partner.direct_downlines_count > 0 && (
-            <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 w-[85%] flex items-center justify-center text-[10px] font-bold px-2 py-1 rounded-full border shadow-sm ${theme.count}`}>
-              <Users className="h-3 w-3 mr-1.5 opacity-80 shrink-0" />
+            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-[85%] flex items-center justify-center text-[9px] font-bold px-1.5 py-0.5 rounded-full border shadow-sm ${theme.count}`}>
+              <Users className="h-2.5 w-2.5 mr-1 opacity-80 shrink-0" />
               <span className="truncate">{partner.direct_downlines_count} Direct</span>
             </div>
           )}
@@ -581,22 +581,40 @@ export default function NetworkTree(): JSX.Element {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-5 w-full md:w-auto md:border-l md:pl-10 border-border/50">
-                    <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 shadow-sm text-center sm:text-left">
-                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1.5 flex items-center justify-center sm:justify-start gap-1.5">
-                        <Users className="h-3.5 w-3.5" /> Direct
+                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto md:border-l md:pl-8 border-border/50">
+                    {/* Upline Card */}
+                    <div className="bg-muted/30 px-3 py-2 rounded-xl border border-muted-foreground/10 shadow-sm min-w-[80px] flex-1 md:flex-none text-center">
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+                        <User className="h-3 w-3" /> Upline
                       </p>
-                      <p className="text-3xl font-black text-emerald-950 dark:text-emerald-100 leading-none">
-                        {selectedPartner.direct_downlines_count}
+                      <p className="text-xs font-bold text-foreground truncate max-w-[100px] mx-auto" title={selectedPartner.upline_username || "Admin Root"}>
+                        {selectedPartner.upline_username || <span className="italic opacity-60">Root</span>}
                       </p>
                     </div>
-                    <div className="bg-purple-50/80 dark:bg-purple-950/30 p-4 rounded-2xl border border-purple-200 dark:border-purple-900/50 shadow-sm text-center sm:text-left">
-                      <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-widest mb-1.5 flex items-center justify-center sm:justify-start gap-1.5">
-                        <User className="h-3.5 w-3.5" /> Upline
-                      </p>
-                      <p className="text-base font-bold text-purple-950 dark:text-purple-100 truncate max-w-[140px]" title={selectedPartner.upline_username || "Admin Root"}>
-                        {selectedPartner.upline_username || <span className="italic opacity-80 font-medium">Root</span>}
-                      </p>
+                    {/* L1 Card */}
+                    <div className="bg-blue-50/80 dark:bg-blue-950/30 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
+                      <p className="text-[9px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-widest mb-1">Direct/L1</p>
+                      <p className="text-base font-black text-blue-950 dark:text-blue-100 leading-none">{mlmGenerations[0]?.length || 0}</p>
+                    </div>
+                    {/* L2 Card */}
+                    <div className="bg-emerald-50/80 dark:bg-emerald-950/30 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
+                      <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">L2</p>
+                      <p className="text-base font-black text-emerald-950 dark:text-emerald-100 leading-none">{mlmGenerations[1]?.length || 0}</p>
+                    </div>
+                    {/* L3 Card */}
+                    <div className="bg-purple-50/80 dark:bg-purple-950/30 px-3 py-2 rounded-xl border border-purple-200 dark:border-purple-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
+                      <p className="text-[9px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-widest mb-1">L3</p>
+                      <p className="text-base font-black text-purple-950 dark:text-purple-100 leading-none">{mlmGenerations[2]?.length || 0}</p>
+                    </div>
+                    {/* L4 Card */}
+                    <div className="bg-orange-50/80 dark:bg-orange-950/30 px-3 py-2 rounded-xl border border-orange-200 dark:border-orange-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
+                      <p className="text-[9px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1">L4</p>
+                      <p className="text-base font-black text-orange-950 dark:text-orange-100 leading-none">{mlmGenerations[3]?.length || 0}</p>
+                    </div>
+                    {/* L5 Card */}
+                    <div className="bg-teal-50/80 dark:bg-teal-950/30 px-3 py-2 rounded-xl border border-teal-200 dark:border-teal-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
+                      <p className="text-[9px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest mb-1">L5</p>
+                      <p className="text-base font-black text-teal-950 dark:text-teal-100 leading-none">{mlmGenerations[4]?.length || 0}</p>
                     </div>
                   </div>
                 </CardContent>

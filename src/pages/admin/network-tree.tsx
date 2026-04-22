@@ -89,6 +89,7 @@ export default function NetworkTree(): JSX.Element {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+  const [showConfirmStep, setShowConfirmStep] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -259,7 +260,7 @@ export default function NetworkTree(): JSX.Element {
     setGenPages([1, 1, 1, 1, 1]);
   };
 
-  const handleResetPassword = async () => {
+  const handleInitiateReset = () => {
     setResetError(null);
     setResetSuccess(null);
 
@@ -273,9 +274,12 @@ export default function NetworkTree(): JSX.Element {
     }
     if (!selectedProfileId) return;
 
-    const isConfirmed = window.confirm("Are you sure you want to reset password for this partner?");
-    if (!isConfirmed) return;
+    setShowConfirmStep(true);
+  };
 
+  const handleConfirmReset = async () => {
+    setResetError(null);
+    setResetSuccess(null);
     setResetLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -296,10 +300,12 @@ export default function NetworkTree(): JSX.Element {
       const data = await res.json();
       if (!res.ok || !data.success) {
         setResetError(data.message || "Failed to reset password.");
+        setShowConfirmStep(false);
       } else {
         setResetSuccess("Password reset successfully.");
         setResetPassword("");
         setResetConfirm("");
+        setShowConfirmStep(false);
         setTimeout(() => {
           setIsResetOpen(false);
           setResetSuccess(null);
@@ -307,6 +313,7 @@ export default function NetworkTree(): JSX.Element {
       }
     } catch (err) {
       setResetError("An unexpected error occurred.");
+      setShowConfirmStep(false);
     } finally {
       setResetLoading(false);
     }
@@ -563,6 +570,7 @@ export default function NetworkTree(): JSX.Element {
                             setResetSuccess(null);
                             setResetPassword("");
                             setResetConfirm("");
+                            setShowConfirmStep(false);
                             setIsResetOpen(true);
                           }}
                         >
@@ -966,34 +974,58 @@ export default function NetworkTree(): JSX.Element {
                 {resetSuccess}
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                placeholder="Enter new password (min 8 chars)"
-                value={resetPassword}
-                onChange={(e) => setResetPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="Confirm new password"
-                value={resetConfirm}
-                onChange={(e) => setResetConfirm(e.target.value)}
-              />
-            </div>
+            
+            {!showConfirmStep ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Enter new password (min 8 chars)"
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={resetConfirm}
+                    onChange={(e) => setResetConfirm(e.target.value)}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-md border border-amber-200 dark:border-amber-900/50">
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                  Are you sure you want to reset the password for this partner? This will immediately replace the current login password.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsResetOpen(false)} disabled={resetLoading}>
-              Cancel
-            </Button>
-            <Button onClick={handleResetPassword} disabled={resetLoading || !resetPassword || !resetConfirm}>
-              {resetLoading ? "Resetting..." : "Reset Password"}
-            </Button>
+            {!showConfirmStep ? (
+              <>
+                <Button variant="outline" onClick={() => setIsResetOpen(false)} disabled={resetLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={handleInitiateReset} disabled={resetLoading || !resetPassword || !resetConfirm}>
+                  Reset Password
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setShowConfirmStep(false)} disabled={resetLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={handleConfirmReset} disabled={resetLoading}>
+                  {resetLoading ? "Resetting..." : "Confirm Reset"}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -4,10 +4,13 @@ import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
+import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 
@@ -17,9 +20,81 @@ export default function AdminDashboard(): JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Password Change State
+  const [isPwdOpen, setIsPwdOpen] = useState(false);
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+  const [pwdSuccess, setPwdSuccess] = useState<string | null>(null);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace("/admin/login");
+  };
+
+  const handlePasswordChange = async () => {
+    setPwdError(null);
+    setPwdSuccess(null);
+
+    if (!currentPwd || !newPwd || !confirmPwd) {
+      setPwdError("All fields are required.");
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setPwdError("New passwords do not match.");
+      return;
+    }
+    if (newPwd.length < 8) {
+      setPwdError("New password must be at least 8 characters.");
+      return;
+    }
+
+    setPwdLoading(true);
+    try {
+      // 1. Get current secure session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        setPwdError("Session error. Please log in again.");
+        setPwdLoading(false);
+        return;
+      }
+
+      // 2. Verify current password securely by attempting a silent re-auth
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPwd
+      });
+
+      if (signInError) {
+        setPwdError("Incorrect current password.");
+        setPwdLoading(false);
+        return;
+      }
+
+      // 3. Update to the new password permanently
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPwd
+      });
+
+      if (updateError) {
+        setPwdError(updateError.message);
+      } else {
+        setPwdSuccess("Password updated successfully.");
+        setCurrentPwd("");
+        setNewPwd("");
+        setConfirmPwd("");
+        setTimeout(() => {
+          setIsPwdOpen(false);
+          setPwdSuccess(null);
+        }, 2000);
+      }
+    } catch (err) {
+      setPwdError("An unexpected error occurred.");
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -156,15 +231,33 @@ export default function AdminDashboard(): JSX.Element {
                 </p>
               </div>
 
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout} 
-                className="shrink-0 bg-background/80 backdrop-blur-sm shadow-sm hover:bg-destructive hover:text-destructive-foreground transition-colors border-muted-foreground/20 font-bold rounded-xl z-20"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 shrink-0 z-20">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setPwdError(null);
+                    setPwdSuccess(null);
+                    setCurrentPwd("");
+                    setNewPwd("");
+                    setConfirmPwd("");
+                    setIsPwdOpen(true);
+                  }}
+                  className="bg-background/80 backdrop-blur-sm shadow-sm hover:bg-muted font-bold rounded-xl"
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  Change Password
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleLogout} 
+                  className="bg-background/80 backdrop-blur-sm shadow-sm hover:bg-destructive hover:text-destructive-foreground transition-colors border-muted-foreground/20 font-bold rounded-xl"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             </div>
             {/* Decorative background element */}
             <div className="absolute right-0 top-0 -translate-y-1/4 translate-x-1/4 opacity-10 pointer-events-none hidden md:block">
@@ -209,6 +302,71 @@ export default function AdminDashboard(): JSX.Element {
           </section>
         </div>
       </main>
+
+      {/* Change Password Dialog */}
+      <Dialog open={isPwdOpen} onOpenChange={setIsPwdOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Admin Password</DialogTitle>
+            <DialogDescription>
+              Update your administrative login password. This change takes effect immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {pwdError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md font-medium">
+                {pwdError}
+              </div>
+            )}
+            {pwdSuccess && (
+              <div className="text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-md font-medium border border-emerald-200 dark:border-emerald-900/50">
+                {pwdSuccess}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="current-pwd">Current Password</Label>
+              <Input
+                id="current-pwd"
+                type="password"
+                placeholder="Enter current password"
+                value={currentPwd}
+                onChange={(e) => setCurrentPwd(e.target.value)}
+                disabled={pwdLoading || !!pwdSuccess}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-pwd">New Password</Label>
+              <Input
+                id="new-pwd"
+                type="password"
+                placeholder="Enter new password (min 8 chars)"
+                value={newPwd}
+                onChange={(e) => setNewPwd(e.target.value)}
+                disabled={pwdLoading || !!pwdSuccess}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-pwd">Confirm New Password</Label>
+              <Input
+                id="confirm-pwd"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPwd}
+                onChange={(e) => setConfirmPwd(e.target.value)}
+                disabled={pwdLoading || !!pwdSuccess}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPwdOpen(false)} disabled={pwdLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handlePasswordChange} disabled={pwdLoading || !!pwdSuccess}>
+              {pwdLoading ? "Updating..." : "Update Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

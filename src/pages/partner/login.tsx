@@ -34,6 +34,10 @@ export default function PartnerLogin(): JSX.Element {
     setLoading(true);
 
     try {
+      // 0. Proactively clear any stale/admin sessions before attempting a new partner login
+      // This prevents cross-tab session contamination between admin and partner views
+      await supabase.auth.signOut();
+
       // 1. Query public.profiles by exact username to resolve internal email
       const { data: lookupData, error: lookupError } = await supabase
         .from("profiles")

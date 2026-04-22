@@ -19,9 +19,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { User, MapPin, Network, Key } from "lucide-react";
 
 type Profile = Tables<"profiles">;
-type TerritoryAssignment = Tables<"territory_assignments">;
-
-type ExtendedTerritoryAssignment = TerritoryAssignment & {
+type PartnerDetails = Tables<"partner_details"> & {
   countries?: { name: string } | null;
   states?: { name: string } | null;
   districts?: { name: string } | null;
@@ -55,8 +53,9 @@ const formatRoleLabel = (role: string | null | undefined) => {
 export default function PartnerDashboard(): JSX.Element {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [partnerDetails, setPartnerDetails] = useState<PartnerDetails | null>(null);
   const [upline, setUpline] = useState<Profile | null>(null);
-  const [assignment, setAssignment] = useState<ExtendedTerritoryAssignment | null>(null);
+  const [uplineFullName, setUplineFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -112,11 +111,23 @@ export default function PartnerDashboard(): JSX.Element {
         
         if (isMounted && uplineData) {
           setUpline(uplineData as Profile);
+          
+          // Also fetch upline's full name from partner_details
+          const { data: uplinePd } = await supabase
+            .from("partner_details")
+            .select("full_name")
+            .eq("profile_id", typedProfile.upline_profile_id)
+            .maybeSingle();
+            
+          if (isMounted && uplinePd) {
+            setUplineFullName(uplinePd.full_name);
+          }
         }
       }
 
-      const { data: assignments, error: assignmentError } = await supabase
-        .from("territory_assignments")
+      // Fetch partner residential details (address, name, mobile)
+      const { data: pdData, error: pdError } = await supabase
+        .from("partner_details")
         .select(`
           *,
           countries(name),
@@ -125,14 +136,15 @@ export default function PartnerDashboard(): JSX.Element {
           pincodes(code),
           locations(name)
         `)
-        .eq("profile_id", user.id);
+        .eq("profile_id", user.id)
+        .maybeSingle();
 
       if (!isMounted) {
         return;
       }
 
-      if (!assignmentError && Array.isArray(assignments) && assignments.length > 0) {
-        setAssignment(assignments[0] as ExtendedTerritoryAssignment);
+      if (!pdError && pdData) {
+        setPartnerDetails(pdData as PartnerDetails);
       }
 
       setLoading(false);
@@ -245,7 +257,7 @@ export default function PartnerDashboard(): JSX.Element {
               <CardContent className="pt-4 space-y-3 text-sm">
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Full Name</p>
-                  <p className="font-medium text-foreground">{profile.full_name || "Not available"}</p>
+                  <p className="font-medium text-foreground">{partnerDetails?.full_name || "Not available"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Username</p>
@@ -253,7 +265,7 @@ export default function PartnerDashboard(): JSX.Element {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Mobile</p>
-                  <p className="font-medium text-foreground">{profile.mobile_number || "Not available"}</p>
+                  <p className="font-medium text-foreground">{partnerDetails?.mobile_number || "Not available"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Role</p>
@@ -277,29 +289,29 @@ export default function PartnerDashboard(): JSX.Element {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-3 text-sm">
-                {hasAssignment ? (
+                {partnerDetails ? (
                   <>
                     <div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Country</p>
-                      <p className="font-medium text-foreground">{assignment?.countries?.name || "Not assigned"}</p>
+                      <p className="font-medium text-foreground">{partnerDetails.countries?.name || "Not available"}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">State</p>
-                      <p className="font-medium text-foreground">{assignment?.states?.name || "Not assigned"}</p>
+                      <p className="font-medium text-foreground">{partnerDetails.states?.name || "Not available"}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">District</p>
-                      <p className="font-medium text-foreground">{assignment?.districts?.name || "Not assigned"}</p>
+                      <p className="font-medium text-foreground">{partnerDetails.districts?.name || "Not available"}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">PIN Code</p>
-                        <p className="font-medium text-foreground">{assignment?.pincodes?.code || "Not assigned"}</p>
+                        <p className="font-medium text-foreground">{partnerDetails.pincodes?.code || "Not available"}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Area</p>
-                        <p className="font-medium text-foreground truncate" title={assignment?.locations?.name || "Not assigned"}>
-                          {assignment?.locations?.name || "Not assigned"}
+                        <p className="font-medium text-foreground truncate" title={partnerDetails.locations?.name || "Not available"}>
+                          {partnerDetails.locations?.name || "Not available"}
                         </p>
                       </div>
                     </div>
@@ -307,8 +319,8 @@ export default function PartnerDashboard(): JSX.Element {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
                     <MapPin className="h-8 w-8 mb-2 opacity-20" />
-                    <p className="font-medium">No Territory Assigned</p>
-                    <p className="text-xs mt-1">Your admin has not assigned a territory.</p>
+                    <p className="font-medium">No Address Found</p>
+                    <p className="text-xs mt-1">Your residential address is missing.</p>
                   </div>
                 )}
               </CardContent>
@@ -329,7 +341,7 @@ export default function PartnerDashboard(): JSX.Element {
                   <>
                     <div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Name</p>
-                      <p className="font-medium text-foreground">{upline.full_name || upline.username}</p>
+                      <p className="font-medium text-foreground">{uplineFullName || upline.username}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Username</p>

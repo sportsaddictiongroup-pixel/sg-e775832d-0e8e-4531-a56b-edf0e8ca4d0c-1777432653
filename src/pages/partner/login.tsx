@@ -43,14 +43,15 @@ export default function PartnerLogin(): JSX.Element {
 
       // 2. If no record found
       if (lookupError || !lookupData) {
-        setError("Invalid login credentials.");
+        console.error("Partner Login Lookup Error:", lookupError);
+        setError(`Invalid login credentials. [Debug: User lookup failed ${lookupError?.message || 'Not found'}]`);
         setLoading(false);
         return;
       }
 
       // 3. If email missing
       if (!lookupData.email) {
-        setError("Account configuration error.");
+        setError("Account configuration error. [Debug: No email attached to this username]");
         setLoading(false);
         return;
       }
@@ -62,7 +63,8 @@ export default function PartnerLogin(): JSX.Element {
       });
 
       if (signInError || !authData.user) {
-        setError("Invalid login credentials.");
+        console.error("Partner Login Auth Error:", signInError);
+        setError(`Invalid login credentials. [Debug: Auth failed ${signInError?.message || 'No user'}]`);
         setLoading(false);
         return;
       }
@@ -76,7 +78,8 @@ export default function PartnerLogin(): JSX.Element {
 
       if (profileError || !profile) {
         await supabase.auth.signOut();
-        setError("No profile found for this account.");
+        console.error("Partner Login Profile Verify Error:", profileError);
+        setError(`No profile found for this account. [Debug: Verify failed ${profileError?.message || 'Not found'}]`);
         setLoading(false);
         return;
       }
@@ -84,16 +87,16 @@ export default function PartnerLogin(): JSX.Element {
       // 6. Verify role (Allow login only if the resolved profile role exactly matches the intended partner role)
       if (profile.role !== "partner") {
         await supabase.auth.signOut();
-        setError("Invalid login credentials.");
+        setError(`Invalid login credentials. [Debug: Role mismatch. Expected partner, got ${profile.role}]`);
         setLoading(false);
         return;
       }
 
       // 7. Preserve existing redirect
       router.push("/partner");
-    } catch (err) {
-      console.error("Partner Login Error:", err);
-      setError("Unable to sign in at the moment. Please try again.");
+    } catch (err: any) {
+      console.error("Partner Login Unexpected Error:", err);
+      setError(`Unable to sign in at the moment. [Debug: ${err?.message || 'Unknown error'}]`);
     } finally {
       setLoading(false);
     }

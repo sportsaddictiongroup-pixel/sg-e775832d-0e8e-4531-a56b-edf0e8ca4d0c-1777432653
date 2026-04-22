@@ -16,9 +16,18 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { User, MapPin, Network, Key } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 type TerritoryAssignment = Tables<"territory_assignments">;
+
+type ExtendedTerritoryAssignment = TerritoryAssignment & {
+  countries?: { name: string } | null;
+  states?: { name: string } | null;
+  districts?: { name: string } | null;
+  pincodes?: { code: string } | null;
+  locations?: { name: string } | null;
+};
 
 const formatRoleLabel = (role: string | null | undefined) => {
   if (!role) {
@@ -46,7 +55,8 @@ const formatRoleLabel = (role: string | null | undefined) => {
 export default function PartnerDashboard(): JSX.Element {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [assignment, setAssignment] = useState<TerritoryAssignment | null>(null);
+  const [upline, setUpline] = useState<Profile | null>(null);
+  const [assignment, setAssignment] = useState<ExtendedTerritoryAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -92,9 +102,29 @@ export default function PartnerDashboard(): JSX.Element {
 
       setProfile(typedProfile);
 
+      // Fetch upline details if exists
+      if (typedProfile.upline_profile_id) {
+        const { data: uplineData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", typedProfile.upline_profile_id)
+          .maybeSingle();
+        
+        if (isMounted && uplineData) {
+          setUpline(uplineData as Profile);
+        }
+      }
+
       const { data: assignments, error: assignmentError } = await supabase
         .from("territory_assignments")
-        .select("*")
+        .select(`
+          *,
+          countries(name),
+          states(name),
+          districts(name),
+          pincodes(code),
+          locations(name)
+        `)
         .eq("profile_id", user.id);
 
       if (!isMounted) {
@@ -102,7 +132,7 @@ export default function PartnerDashboard(): JSX.Element {
       }
 
       if (!assignmentError && Array.isArray(assignments) && assignments.length > 0) {
-        setAssignment(assignments[0] as TerritoryAssignment);
+        setAssignment(assignments[0] as ExtendedTerritoryAssignment);
       }
 
       setLoading(false);
@@ -193,7 +223,7 @@ export default function PartnerDashboard(): JSX.Element {
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
               Partner Portal
             </p>
-            <h1 className="font-heading text-2xl md:text-3xl font-semibold">
+            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">
               Welcome{profile.full_name ? `, ${profile.full_name}` : ""}.
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -201,78 +231,121 @@ export default function PartnerDashboard(): JSX.Element {
             </p>
           </header>
 
-          <section className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Summary</CardTitle>
-                <CardDescription>
-                  Basic details about your account.
-                </CardDescription>
+          <section className="grid gap-4 md:grid-cols-3">
+            {/* BLOCK 1: BASIC DETAILS */}
+            <Card className="border-blue-200/60 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/10 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                <CardTitle className="text-sm font-bold flex items-center text-foreground">
+                  <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-md mr-2 text-blue-700 dark:text-blue-400">
+                    <User className="h-4 w-4" />
+                  </div>
+                  Basic Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Full Name</span>
-                  <span className="font-medium">
-                    {profile.full_name || profile.username}
-                  </span>
+              <CardContent className="pt-4 space-y-3 text-sm">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Full Name</p>
+                  <p className="font-medium text-foreground">{profile.full_name || "Not available"}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Username</span>
-                  <span className="font-medium">{profile.username}</span>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Username</p>
+                  <p className="font-medium text-foreground">{profile.username || "Not available"}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Mobile</span>
-                  <span className="font-medium">{profile.mobile_number}</span>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Mobile</p>
+                  <p className="font-medium text-foreground">{profile.mobile_number || "Not available"}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Role</span>
-                  <span className="font-medium">
-                    {formatRoleLabel(profile.role)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Upline</span>
-                  <span className="font-medium">
-                    {profile.upline_profile_id
-                      ? "Configured"
-                      : "Admin (default)"}
-                  </span>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Role</p>
+                  <p className="font-medium text-foreground">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                      {formatRoleLabel(profile.role)}
+                    </span>
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Territory Summary</CardTitle>
-                <CardDescription>
-                  High-level view of your current assignment.
-                </CardDescription>
+            {/* BLOCK 2: ADDRESS DETAILS */}
+            <Card className="border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                <CardTitle className="text-sm font-bold flex items-center text-foreground">
+                  <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 rounded-md mr-2 text-emerald-700 dark:text-emerald-400">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  Address Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <span className="font-medium">
-                    {hasAssignment ? "Assigned" : "Not assigned"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Position</span>
-                  <span className="font-medium">
-                    {assignment
-                      ? formatRoleLabel(assignment.role)
-                      : formatRoleLabel(profile.role)}
-                  </span>
-                </div>
-                {!hasAssignment && (
-                  <p className="text-xs text-muted-foreground pt-2">
-                    Your admin will assign a specific territory to this account.
-                  </p>
+              <CardContent className="pt-4 space-y-3 text-sm">
+                {hasAssignment ? (
+                  <>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Country</p>
+                      <p className="font-medium text-foreground">{assignment?.countries?.name || "Not assigned"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">State</p>
+                      <p className="font-medium text-foreground">{assignment?.states?.name || "Not assigned"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">District</p>
+                      <p className="font-medium text-foreground">{assignment?.districts?.name || "Not assigned"}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">PIN Code</p>
+                        <p className="font-medium text-foreground">{assignment?.pincodes?.code || "Not assigned"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Area</p>
+                        <p className="font-medium text-foreground truncate" title={assignment?.locations?.name || "Not assigned"}>
+                          {assignment?.locations?.name || "Not assigned"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+                    <MapPin className="h-8 w-8 mb-2 opacity-20" />
+                    <p className="font-medium">No Territory Assigned</p>
+                    <p className="text-xs mt-1">Your admin has not assigned a territory.</p>
+                  </div>
                 )}
-                {hasAssignment && (
-                  <p className="text-xs text-muted-foreground pt-2">
-                    Detailed territory drilldown will appear here as the system
-                    evolves.
-                  </p>
+              </CardContent>
+            </Card>
+
+            {/* BLOCK 3: UPLINE DETAILS */}
+            <Card className="border-purple-200/60 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/10 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                <CardTitle className="text-sm font-bold flex items-center text-foreground">
+                  <div className="bg-purple-100 dark:bg-purple-900/50 p-1.5 rounded-md mr-2 text-purple-700 dark:text-purple-400">
+                    <Network className="h-4 w-4" />
+                  </div>
+                  Upline Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3 text-sm">
+                {upline ? (
+                  <>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Name</p>
+                      <p className="font-medium text-foreground">{upline.full_name || upline.username}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Username</p>
+                      <p className="font-medium text-foreground">{upline.username}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Role</p>
+                      <p className="font-medium text-foreground text-xs opacity-80">{formatRoleLabel(upline.role)}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+                    <Network className="h-8 w-8 mb-2 opacity-20" />
+                    <p className="font-medium">No Upline Linked</p>
+                    <p className="text-xs mt-1">You are attached directly to root/admin.</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -281,7 +354,10 @@ export default function PartnerDashboard(): JSX.Element {
           <section className="grid gap-4 md:grid-cols-[2fr,1fr]">
             <Card>
               <CardHeader>
-                <CardTitle>Change Password</CardTitle>
+                <CardTitle className="flex items-center">
+                  <Key className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Change Password
+                </CardTitle>
                 <CardDescription>
                   Update your password to keep your account secure.
                 </CardDescription>

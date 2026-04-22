@@ -224,7 +224,13 @@ export default function PartnerDashboard(): JSX.Element {
     );
   }
 
-  const hasAssignment = !!assignment;
+  const hasAddress = !!partnerDetails && (
+    !!partnerDetails.countries?.name || 
+    !!partnerDetails.states?.name || 
+    !!partnerDetails.districts?.name || 
+    !!partnerDetails.pincodes?.code || 
+    !!partnerDetails.locations?.name
+  );
 
   return (
     <>
@@ -289,7 +295,7 @@ export default function PartnerDashboard(): JSX.Element {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4 space-y-3 text-sm">
-                {partnerDetails ? (
+                {hasAddress ? (
                   <>
                     <div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Country</p>

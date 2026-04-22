@@ -101,6 +101,28 @@ export default function PartnerDashboard(): JSX.Element {
 
       setProfile(typedProfile);
 
+      // Fetch partner residential details (address, name, mobile)
+      const { data: pdData, error: pdError } = await supabase
+        .from("partner_details")
+        .select(`
+          *,
+          countries(name),
+          states(name),
+          districts(name),
+          pincodes(code),
+          locations(name)
+        `)
+        .eq("profile_id", user.id)
+        .maybeSingle();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!pdError && pdData) {
+        setPartnerDetails(pdData as PartnerDetails);
+      }
+
       // Fetch upline details if exists
       if (typedProfile.upline_profile_id) {
         const { data: uplineData } = await supabase
@@ -123,28 +145,6 @@ export default function PartnerDashboard(): JSX.Element {
             setUplineFullName(uplinePd.full_name);
           }
         }
-      }
-
-      // Fetch partner residential details (address, name, mobile)
-      const { data: pdData, error: pdError } = await supabase
-        .from("partner_details")
-        .select(`
-          *,
-          countries(name),
-          states(name),
-          districts(name),
-          pincodes(code),
-          locations(name)
-        `)
-        .eq("profile_id", user.id)
-        .maybeSingle();
-
-      if (!isMounted) {
-        return;
-      }
-
-      if (!pdError && pdData) {
-        setPartnerDetails(pdData as PartnerDetails);
       }
 
       setLoading(false);

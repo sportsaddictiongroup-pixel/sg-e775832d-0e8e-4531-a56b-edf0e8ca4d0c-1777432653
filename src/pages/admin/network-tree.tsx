@@ -581,40 +581,40 @@ export default function NetworkTree(): JSX.Element {
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto md:border-l md:pl-8 border-border/50">
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto md:border-l md:pl-8 border-border/50">
                     {/* Upline Card */}
-                    <div className="bg-muted/30 px-3 py-2 rounded-xl border border-muted-foreground/10 shadow-sm min-w-[80px] flex-1 md:flex-none text-center">
-                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
-                        <User className="h-3 w-3" /> Upline
+                    <div className="bg-muted/30 px-4 py-3 rounded-xl border border-muted-foreground/10 shadow-sm min-w-[120px] flex-1 md:flex-none text-center">
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center justify-center gap-1.5">
+                        <User className="h-3.5 w-3.5" /> Upline
                       </p>
-                      <p className="text-xs font-bold text-foreground truncate max-w-[100px] mx-auto" title={selectedPartner.upline_username || "Admin Root"}>
+                      <p className="text-sm font-bold text-foreground truncate max-w-[110px] mx-auto" title={selectedPartner.upline_username || "Admin Root"}>
                         {selectedPartner.upline_username || <span className="italic opacity-60">Root</span>}
                       </p>
                     </div>
                     {/* L1 Card */}
-                    <div className="bg-blue-50/80 dark:bg-blue-950/30 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
-                      <p className="text-[9px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-widest mb-1">Direct/L1</p>
-                      <p className="text-base font-black text-blue-950 dark:text-blue-100 leading-none">{mlmGenerations[0]?.length || 0}</p>
+                    <div className="bg-blue-50/80 dark:bg-blue-950/30 px-4 py-3 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm min-w-[88px] flex-1 md:flex-none text-center">
+                      <p className="text-[11px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-widest mb-1.5">Direct/L1</p>
+                      <p className="text-2xl font-black text-blue-950 dark:text-blue-100 leading-none">{mlmGenerations[0]?.length || 0}</p>
                     </div>
                     {/* L2 Card */}
-                    <div className="bg-emerald-50/80 dark:bg-emerald-950/30 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
-                      <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1">L2</p>
-                      <p className="text-base font-black text-emerald-950 dark:text-emerald-100 leading-none">{mlmGenerations[1]?.length || 0}</p>
+                    <div className="bg-emerald-50/80 dark:bg-emerald-950/30 px-4 py-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 shadow-sm min-w-[88px] flex-1 md:flex-none text-center">
+                      <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-1.5">L2</p>
+                      <p className="text-2xl font-black text-emerald-950 dark:text-emerald-100 leading-none">{mlmGenerations[1]?.length || 0}</p>
                     </div>
                     {/* L3 Card */}
-                    <div className="bg-purple-50/80 dark:bg-purple-950/30 px-3 py-2 rounded-xl border border-purple-200 dark:border-purple-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
-                      <p className="text-[9px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-widest mb-1">L3</p>
-                      <p className="text-base font-black text-purple-950 dark:text-purple-100 leading-none">{mlmGenerations[2]?.length || 0}</p>
+                    <div className="bg-purple-50/80 dark:bg-purple-950/30 px-4 py-3 rounded-xl border border-purple-200 dark:border-purple-900/50 shadow-sm min-w-[88px] flex-1 md:flex-none text-center">
+                      <p className="text-[11px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-widest mb-1.5">L3</p>
+                      <p className="text-2xl font-black text-purple-950 dark:text-purple-100 leading-none">{mlmGenerations[2]?.length || 0}</p>
                     </div>
                     {/* L4 Card */}
-                    <div className="bg-orange-50/80 dark:bg-orange-950/30 px-3 py-2 rounded-xl border border-orange-200 dark:border-orange-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
-                      <p className="text-[9px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1">L4</p>
-                      <p className="text-base font-black text-orange-950 dark:text-orange-100 leading-none">{mlmGenerations[3]?.length || 0}</p>
+                    <div className="bg-orange-50/80 dark:bg-orange-950/30 px-4 py-3 rounded-xl border border-orange-200 dark:border-orange-900/50 shadow-sm min-w-[88px] flex-1 md:flex-none text-center">
+                      <p className="text-[11px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-widest mb-1.5">L4</p>
+                      <p className="text-2xl font-black text-orange-950 dark:text-orange-100 leading-none">{mlmGenerations[3]?.length || 0}</p>
                     </div>
                     {/* L5 Card */}
-                    <div className="bg-teal-50/80 dark:bg-teal-950/30 px-3 py-2 rounded-xl border border-teal-200 dark:border-teal-900/50 shadow-sm min-w-[64px] flex-1 md:flex-none text-center">
-                      <p className="text-[9px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest mb-1">L5</p>
-                      <p className="text-base font-black text-teal-950 dark:text-teal-100 leading-none">{mlmGenerations[4]?.length || 0}</p>
+                    <div className="bg-teal-50/80 dark:bg-teal-950/30 px-4 py-3 rounded-xl border border-teal-200 dark:border-teal-900/50 shadow-sm min-w-[88px] flex-1 md:flex-none text-center">
+                      <p className="text-[11px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest mb-1.5">L5</p>
+                      <p className="text-2xl font-black text-teal-950 dark:text-teal-100 leading-none">{mlmGenerations[4]?.length || 0}</p>
                     </div>
                   </div>
                 </CardContent>

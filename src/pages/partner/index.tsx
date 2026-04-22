@@ -29,6 +29,8 @@ type PartnerDetails = {
   locations?: { name: string } | null;
 };
 
+type TerritoryAssignment = Tables<"territory_assignments">;
+
 const formatRoleLabel = (role: string | null | undefined) => {
   if (!role) {
     return "Not set";
@@ -58,6 +60,7 @@ export default function PartnerDashboard(): JSX.Element {
   const [partnerDetails, setPartnerDetails] = useState<PartnerDetails | null>(null);
   const [upline, setUpline] = useState<Profile | null>(null);
   const [uplineFullName, setUplineFullName] = useState<string | null>(null);
+  const [activeAssignment, setActiveAssignment] = useState<TerritoryAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -149,6 +152,18 @@ export default function PartnerDashboard(): JSX.Element {
         setPartnerDetails(pdData as PartnerDetails);
       }
 
+      // Fetch the active territory assignment to derive the operational role badge
+      const { data: assignmentData } = await supabase
+        .from("territory_assignments")
+        .select("*")
+        .eq("profile_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+        
+      if (isMounted && assignmentData) {
+        setActiveAssignment(assignmentData as TerritoryAssignment);
+      }
+
       setLoading(false);
     };
 
@@ -226,105 +241,125 @@ export default function PartnerDashboard(): JSX.Element {
     );
   }
 
-  const hasAddress = !!partnerDetails && (
-    !!partnerDetails.countries?.name || 
-    !!partnerDetails.states?.name || 
-    !!partnerDetails.districts?.name || 
-    !!partnerDetails.pincodes?.code || 
-    !!partnerDetails.locations?.name
-  );
+  // Derive the operational role from the active territory assignment
+  let derivedRole = "No Role Defined";
+  if (activeAssignment) {
+    if (activeAssignment.location_id) {
+      derivedRole = "Area / Location Head";
+    } else if (activeAssignment.pincode_id) {
+      derivedRole = "PIN Code Head";
+    } else if (activeAssignment.district_id) {
+      derivedRole = "District Head";
+    } else if (activeAssignment.state_id) {
+      derivedRole = "State Head";
+    }
+  }
 
   return (
     <>
       <SEO title="Partner Dashboard" description="Partner overview" />
-      <main className="min-h-screen bg-background text-foreground px-4 py-8">
-        <div className="mx-auto w-full max-w-5xl space-y-8">
-          <header className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Partner Portal
-            </p>
-            <div className="space-y-1">
-              <h1 className="font-heading text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
-                Welcome
-              </h1>
-              <h2 className="font-heading text-2xl md:text-3xl font-normal text-blue-600 dark:text-blue-400">
-                {partnerDetails?.full_name || profile.full_name || profile.username}
-              </h2>
+      <main className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12">
+        <div className="mx-auto w-full max-w-6xl space-y-10 md:space-y-12">
+          
+          {/* WELCOME AREA WITH TOP-RIGHT BADGE */}
+          <header className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                Partner Portal
+              </p>
+              <div className="space-y-1">
+                <h1 className="font-heading text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+                  Welcome
+                </h1>
+                <h2 className="font-heading text-2xl md:text-3xl font-normal text-blue-600 dark:text-blue-400">
+                  {partnerDetails?.full_name || profile.full_name || profile.username}
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground pt-1 max-w-xl">
+                View your role, assigned territory, and manage your credentials.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground pt-1">
-              View your role, assigned territory, and manage your credentials.
-            </p>
+
+            {/* PREMIUM ROLE BADGE */}
+            <div className="shrink-0">
+              <div className="inline-flex items-center px-4 py-2 rounded-xl border border-orange-200 dark:border-orange-800/60 bg-orange-50/50 dark:bg-orange-950/20 shadow-sm backdrop-blur-sm">
+                <div className="h-2 w-2 rounded-full bg-orange-500 mr-2.5 animate-pulse" />
+                <span className="text-sm font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">
+                  {derivedRole}
+                </span>
+              </div>
+            </div>
           </header>
 
           <section>
-            <Card className="max-w-2xl border-orange-300 dark:border-orange-800 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
+            <Card className="w-full md:max-w-4xl border-orange-300 dark:border-orange-800 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-orange-600" />
               
-              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
-                <CardTitle className="text-sm font-bold flex items-center text-foreground tracking-widest uppercase">
-                  <div className="bg-orange-100 dark:bg-orange-900/50 p-1.5 rounded-md mr-3 text-orange-700 dark:text-orange-400">
-                    <User className="h-4 w-4" />
+              <CardHeader className="pb-4 pt-5 md:pt-6 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                <CardTitle className="text-sm md:text-base font-bold flex items-center text-foreground tracking-widest uppercase">
+                  <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg mr-3 text-orange-700 dark:text-orange-400 shadow-sm">
+                    <User className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                   SAG NETWORK IDENTITY
                 </CardTitle>
               </CardHeader>
               
-              <CardContent className="pt-5 pb-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+              <CardContent className="p-5 md:p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
                   {/* Personal Info */}
-                  <div className="space-y-4">
+                  <div className="space-y-5 md:space-y-6">
                     <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                         Full Name
                       </p>
-                      <p className="text-sm font-semibold text-foreground">
+                      <p className="text-sm md:text-base font-semibold text-foreground">
                         {partnerDetails?.full_name || "Not available"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                         User ID / Username
                       </p>
-                      <p className="text-sm font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded inline-block">
+                      <p className="text-sm md:text-base font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-md inline-block border border-orange-100 dark:border-orange-900/30">
                         {profile.username || "Not available"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                         Registered Mobile Number
                       </p>
-                      <p className="text-sm font-semibold text-foreground">
+                      <p className="text-sm md:text-base font-semibold text-foreground">
                         {partnerDetails?.mobile_number || "Not available"}
                       </p>
                     </div>
                   </div>
 
                   {/* Upline Info */}
-                  <div className="space-y-4 sm:border-l sm:border-border/50 sm:pl-6">
+                  <div className="space-y-5 md:space-y-6 md:border-l md:border-border/60 md:pl-10">
                     {upline ? (
                       <>
                         <div>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                            <Network className="h-3 w-3" /> Upline Full Name
+                          <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <Network className="h-3 w-3 md:h-3.5 md:w-3.5" /> Upline Full Name
                           </p>
-                          <p className="text-sm font-semibold text-foreground">
+                          <p className="text-sm md:text-base font-semibold text-foreground">
                             {uplineFullName || upline.full_name || upline.username}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                             Upline User ID
                           </p>
-                          <p className="text-sm font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded inline-block">
+                          <p className="text-sm md:text-base font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-md inline-block border border-orange-100 dark:border-orange-900/30">
                             {upline.username}
                           </p>
                         </div>
                       </>
                     ) : (
-                      <div className="flex flex-col items-start justify-center h-full text-muted-foreground bg-muted/10 p-4 rounded-xl border border-muted/50">
-                        <Network className="h-5 w-5 mb-2 opacity-40" />
-                        <p className="text-sm font-semibold text-foreground">No upline linked</p>
-                        <p className="text-[10px] mt-1">You are attached directly to root/admin.</p>
+                      <div className="flex flex-col items-start justify-center h-full text-muted-foreground bg-muted/10 p-5 rounded-2xl border border-muted/50">
+                        <Network className="h-6 w-6 md:h-7 md:w-7 mb-3 opacity-30" />
+                        <p className="text-sm md:text-base font-semibold text-foreground">No upline linked</p>
+                        <p className="text-[10px] md:text-xs mt-1.5 leading-relaxed">You are attached directly to root/admin.</p>
                       </div>
                     )}
                   </div>

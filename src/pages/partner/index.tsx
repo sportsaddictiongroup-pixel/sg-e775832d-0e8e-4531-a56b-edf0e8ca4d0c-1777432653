@@ -241,130 +241,87 @@ export default function PartnerDashboard(): JSX.Element {
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
               Partner Portal
             </p>
-            <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight">
-              Welcome{profile.full_name ? `, ${profile.full_name}` : ""}.
+            <h1 className="font-heading text-3xl md:text-4xl font-extrabold tracking-tight text-blue-700 dark:text-blue-500">
+              Welcome {partnerDetails?.full_name || profile.full_name || profile.username}
             </h1>
             <p className="text-sm text-muted-foreground">
               View your role, assigned territory, and manage your credentials.
             </p>
           </header>
 
-          <section className="grid gap-4 md:grid-cols-3">
-            {/* BLOCK 1: BASIC DETAILS */}
-            <Card className="border-blue-200/60 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/10 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
-                <CardTitle className="text-sm font-bold flex items-center text-foreground">
-                  <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-md mr-2 text-blue-700 dark:text-blue-400">
-                    <User className="h-4 w-4" />
+          <section>
+            <Card className="border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/20 dark:to-background shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600" />
+              
+              <CardHeader className="pb-4 border-b border-border/40 bg-background/50 backdrop-blur-sm">
+                <CardTitle className="text-lg font-bold flex items-center text-foreground">
+                  <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-md mr-3 text-blue-700 dark:text-blue-400">
+                    <User className="h-5 w-5" />
                   </div>
-                  Basic Details
+                  Profile Identity
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4 space-y-3 text-sm">
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Full Name</p>
-                  <p className="font-medium text-foreground">{partnerDetails?.full_name || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Username</p>
-                  <p className="font-medium text-foreground">{profile.username || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Mobile</p>
-                  <p className="font-medium text-foreground">{partnerDetails?.mobile_number || "Not available"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Role</p>
-                  <p className="font-medium text-foreground">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                      {formatRoleLabel(profile.role)}
-                    </span>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  {/* Personal Info */}
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Full Name
+                      </p>
+                      <p className="text-base font-semibold text-foreground">
+                        {partnerDetails?.full_name || "Not available"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        User ID / Username
+                      </p>
+                      <p className="text-base font-mono font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded inline-block">
+                        {profile.username || "Not available"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Registered Mobile Number
+                      </p>
+                      <p className="text-base font-semibold text-foreground">
+                        {partnerDetails?.mobile_number || "Not available"}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* BLOCK 2: ADDRESS DETAILS */}
-            <Card className="border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
-                <CardTitle className="text-sm font-bold flex items-center text-foreground">
-                  <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 rounded-md mr-2 text-emerald-700 dark:text-emerald-400">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  Address Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-3 text-sm">
-                {hasAddress ? (
-                  <>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Country</p>
-                      <p className="font-medium text-foreground">{partnerDetails.countries?.name || "Not available"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">State</p>
-                      <p className="font-medium text-foreground">{partnerDetails.states?.name || "Not available"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">District</p>
-                      <p className="font-medium text-foreground">{partnerDetails.districts?.name || "Not available"}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">PIN Code</p>
-                        <p className="font-medium text-foreground">{partnerDetails.pincodes?.code || "Not available"}</p>
+                  {/* Upline Info */}
+                  <div className="space-y-5 md:border-l md:border-border/50 md:pl-8">
+                    {upline ? (
+                      <>
+                        <div>
+                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                            <Network className="h-3 w-3" /> Upline Full Name
+                          </p>
+                          <p className="text-base font-semibold text-foreground">
+                            {uplineFullName || upline.full_name || upline.username}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                            Upline User ID
+                          </p>
+                          <p className="text-base font-mono font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-2 py-0.5 rounded inline-block">
+                            {upline.username}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-start justify-center h-full text-muted-foreground bg-muted/10 p-5 rounded-xl border border-muted/50">
+                        <Network className="h-6 w-6 mb-3 opacity-40" />
+                        <p className="font-semibold text-foreground">No upline linked</p>
+                        <p className="text-xs mt-1">You are attached directly to root/admin.</p>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Area</p>
-                        <p className="font-medium text-foreground truncate" title={partnerDetails.locations?.name || "Not available"}>
-                          {partnerDetails.locations?.name || "Not available"}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
-                    <MapPin className="h-8 w-8 mb-2 opacity-20" />
-                    <p className="font-medium">No Address Found</p>
-                    <p className="text-xs mt-1">Your residential address is missing.</p>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* BLOCK 3: UPLINE DETAILS */}
-            <Card className="border-purple-200/60 dark:border-purple-900/40 bg-purple-50/30 dark:bg-purple-950/10 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3 border-b border-border/40 bg-background/50 backdrop-blur-sm">
-                <CardTitle className="text-sm font-bold flex items-center text-foreground">
-                  <div className="bg-purple-100 dark:bg-purple-900/50 p-1.5 rounded-md mr-2 text-purple-700 dark:text-purple-400">
-                    <Network className="h-4 w-4" />
-                  </div>
-                  Upline Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-3 text-sm">
-                {upline ? (
-                  <>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Name</p>
-                      <p className="font-medium text-foreground">{uplineFullName || upline.username}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Username</p>
-                      <p className="font-medium text-foreground">{upline.username}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Upline Role</p>
-                      <p className="font-medium text-foreground text-xs opacity-80">{formatRoleLabel(upline.role)}</p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
-                    <Network className="h-8 w-8 mb-2 opacity-20" />
-                    <p className="font-medium">No Upline Linked</p>
-                    <p className="text-xs mt-1">You are attached directly to root/admin.</p>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </section>

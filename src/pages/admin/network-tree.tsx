@@ -385,24 +385,24 @@ export default function NetworkTree(): JSX.Element {
     const theme = getLevelTheme(level, partner.role);
 
     return (
-      <Card className={`w-72 shadow-md hover:shadow-xl z-10 relative overflow-hidden rounded-3xl border-2 ${theme.card} transition-all duration-300 hover:-translate-y-1.5`}>
-        <div className={`h-2.5 w-full absolute top-0 left-0 ${theme.accent}`} />
-        <CardContent className="p-7 flex flex-col items-center text-center mt-3">
-          <div className={`h-16 w-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${theme.iconBg}`}>
-            <span className="text-xl font-black tracking-tight">
+      <Card className={`w-48 h-[160px] shadow-sm hover:shadow-md z-10 relative overflow-hidden rounded-2xl border-2 ${theme.card} transition-all duration-300 hover:-translate-y-1`}>
+        <div className={`h-1.5 w-full absolute top-0 left-0 ${theme.accent}`} />
+        <CardContent className="p-4 flex flex-col items-center text-center mt-1 h-full">
+          <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-2 shadow-sm shrink-0 ${theme.iconBg}`}>
+            <span className="text-lg font-black tracking-tight">
               {partner.partner_name.substring(0, 2).toUpperCase()}
             </span>
           </div>
-          <h4 className={`text-base font-extrabold truncate w-full ${theme.title}`} title={partner.partner_name}>
+          <h4 className={`text-sm font-extrabold truncate w-full ${theme.title}`} title={partner.partner_name}>
             {partner.partner_name}
           </h4>
-          <p className="text-xs text-muted-foreground font-mono mt-2 px-3 py-1 rounded-md bg-background/80 shadow-sm border border-muted-foreground/10">
+          <p className="text-[11px] text-muted-foreground font-mono mt-1 px-2 py-0.5 rounded bg-background/80 shadow-sm border border-muted-foreground/10 truncate max-w-[90%]" title={partner.user_id}>
             {partner.user_id}
           </p>
           {partner.direct_downlines_count > 0 && (
-            <div className={`mt-5 flex items-center text-[11px] font-bold px-4 py-1.5 rounded-full border shadow-sm ${theme.count}`}>
-              <Users className="h-3.5 w-3.5 mr-2 opacity-80" />
-              {partner.direct_downlines_count} Direct Downlines
+            <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 w-[85%] flex items-center justify-center text-[10px] font-bold px-2 py-1 rounded-full border shadow-sm ${theme.count}`}>
+              <Users className="h-3 w-3 mr-1.5 opacity-80 shrink-0" />
+              <span className="truncate">{partner.direct_downlines_count} Direct</span>
             </div>
           )}
         </CardContent>
@@ -417,14 +417,14 @@ export default function NetworkTree(): JSX.Element {
         {children.length > 0 && (
           <div className="flex flex-col items-center">
             {/* Vertical drop line */}
-            <div className="w-0.5 h-12 bg-border dark:bg-border" />
+            <div className="w-0.5 h-8 bg-border dark:bg-border" />
             
             {/* Horizontal line container spanning all children */}
-            <div className="flex flex-row gap-8 items-start pt-10 border-t-2 border-border dark:border-border relative">
+            <div className="flex flex-row gap-4 items-start pt-8 border-t-2 border-border dark:border-border relative">
               {children.map((child) => (
                 <div key={child.profile_id} className="flex flex-col items-center relative">
                   {/* Vertical connect line going up */}
-                  <div className="w-0.5 h-10 bg-border dark:bg-border absolute -top-10 left-1/2 -translate-x-1/2" />
+                  <div className="w-0.5 h-8 bg-border dark:bg-border absolute -top-8 left-1/2 -translate-x-1/2" />
                   {renderNodeCard(child, 1)}
                 </div>
               ))}

@@ -95,8 +95,7 @@ export default function PartnerDashboard(): JSX.Element {
       const { data: assignments, error: assignmentError } = await supabase
         .from("territory_assignments")
         .select("*")
-        .eq("profile_id", user.id)
-        .eq("is_active", true);
+        .eq("profile_id", user.id);
 
       if (!isMounted) {
         return;

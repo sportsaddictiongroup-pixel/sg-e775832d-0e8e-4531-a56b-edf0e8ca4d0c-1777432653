@@ -38,32 +38,31 @@ export default function PartnerLogin(): JSX.Element {
       // This prevents cross-tab session contamination between admin and partner views
       await supabase.auth.signOut();
 
-      // 1. Query public.profiles by username to resolve internal email (case-insensitive)
-      const { data: lookupData, error: lookupError } = await supabase
-        .from("profiles")
-        .select("email")
-        .ilike("username", trimmedUsername)
-        .limit(1)
-        .maybeSingle();
+      // 1. Resolve internal email via secure backend route to bypass anon RLS restrictions
+      const lookupRes = await fetch("/api/partner/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: trimmedUsername }),
+      });
 
-      // 2. If no record found
-      if (lookupError || !lookupData) {
-        console.error("Partner Login Lookup Error:", lookupError);
-        setError(`Invalid login credentials. [Debug: User lookup failed ${lookupError?.message || 'Not found'}]`);
+      if (!lookupRes.ok) {
+        console.error("Partner Login Lookup Error: API returned", lookupRes.status);
+        setError("Invalid login credentials. [Debug: User lookup failed Not found]");
         setLoading(false);
         return;
       }
 
-      // 3. If email missing
-      if (!lookupData.email) {
+      const { email: resolvedEmail } = await lookupRes.json();
+
+      if (!resolvedEmail) {
         setError("Account configuration error. [Debug: No email attached to this username]");
         setLoading(false);
         return;
       }
 
-      // 4. Call supabase.auth.signInWithPassword using the resolved internal email
+      // 2. Call supabase.auth.signInWithPassword using the resolved internal email
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: lookupData.email,
+        email: resolvedEmail,
         password: password,
       });
 
@@ -74,7 +73,7 @@ export default function PartnerLogin(): JSX.Element {
         return;
       }
 
-      // 5. Fetch the matching profile using auth user id to verify it's valid
+      // 3. Fetch the matching profile using auth user id to verify it's valid
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, role")
@@ -89,7 +88,7 @@ export default function PartnerLogin(): JSX.Element {
         return;
       }
 
-      // 6. Verify role (Allow login only if the resolved profile role exactly matches the intended partner role)
+      // 4. Verify role (Allow login only if the resolved profile role exactly matches the intended partner role)
       if (profile.role !== "partner") {
         await supabase.auth.signOut();
         setError(`Invalid login credentials. [Debug: Role mismatch. Expected partner, got ${profile.role}]`);
@@ -97,7 +96,7 @@ export default function PartnerLogin(): JSX.Element {
         return;
       }
 
-      // 7. Preserve existing redirect
+      // 5. Preserve existing redirect
       router.push("/partner");
     } catch (err: any) {
       console.error("Partner Login Unexpected Error:", err);

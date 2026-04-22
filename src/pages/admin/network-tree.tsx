@@ -273,6 +273,9 @@ export default function NetworkTree(): JSX.Element {
     }
     if (!selectedProfileId) return;
 
+    const isConfirmed = window.confirm("Are you sure you want to reset password for this partner?");
+    if (!isConfirmed) return;
+
     setResetLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();

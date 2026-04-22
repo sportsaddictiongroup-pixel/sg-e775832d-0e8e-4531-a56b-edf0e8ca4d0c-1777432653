@@ -38,11 +38,12 @@ export default function PartnerLogin(): JSX.Element {
       // This prevents cross-tab session contamination between admin and partner views
       await supabase.auth.signOut();
 
-      // 1. Query public.profiles by exact username to resolve internal email
+      // 1. Query public.profiles by username to resolve internal email (case-insensitive)
       const { data: lookupData, error: lookupError } = await supabase
         .from("profiles")
         .select("email")
-        .eq("username", trimmedUsername)
+        .ilike("username", trimmedUsername)
+        .limit(1)
         .maybeSingle();
 
       // 2. If no record found

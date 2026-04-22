@@ -19,7 +19,9 @@ import type { Tables } from "@/integrations/supabase/types";
 import { User, MapPin, Network, Key } from "lucide-react";
 
 type Profile = Tables<"profiles">;
-type PartnerDetails = Tables<"partner_details"> & {
+type PartnerDetails = {
+  full_name: string | null;
+  mobile_number: string | null;
   countries?: { name: string } | null;
   states?: { name: string } | null;
   districts?: { name: string } | null;
@@ -101,8 +103,32 @@ export default function PartnerDashboard(): JSX.Element {
 
       setProfile(typedProfile);
 
+      // Fetch upline details if exists
+      if (typedProfile.upline_profile_id) {
+        const { data: uplineData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", typedProfile.upline_profile_id)
+          .maybeSingle();
+        
+        if (isMounted && uplineData) {
+          setUpline(uplineData as Profile);
+          
+          // Also fetch upline's full name from partner_details
+          const { data: uplinePd } = await (supabase as any)
+            .from("partner_details")
+            .select("full_name")
+            .eq("profile_id", typedProfile.upline_profile_id)
+            .maybeSingle();
+            
+          if (isMounted && uplinePd) {
+            setUplineFullName(uplinePd?.full_name || null);
+          }
+        }
+      }
+
       // Fetch partner residential details (address, name, mobile)
-      const { data: pdData, error: pdError } = await supabase
+      const { data: pdData, error: pdError } = await (supabase as any)
         .from("partner_details")
         .select(`
           *,
@@ -121,30 +147,6 @@ export default function PartnerDashboard(): JSX.Element {
 
       if (!pdError && pdData) {
         setPartnerDetails(pdData as PartnerDetails);
-      }
-
-      // Fetch upline details if exists
-      if (typedProfile.upline_profile_id) {
-        const { data: uplineData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", typedProfile.upline_profile_id)
-          .maybeSingle();
-        
-        if (isMounted && uplineData) {
-          setUpline(uplineData as Profile);
-          
-          // Also fetch upline's full name from partner_details
-          const { data: uplinePd } = await supabase
-            .from("partner_details")
-            .select("full_name")
-            .eq("profile_id", typedProfile.upline_profile_id)
-            .maybeSingle();
-            
-          if (isMounted && uplinePd) {
-            setUplineFullName(uplinePd.full_name);
-          }
-        }
       }
 
       setLoading(false);

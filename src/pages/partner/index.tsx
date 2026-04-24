@@ -384,7 +384,7 @@ export default function PartnerDashboard(): JSX.Element {
           .print-text-black { color: #000000 !important; }
           .print-text-gray { color: #6b7280 !important; }
           .print-border-gray { border-color: #e5e7eb !important; }
-          .print-watermark { opacity: 0.05 !important; color: #000000 !important; }
+          .print-watermark { opacity: 0.08 !important; color: #000000 !important; }
         }
       `}} />
       <main className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12">
@@ -429,7 +429,7 @@ export default function PartnerDashboard(): JSX.Element {
             <Card id="printable-identity-card" className="w-full border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black">
               {/* Security Watermark */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
-                <span className="text-[3.5rem] sm:text-[5rem] md:text-[7rem] font-black text-slate-900/[0.03] dark:text-white/[0.02] print-watermark -rotate-12 whitespace-nowrap">
+                <span className="text-[3.5rem] sm:text-[5rem] md:text-[7rem] font-bold tracking-widest text-slate-900/[0.07] dark:text-white/[0.06] print-watermark -rotate-12 whitespace-nowrap">
                   SPORTS ADDICTION GROUP
                 </span>
               </div>
@@ -437,7 +437,7 @@ export default function PartnerDashboard(): JSX.Element {
               <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 print-border-gray relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                   <CardTitle className="text-lg md:text-xl font-black flex items-center text-orange-600 dark:text-orange-500 tracking-widest uppercase">
-                    SAG NETWORK IDENTITY
+                    SAG NETWORK MEMBERSHIP CARD
                   </CardTitle>
                 </div>
                 <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
@@ -511,7 +511,7 @@ export default function PartnerDashboard(): JSX.Element {
 
                 {/* Official Footer Note */}
                 <div className="pt-2 text-[10px] sm:text-[11px] text-muted-foreground print-text-gray italic leading-relaxed">
-                  <p>This SAG Network Identity is system-generated.</p>
+                  <p>This SAG Network Membership Card is system-generated.</p>
                   <p>Valid as per generated date and time shown above.</p>
                   <p>For official verification, match details with SAG Network records.</p>
                 </div>

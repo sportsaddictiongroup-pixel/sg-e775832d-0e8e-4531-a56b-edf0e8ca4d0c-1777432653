@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { User, MapPin, Network, Key, LogOut, ChevronRight } from "lucide-react";
+import { User, MapPin, Network, Key, LogOut, ChevronRight, Printer } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 type PartnerDetails = {
@@ -75,6 +75,19 @@ export default function PartnerDashboard(): JSX.Element {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' });
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setCurrentTime(`${dateStr} • ${timeStr}`);
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -329,6 +342,31 @@ export default function PartnerDashboard(): JSX.Element {
   return (
     <>
       <SEO title="Partner Dashboard" description="Partner overview" />
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-identity-card, #printable-identity-card * {
+            visibility: visible;
+          }
+          #printable-identity-card {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            box-shadow: none !important;
+            border: 2px solid #ea580c !important;
+            border-radius: 12px !important;
+            background: white !important;
+          }
+          .print-hidden {
+            display: none !important;
+          }
+        }
+      `}} />
       <main className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12">
         <div className="mx-auto w-full max-w-5xl space-y-8 md:space-y-10">
           
@@ -368,16 +406,30 @@ export default function PartnerDashboard(): JSX.Element {
           </header>
 
           <section>
-            <Card className="w-full border-orange-300/80 dark:border-orange-800/80 bg-gradient-to-br from-orange-50/40 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-orange-600" />
+            <Card id="printable-identity-card" className="w-full border-orange-300/80 dark:border-orange-800/80 bg-gradient-to-br from-orange-50/40 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-orange-600 print-hidden" />
               
-              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 bg-background/50 backdrop-blur-sm px-6 md:px-10">
-                <CardTitle className="text-sm md:text-base font-bold flex items-center text-foreground tracking-widest uppercase">
-                  <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg mr-3 text-orange-700 dark:text-orange-400 shadow-sm">
-                    <User className="h-4 w-4 md:h-5 md:w-5" />
-                  </div>
-                  SAG NETWORK IDENTITY
-                </CardTitle>
+              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 bg-background/50 backdrop-blur-sm px-6 md:px-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-sm md:text-base font-bold flex items-center text-foreground tracking-widest uppercase">
+                    <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg mr-3 text-orange-700 dark:text-orange-400 shadow-sm print-hidden">
+                      <User className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    SAG NETWORK IDENTITY
+                  </CardTitle>
+                  <p className="text-[11px] font-mono text-muted-foreground mt-2 sm:ml-12 uppercase tracking-wider font-semibold text-orange-600/80 dark:text-orange-400/80">
+                    {currentTime ? `Generated: ${currentTime}` : "Loading date..."}
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => window.print()}
+                  variant="outline" 
+                  size="sm" 
+                  className="print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Identity / PDF
+                </Button>
               </CardHeader>
               
               <CardContent className="p-6 md:p-10">

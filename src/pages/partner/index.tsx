@@ -428,8 +428,8 @@ export default function PartnerDashboard(): JSX.Element {
           <section>
             <Card id="printable-identity-card" className="w-full border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black">
               {/* Security Watermark */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
-                <span className="text-[3.5rem] sm:text-[5rem] md:text-[7rem] font-bold tracking-widest text-slate-900/[0.07] dark:text-white/[0.06] print-watermark -rotate-12 whitespace-nowrap">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none px-4">
+                <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-widest text-slate-900/[0.07] dark:text-white/[0.06] print-watermark -rotate-12 whitespace-nowrap">
                   SPORTS ADDICTION GROUP
                 </span>
               </div>

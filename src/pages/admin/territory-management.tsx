@@ -168,7 +168,7 @@ export default function TerritoryManagement(): JSX.Element {
   const loadStateAssignments = async (items: State[]) => {
     if (!items.length) return setStateAssignments({});
 
-    const ids = items.map((item) => item.id as string).filter(Boolean);
+    const ids: string[] = items.map((item) => item.id as string).filter((id): id is string => Boolean(id));
     if (!ids.length) return setStateAssignments({});
 
     const { data: assignments, error } = await (supabase as any)
@@ -217,7 +217,7 @@ export default function TerritoryManagement(): JSX.Element {
   const loadDistrictAssignments = async (items: District[]) => {
     if (!items.length) return setDistrictAssignments({});
 
-    const ids = items.map((item) => item.id as string).filter(Boolean);
+    const ids: string[] = items.map((item) => item.id as string).filter((id): id is string => Boolean(id));
     if (!ids.length) return setDistrictAssignments({});
 
     const { data: assignments, error } = await (supabase as any)
@@ -265,7 +265,7 @@ export default function TerritoryManagement(): JSX.Element {
   const loadPincodeAssignments = async (items: Pincode[]) => {
     if (!items.length) return setPincodeAssignments({});
 
-    const ids = items.map((item) => item.id as string).filter(Boolean);
+    const ids: string[] = items.map((item) => item.id as string).filter((id): id is string => Boolean(id));
     if (!ids.length) return setPincodeAssignments({});
 
     const { data: assignments, error } = await (supabase as any)
@@ -312,7 +312,7 @@ export default function TerritoryManagement(): JSX.Element {
   const loadLocationAssignments = async (items: Location[]) => {
     if (!items.length) return setLocationAssignments({});
 
-    const ids = items.map((item) => item.id as string).filter(Boolean);
+    const ids: string[] = items.map((item) => item.id as string).filter((id): id is string => Boolean(id));
     if (!ids.length) return setLocationAssignments({});
 
     const { data: assignments, error } = await (supabase as any)

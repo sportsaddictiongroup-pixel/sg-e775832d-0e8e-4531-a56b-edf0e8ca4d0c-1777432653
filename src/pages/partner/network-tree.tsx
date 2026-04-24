@@ -1,0 +1,561 @@
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import { SEO } from "@/components/SEO";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Network, 
+  Search, 
+  ArrowLeft, 
+  Users, 
+  User, 
+  ChevronRight,
+  ChevronLeft,
+  Home,
+  FolderTree,
+  Info,
+  Layers
+} from "lucide-react";
+import { authService } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
+
+interface NormalizedPartner {
+  profile_id: string;
+  partner_name: string;
+  user_id: string; 
+  role: string;
+  position: string;
+  upline_profile_id: string | null;
+  upline_username: string | null;
+  created_at: string;
+  direct_downlines_count: number;
+}
+
+const PREVIEW_THRESHOLD = 20;
+const DOWNLINES_PER_PAGE = 20;
+
+export default function PartnerNetworkTree(): JSX.Element {
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const [partners, setPartners] = useState<NormalizedPartner[]>([]);
+  const [partnerMap, setPartnerMap] = useState<Map<string, NormalizedPartner>>(new Map());
+  const [childrenMap, setChildrenMap] = useState<Map<string, NormalizedPartner[]>>(new Map());
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [rootProfileId, setRootProfileId] = useState<string | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [drilldownPath, setDrilldownPath] = useState<NormalizedPartner[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [downlinesPage, setDownlinesPage] = useState(1);
+  const [genPages, setGenPages] = useState<number[]>([1, 1, 1, 1, 1]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initialize = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        if (!user) {
+          router.replace("/partner/login");
+          return;
+        }
+
+        // Chunk helper for safe querying without hitting URL limits
+        const chunkArray = (arr: string[], size: number) => {
+          const chunks = [];
+          for (let i = 0; i < arr.length; i += size) {
+            chunks.push(arr.slice(i, i + size));
+          }
+          return chunks;
+        };
+
+        // 1. Fetch Root Partner securely
+        const { data: rootData, error: rootError } = await supabase
+          .from("profiles")
+          .select("id, username, role, upline_profile_id, created_at, partner_details(full_name), territory_assignments(*)")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (rootError || !rootData) throw new Error("Could not load your profile data.");
+        if (rootData.role === "admin") {
+          router.replace("/admin/network-tree");
+          return;
+        }
+
+        const fetchedNodes: any[] = [rootData];
+        let currentLevelIds = [user.id];
+
+        // 2. Fetch 5 levels explicitly to guarantee strict scoping
+        for (let i = 0; i < 5; i++) {
+          if (currentLevelIds.length === 0) break;
+          
+          const levelData: any[] = [];
+          const chunks = chunkArray(currentLevelIds, 150);
+          
+          for (const chunk of chunks) {
+            const { data, error } = await supabase
+              .from("profiles")
+              .select("id, username, role, upline_profile_id, created_at, partner_details(full_name), territory_assignments(*)")
+              .in("upline_profile_id", chunk);
+              
+            if (!error && data) {
+              levelData.push(...data);
+            }
+          }
+          
+          if (levelData.length === 0) break;
+          fetchedNodes.push(...levelData);
+          currentLevelIds = levelData.map((d: any) => d.id);
+        }
+
+        if (!isMounted) return;
+
+        // 3. Normalize Data
+        const pMap = new Map<string, NormalizedPartner>();
+        const cMap = new Map<string, NormalizedPartner[]>();
+
+        fetchedNodes.forEach((row: any) => {
+          const pd = row.partner_details;
+          const fullName = pd ? (Array.isArray(pd) ? pd[0]?.full_name : pd.full_name) : null;
+
+          let position = "Unassigned";
+          if (row.territory_assignments && Array.isArray(row.territory_assignments)) {
+            const active = row.territory_assignments.find((a: any) => a.is_active);
+            if (active) {
+              if (active.location_id) position = "pincode_partner";
+              else if (active.pincode_id) position = row.role === "pincode_partner" ? "pincode_partner" : "pincode_head";
+              else if (active.district_id) position = "district_head";
+              else if (active.state_id) position = "state_head";
+              else position = "Assigned";
+            }
+          }
+
+          pMap.set(row.id as string, {
+            profile_id: row.id as string,
+            partner_name: fullName || (row.username as string),
+            user_id: row.username as string,
+            role: row.role as string,
+            position: position,
+            upline_profile_id: row.upline_profile_id as string | null,
+            upline_username: null,
+            created_at: row.created_at as string,
+            direct_downlines_count: 0,
+          });
+        });
+
+        // 4. Link Uplines and Populate Children
+        pMap.forEach((partner) => {
+          if (partner.upline_profile_id) {
+            const upline = pMap.get(partner.upline_profile_id);
+            if (upline) partner.upline_username = upline.user_id;
+
+            if (!cMap.has(partner.upline_profile_id)) {
+              cMap.set(partner.upline_profile_id, []);
+            }
+            cMap.get(partner.upline_profile_id)!.push(partner);
+          }
+        });
+
+        // 5. Aggregate Counts
+        pMap.forEach((partner) => {
+          const children = cMap.get(partner.profile_id);
+          partner.direct_downlines_count = children ? children.length : 0;
+        });
+
+        setPartnerMap(pMap);
+        setChildrenMap(cMap);
+        setPartners(Array.from(pMap.values()));
+        setRootProfileId(user.id);
+        setSelectedProfileId(user.id);
+        setIsLoading(false);
+      } catch (err: any) {
+        console.error("Failed to load network tree data:", err);
+        if (isMounted) {
+          setAuthError("Failed to load your network securely. Please try again.");
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void initialize();
+    return () => { isMounted = false; };
+  }, [router]);
+
+  const filteredPartners = useMemo(() => {
+    if (!searchQuery.trim()) return partners;
+    const query = searchQuery.toLowerCase();
+    return partners.filter(
+      (p) =>
+        p.partner_name.toLowerCase().includes(query) ||
+        p.user_id.toLowerCase().includes(query) ||
+        (p.upline_username && p.upline_username.toLowerCase().includes(query))
+    );
+  }, [partners, searchQuery]);
+
+  const handleOpenNode = (partner: NormalizedPartner) => {
+    setSelectedProfileId(partner.profile_id);
+    setDrilldownPath((prev) => [...prev, partner]);
+    setActiveTab("overview");
+    setDownlinesPage(1);
+    setGenPages([1, 1, 1, 1, 1]);
+  };
+
+  const handleBreadcrumbClick = (index: number) => {
+    if (index === -1 && rootProfileId) {
+      setSelectedProfileId(rootProfileId);
+      setDrilldownPath([]);
+    } else {
+      const partner = drilldownPath[index];
+      setSelectedProfileId(partner.profile_id);
+      setDrilldownPath((prev) => prev.slice(0, index + 1));
+    }
+    setActiveTab("overview");
+    setDownlinesPage(1);
+    setGenPages([1, 1, 1, 1, 1]);
+  };
+
+  const mlmGenerations = useMemo(() => {
+    if (!selectedProfileId) return [];
+    
+    const gens: NormalizedPartner[][] = [];
+    let currentLevel = childrenMap.get(selectedProfileId) || [];
+
+    for (let i = 0; i < 5; i++) {
+      gens.push(currentLevel);
+      let nextLevel: NormalizedPartner[] = [];
+      if (currentLevel.length > 0) {
+        for (const p of currentLevel) {
+          const children = childrenMap.get(p.profile_id) || [];
+          nextLevel = nextLevel.concat(children);
+        }
+      }
+      currentLevel = nextLevel;
+    }
+    return gens;
+  }, [selectedProfileId, childrenMap]);
+
+  const renderNodeCard = (partner: NormalizedPartner, level: number = 0) => {
+    const getLevelTheme = (lvl: number) => {
+      if (lvl === 0) return { card: "border-blue-200 bg-gradient-to-b from-card to-blue-50/50", iconBg: "bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700", title: "text-foreground", accent: "bg-gradient-to-r from-blue-500 to-blue-600", count: "bg-blue-100/80 text-blue-700 border-blue-200" };
+      if (lvl === 1) return { card: "border-emerald-200 bg-gradient-to-b from-card to-emerald-50/50", iconBg: "bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700", title: "text-foreground", accent: "bg-gradient-to-r from-emerald-500 to-emerald-600", count: "bg-emerald-100/80 text-emerald-700 border-emerald-200" };
+      return { card: "border-purple-200 bg-gradient-to-b from-card to-purple-50/50", iconBg: "bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700", title: "text-foreground", accent: "bg-gradient-to-r from-purple-500 to-purple-600", count: "bg-purple-100/80 text-purple-700 border-purple-200" };
+    };
+    const theme = getLevelTheme(level > 1 ? 2 : level);
+
+    return (
+      <Card className={`w-36 h-[124px] shadow-sm hover:shadow-md z-10 relative overflow-hidden rounded-2xl border-2 ${theme.card} transition-all duration-200 hover:-translate-y-0.5`}>
+        <div className={`h-1 w-full absolute top-0 left-0 ${theme.accent}`} />
+        <CardContent className="p-3 flex flex-col items-center text-center h-full mt-1">
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center mb-1.5 shadow-sm shrink-0 ${theme.iconBg}`}>
+            <span className="text-base font-black tracking-tight">{partner.partner_name.substring(0, 2).toUpperCase()}</span>
+          </div>
+          <h4 className={`text-xs font-extrabold truncate w-full ${theme.title}`} title={partner.partner_name}>{partner.partner_name}</h4>
+          <p className="text-[9px] text-muted-foreground font-mono mt-0.5 px-1.5 py-0.5 rounded bg-background/80 shadow-sm border border-muted-foreground/10 truncate max-w-[95%]">{partner.user_id}</p>
+          {partner.direct_downlines_count > 0 && (
+            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-[85%] flex items-center justify-center text-[9px] font-bold px-1.5 py-0.5 rounded-full border shadow-sm ${theme.count}`}>
+              <Users className="h-2.5 w-2.5 mr-1 opacity-80 shrink-0" />
+              <span className="truncate">{partner.direct_downlines_count} Direct</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderPreviewTree = (parent: NormalizedPartner, children: NormalizedPartner[]) => {
+    return (
+      <div className="flex flex-col items-center py-8">
+        {renderNodeCard(parent, 0)}
+        {children.length > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="w-0.5 h-8 bg-border" />
+            <div className="flex flex-row gap-4 items-start pt-8 border-t-2 border-border relative">
+              {children.map((child) => (
+                <div key={child.profile_id} className="flex flex-col items-center relative">
+                  <div className="w-0.5 h-8 bg-border absolute -top-8 left-1/2 -translate-x-1/2" />
+                  {renderNodeCard(child, 1)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground animate-pulse">Loading Your Secure Network Tree...</p>
+      </main>
+    );
+  }
+
+  if (authError) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-sm text-destructive font-medium">{authError}</p>
+      </main>
+    );
+  }
+
+  const selectedPartner = selectedProfileId ? partnerMap.get(selectedProfileId) : null;
+  const selectedChildren = selectedProfileId ? (childrenMap.get(selectedProfileId) || []) : [];
+  
+  const totalPages = Math.ceil(selectedChildren.length / DOWNLINES_PER_PAGE);
+  const paginatedChildren = selectedChildren.slice((downlinesPage - 1) * DOWNLINES_PER_PAGE, downlinesPage * DOWNLINES_PER_PAGE);
+
+  return (
+    <>
+      <SEO title="My Network Tree" description="View your securely scoped partner downline hierarchy." />
+      <main className="min-h-screen bg-background text-foreground px-4 py-8 overflow-x-hidden">
+        <div className="mx-auto w-full max-w-7xl space-y-6">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <Button variant="ghost" size="sm" className="pl-0 text-muted-foreground hover:text-foreground mb-4" asChild>
+                <Link href="/partner">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </Link>
+              </Button>
+              <h1 className="font-heading text-3xl md:text-4xl font-black flex items-center gap-3 tracking-tight">
+                <div className="p-2.5 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-md border border-blue-400/30">
+                  <Network className="h-6 w-6 text-white" />
+                </div>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/80 to-muted-foreground">
+                  My Network Tree
+                </span>
+              </h1>
+              <p className="text-base text-muted-foreground mt-2 max-w-2xl font-medium">
+                Your securely scoped downline view.
+              </p>
+            </div>
+            
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search your downline..."
+                className="pl-10 h-12 text-base bg-background shadow-sm border-muted-foreground/20 hover:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {selectedProfileId && selectedPartner ? (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="flex items-center text-sm text-muted-foreground overflow-x-auto pb-2 scrollbar-hide whitespace-nowrap bg-muted/10 p-2.5 rounded-2xl border border-muted-foreground/10 shadow-sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleBreadcrumbClick(-1)} 
+                  className="h-9 px-5 hover:bg-background shadow-sm bg-background border border-muted-foreground/20 font-bold rounded-xl"
+                >
+                  <Home className="h-4 w-4 mr-2 text-primary" />
+                  My Root
+                </Button>
+                {drilldownPath.map((p, i) => (
+                  <div key={p.profile_id} className="flex items-center">
+                    <ChevronRight className="h-4 w-4 mx-2 opacity-40 shrink-0" />
+                    <Button
+                      variant={i === drilldownPath.length - 1 ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => handleBreadcrumbClick(i)}
+                      className={`h-9 px-5 rounded-xl ${i === drilldownPath.length - 1 ? 'font-bold shadow-sm bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20' : 'hover:bg-background border border-transparent font-medium'}`}
+                    >
+                      {p.partner_name}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <Card className="border border-muted-foreground/10 shadow-xl overflow-hidden rounded-3xl relative bg-card">
+                <div className="absolute top-0 left-0 h-full w-2.5 bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500" />
+                <CardContent className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pl-10">
+                  <div className="flex items-center gap-6">
+                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white dark:border-slate-900 shadow-md flex items-center justify-center shrink-0">
+                      <span className="text-2xl font-black text-blue-700">{selectedPartner.partner_name.substring(0, 2).toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-heading font-extrabold text-foreground tracking-tight">{selectedPartner.partner_name}</h2>
+                      <div className="flex items-center mt-3">
+                        <Badge variant="outline" className="font-mono text-[11px] bg-muted/40 px-3 py-1 rounded-md shadow-sm border-muted-foreground/20">
+                          {selectedPartner.user_id}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto md:border-l md:pl-8 border-border/50">
+                    <div className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 shadow-sm min-w-[88px] text-center">
+                      <p className="text-[11px] font-bold text-blue-700 uppercase tracking-widest mb-1.5">Direct/L1</p>
+                      <p className="text-2xl font-black text-blue-950 leading-none">{mlmGenerations[0]?.length || 0}</p>
+                    </div>
+                    <div className="bg-emerald-50/80 px-4 py-3 rounded-xl border border-emerald-200 shadow-sm min-w-[88px] text-center">
+                      <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">L2</p>
+                      <p className="text-2xl font-black text-emerald-950 leading-none">{mlmGenerations[1]?.length || 0}</p>
+                    </div>
+                    <div className="bg-purple-50/80 px-4 py-3 rounded-xl border border-purple-200 shadow-sm min-w-[88px] text-center">
+                      <p className="text-[11px] font-bold text-purple-700 uppercase tracking-widest mb-1.5">L3</p>
+                      <p className="text-2xl font-black text-purple-950 leading-none">{mlmGenerations[2]?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-3 h-auto p-1.5 bg-muted/40 border border-muted/50 rounded-2xl shadow-inner mb-8 gap-1">
+                  <TabsTrigger value="overview" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-blue-600 data-[state=active]:text-white">Preview</TabsTrigger>
+                  <TabsTrigger value="downlines" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Direct</TabsTrigger>
+                  <TabsTrigger value="generations" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-purple-600 data-[state=active]:text-white">Full View</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="overview" className="mt-0">
+                  <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
+                    <div className="h-1.5 w-full bg-blue-500"></div>
+                    <CardContent className="p-0 bg-slate-50/30">
+                      {selectedChildren.length <= PREVIEW_THRESHOLD ? (
+                        <div className="w-full overflow-x-auto p-12 flex justify-center min-w-max">
+                          {renderPreviewTree(selectedPartner, selectedChildren)}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-24 text-center max-w-md mx-auto">
+                          <div className="h-16 w-16 rounded-2xl bg-amber-100 flex items-center justify-center mb-6 shadow-sm border border-amber-200">
+                            <Info className="h-8 w-8 text-amber-600" />
+                          </div>
+                          <h3 className="text-xl font-bold text-foreground mb-3">High Volume Downline</h3>
+                          <Button onClick={() => setActiveTab("downlines")} className="shadow-md rounded-full px-8 h-12 font-bold bg-amber-600 hover:bg-amber-700 text-white">
+                            View List
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="downlines" className="mt-0">
+                  <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
+                    <div className="h-1.5 w-full bg-emerald-500"></div>
+                    <CardContent className="p-0">
+                      {selectedChildren.length === 0 ? (
+                        <div className="py-24 text-center m-4">
+                          <p className="text-base font-bold text-foreground">No direct downlines.</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader className="bg-muted/20">
+                              <TableRow>
+                                <TableHead className="h-14 py-4 px-8 font-bold text-muted-foreground text-[11px] uppercase">Partner Name</TableHead>
+                                <TableHead className="h-14 py-4 text-center font-bold text-muted-foreground text-[11px] uppercase">Direct Downlines</TableHead>
+                                <TableHead className="h-14 py-4 text-right pr-8 font-bold text-muted-foreground text-[11px] uppercase">Explore</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedChildren.map((p) => (
+                                <TableRow key={p.profile_id} className="hover:bg-emerald-50/60">
+                                  <TableCell className="py-5 px-8">
+                                    <div className="font-extrabold text-foreground text-sm">{p.partner_name}</div>
+                                    <div className="text-xs font-mono text-muted-foreground mt-1.5 bg-muted/30 inline-block px-2 rounded">{p.user_id}</div>
+                                  </TableCell>
+                                  <TableCell className="text-center py-5">
+                                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border">{p.direct_downlines_count}</span>
+                                  </TableCell>
+                                  <TableCell className="text-right pr-8 py-5">
+                                    <Button size="sm" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={() => handleOpenNode(p)}>
+                                      Explore <ChevronRight className="h-4 w-4 ml-1.5" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="generations" className="mt-0 space-y-6">
+                  {mlmGenerations.map((levelPartners, index) => {
+                    const levelNum = index + 1;
+                    const total = levelPartners.length;
+                    const page = genPages[index];
+                    const totalPages = Math.ceil(total / DOWNLINES_PER_PAGE) || 1;
+                    const paginated = levelPartners.slice((page - 1) * DOWNLINES_PER_PAGE, page * DOWNLINES_PER_PAGE);
+
+                    if (total === 0) return null;
+
+                    return (
+                      <Card key={`gen-level-${levelNum}`} className="shadow-lg border-muted overflow-hidden rounded-3xl">
+                        <div className="h-2 w-full bg-purple-500"></div>
+                        <CardHeader className="border-b py-6 bg-purple-50/40">
+                          <CardTitle className="text-xl font-bold flex items-center gap-3">
+                            <Layers className="h-5 w-5 text-purple-600" />
+                            Level {levelNum}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <Table>
+                            <TableHeader className="bg-muted/20">
+                              <TableRow>
+                                <TableHead className="h-14 py-4 px-8 font-bold text-[11px] uppercase">Partner</TableHead>
+                                <TableHead className="h-14 py-4 text-right pr-8 font-bold text-[11px] uppercase">Action</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginated.map((p) => (
+                                <TableRow key={p.profile_id} className="hover:bg-purple-50/60">
+                                  <TableCell className="py-5 px-8">
+                                    <div className="font-extrabold text-foreground text-sm">{p.partner_name}</div>
+                                    <div className="text-xs font-mono text-muted-foreground mt-1.5">{p.user_id}</div>
+                                  </TableCell>
+                                  <TableCell className="text-right pr-8 py-5">
+                                    <Button size="sm" className="rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold" onClick={() => handleOpenNode(p)}>
+                                      Explore <ChevronRight className="h-4 w-4 ml-1.5" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </TabsContent>
+              </Tabs>
+            </div>
+          ) : (
+            <div className="py-32 text-center">
+              <p className="text-xl font-bold text-foreground">No partners found in your downline.</p>
+            </div>
+          )}
+
+        </div>
+      </main>
+    </>
+  );
+}

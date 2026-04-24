@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { User, MapPin, Network, Key, LogOut } from "lucide-react";
+import { User, MapPin, Network, Key, LogOut, ChevronRight } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 type PartnerDetails = {
@@ -451,6 +451,32 @@ export default function PartnerDashboard(): JSX.Element {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* MY NETWORK TREE ENTRY BANNER */}
+          <section>
+            <Card className="w-full border-blue-300/80 dark:border-blue-800/80 bg-gradient-to-br from-blue-50/40 to-white dark:from-blue-950/20 dark:to-background shadow-md relative overflow-hidden group hover:shadow-lg transition-all">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-blue-600" />
+              <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-5 w-full md:w-auto">
+                  <div className="h-14 w-14 rounded-2xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shadow-inner shrink-0 group-hover:scale-105 transition-transform">
+                    <Network className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground tracking-tight">My Network Tree</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                      Explore your personal downline, view partner levels, and track your organizational hierarchy.
+                    </p>
+                  </div>
+                </div>
+                <Button asChild className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-bold h-11 px-8 rounded-xl shrink-0">
+                  <Link href="/partner/network-tree">
+                    View My Network
+                    <ChevronRight className="h-5 w-5 ml-2" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </section>

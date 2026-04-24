@@ -399,15 +399,15 @@ export default function PartnerDashboard(): JSX.Element {
                 <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                 Partner Portal
               </p>
-              <div className="space-y-1">
-                <h1 className="font-heading text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">
+              <div>
+                <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight text-foreground">
                   Welcome
                 </h1>
-                <h2 className="font-heading text-2xl md:text-3xl font-medium text-blue-600 dark:text-blue-400">
+                <h2 className="font-heading text-xl md:text-2xl font-medium text-blue-600 dark:text-blue-400 mt-1.5">
                   {partnerDetails?.full_name || profile.full_name || profile.username}
                 </h2>
               </div>
-              <p className="text-sm text-muted-foreground pt-1 max-w-xl">
+              <p className="text-sm text-muted-foreground pt-2 max-w-xl">
                 View your role, assigned territory, and manage your credentials.
               </p>
             </div>

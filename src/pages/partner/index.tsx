@@ -162,14 +162,20 @@ export default function PartnerDashboard(): JSX.Element {
       const { data: assignmentData, error: assignmentError } = await (supabase as any)
         .from("territory_assignments")
         .select(`
-          *,
+          id,
+          profile_id,
+          country_id,
+          state_id,
+          district_id,
+          pincode_id,
+          location_id,
           states(name),
           districts(name),
           pincodes(code),
           locations(name)
         `)
         .eq("profile_id", user.id)
-        .order("assigned_at", { ascending: false })
+        .order("id", { ascending: false })
         .limit(1)
         .maybeSingle();
         

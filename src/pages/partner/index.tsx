@@ -361,6 +361,7 @@ export default function PartnerDashboard(): JSX.Element {
                 className="bg-blue-50/50 hover:bg-blue-100/50 dark:bg-blue-950/20 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 font-semibold shadow-sm transition-all"
                 onClick={() => {
                   document.getElementById("change-password")?.scrollIntoView({ behavior: "smooth" });
+                  setTimeout(() => document.getElementById("new-password")?.focus(), 400);
                 }}
               >
                 <Key className="h-4 w-4 mr-2" />
@@ -531,28 +532,28 @@ export default function PartnerDashboard(): JSX.Element {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm border-border/60 bg-card/50 hover:bg-card hover:shadow-md transition-all flex flex-col">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Need Help?</CardTitle>
-                <CardDescription className="pt-1">
+            <Card className="shadow-sm border-orange-200/60 dark:border-orange-900/40 bg-orange-50/30 dark:bg-orange-950/10 hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-all flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-orange-300 dark:bg-orange-700/50" />
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold text-orange-800 dark:text-orange-400">
+                  Need Help?
+                </CardTitle>
+                <CardDescription className="pt-1 text-orange-700/80 dark:text-orange-400/70 text-[13px]">
                   Contact your admin if your role or territory looks incorrect.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm flex-1 flex flex-col">
-                <p className="text-muted-foreground leading-relaxed">
+              <CardContent className="space-y-4 text-[13px] flex-1 flex flex-col text-orange-900/80 dark:text-orange-200/70">
+                <p className="leading-relaxed">
                   If you see an unexpected role or no territory assignment here,
                   please reach out to your admin so they can review your
                   profile.
                 </p>
-                <div className="bg-muted/40 p-4 rounded-xl border border-muted/50 mt-auto">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    <strong>Note:</strong> You can also sign out and sign back in if you recently changed
+                <div className="bg-orange-100/50 dark:bg-orange-900/20 p-3.5 rounded-lg border border-orange-200/50 dark:border-orange-800/30 mt-auto">
+                  <p className="text-[12px] leading-relaxed">
+                    <strong className="text-orange-800 dark:text-orange-400">Note:</strong> You can also sign out and sign back in if you recently changed
                     your credentials or if your assignment was just updated.
                   </p>
                 </div>
-                <Button variant="outline" asChild className="w-full sm:w-auto mt-4">
-                  <Link href="/partner/login">Back to Login</Link>
-                </Button>
               </CardContent>
             </Card>
           </section>

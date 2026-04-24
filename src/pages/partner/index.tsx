@@ -30,6 +30,12 @@ type PartnerDetails = {
 };
 
 type TerritoryAssignment = Tables<"territory_assignments">;
+type ExtendedAssignment = TerritoryAssignment & {
+  states?: { name: string } | null;
+  districts?: { name: string } | null;
+  pincodes?: { code: string } | null;
+  locations?: { name: string } | null;
+};
 
 const formatRoleLabel = (role: string | null | undefined) => {
   if (!role) {
@@ -60,7 +66,7 @@ export default function PartnerDashboard(): JSX.Element {
   const [partnerDetails, setPartnerDetails] = useState<PartnerDetails | null>(null);
   const [upline, setUpline] = useState<Profile | null>(null);
   const [uplineFullName, setUplineFullName] = useState<string | null>(null);
-  const [activeAssignment, setActiveAssignment] = useState<TerritoryAssignment | null>(null);
+  const [activeAssignment, setActiveAssignment] = useState<ExtendedAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -153,15 +159,25 @@ export default function PartnerDashboard(): JSX.Element {
       }
 
       // Fetch the active territory assignment to derive the operational role badge
-      const { data: assignmentData } = await supabase
+      const { data: assignmentData, error: assignmentError } = await (supabase as any)
         .from("territory_assignments")
-        .select("*")
+        .select(`
+          *,
+          states(name),
+          districts(name),
+          pincodes(code),
+          locations(name)
+        `)
         .eq("profile_id", user.id)
         .eq("is_active", true)
         .maybeSingle();
         
+      if (assignmentError) {
+        console.error("Error fetching territory assignment:", assignmentError);
+      }
+        
       if (isMounted && assignmentData) {
-        setActiveAssignment(assignmentData as TerritoryAssignment);
+        setActiveAssignment(assignmentData as ExtendedAssignment);
       }
 
       setLoading(false);
@@ -245,13 +261,13 @@ export default function PartnerDashboard(): JSX.Element {
   let derivedRole = "No Role Defined";
   if (activeAssignment) {
     if (activeAssignment.location_id) {
-      derivedRole = "Area / Location Head";
+      derivedRole = `Area / Location Head: ${activeAssignment.locations?.name || "Assigned"}`;
     } else if (activeAssignment.pincode_id) {
-      derivedRole = "PIN Code Head";
+      derivedRole = `PIN Code Head: ${activeAssignment.pincodes?.code || "Assigned"}`;
     } else if (activeAssignment.district_id) {
-      derivedRole = "District Head";
+      derivedRole = `District Head: ${activeAssignment.districts?.name || "Assigned"}`;
     } else if (activeAssignment.state_id) {
-      derivedRole = "State Head";
+      derivedRole = `State Head: ${activeAssignment.states?.name || "Assigned"}`;
     }
   }
 

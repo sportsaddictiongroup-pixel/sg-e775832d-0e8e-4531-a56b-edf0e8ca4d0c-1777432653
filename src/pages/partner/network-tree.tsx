@@ -90,7 +90,7 @@ export default function PartnerNetworkTree(): JSX.Element {
           return chunks;
         };
 
-        // 1. Fetch Root Partner securely
+        // 1. Fetch Root Partner securely without complex upline joins that might trigger RLS/FK errors
         const { data: rootData, error: rootError } = await supabase
           .from("profiles")
           .select(`
@@ -100,16 +100,19 @@ export default function PartnerNetworkTree(): JSX.Element {
             upline_profile_id, 
             created_at, 
             partner_details(full_name), 
-            territory_assignments(*),
-            upline:profiles!profiles_upline_profile_id_fkey(
-              username,
-              partner_details(full_name)
-            )
+            territory_assignments(*)
           `)
           .eq("id", user.id)
           .maybeSingle();
 
-        if (rootError || !rootData) throw new Error("Could not load your profile data.");
+        if (rootError) {
+          console.error("Root fetch error:", rootError);
+          throw new Error("Could not load your profile data.");
+        }
+        if (!rootData) {
+          throw new Error("Profile not found.");
+        }
+
         if (rootData.role === "admin") {
           router.replace("/admin/network-tree");
           return;
@@ -170,19 +173,35 @@ export default function PartnerNetworkTree(): JSX.Element {
             role: row.role as string,
             position: position,
             upline_profile_id: row.upline_profile_id as string | null,
-            upline_username: row.id === user.id && row.upline ? (row.upline as any).username : null,
+            upline_username: null, // Populated safely below
             created_at: row.created_at as string,
             direct_downlines_count: 0,
           });
         });
 
-        // Store root's upline full name safely if available
-        if (rootData.upline) {
-          const uplinePd = (rootData.upline as any).partner_details;
-          const uplineFullName = uplinePd ? (Array.isArray(uplinePd) ? uplinePd[0]?.full_name : uplinePd.full_name) : null;
-          pMap.get(user.id)!.upline_username = (rootData.upline as any).username;
-          // Storing full name temporarily in a custom property just for root card display
-          (pMap.get(user.id) as any)._root_upline_full_name = uplineFullName || (rootData.upline as any).username;
+        // Safely fetch root's upline details in a separate query to bypass strict RLS blocks
+        if (rootData.upline_profile_id) {
+          try {
+            const { data: upProfile } = await supabase
+              .from("profiles")
+              .select("username")
+              .eq("id", rootData.upline_profile_id)
+              .maybeSingle();
+
+            if (upProfile) {
+              pMap.get(user.id)!.upline_username = upProfile.username;
+              
+              const { data: upPd } = await (supabase as any)
+                .from("partner_details")
+                .select("full_name")
+                .eq("profile_id", rootData.upline_profile_id)
+                .maybeSingle();
+                
+              (pMap.get(user.id) as any)._root_upline_full_name = upPd?.full_name || upProfile.username;
+            }
+          } catch (e) {
+            console.warn("Could not fetch upline details safely, falling back", e);
+          }
         }
 
         // 4. Link Uplines and Populate Children

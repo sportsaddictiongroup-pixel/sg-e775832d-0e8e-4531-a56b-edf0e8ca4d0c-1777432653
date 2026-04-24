@@ -178,13 +178,41 @@ export default function PartnerDashboard(): JSX.Element {
         .order("id", { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      console.log("Partner assignmentData", assignmentData);
         
       if (assignmentError) {
         console.error("Error fetching territory assignment:", assignmentError);
       }
         
-      if (isMounted && assignmentData) {
-        setActiveAssignment(assignmentData as ExtendedAssignment);
+      const resolvedAssignment = assignmentData ? { ...assignmentData } : null;
+
+      if (isMounted && resolvedAssignment) {
+        const checkJoined = (data: any, key: 'name' | 'code' = 'name') => {
+          if (!data) return null;
+          if (Array.isArray(data)) return data[0]?.[key] || null;
+          return data[key] || null;
+        };
+
+        // SECONDARY FALLBACK QUERIES: Manually fetch name if relational join returned null
+        if (resolvedAssignment.location_id && !checkJoined(resolvedAssignment.locations, 'name')) {
+          const { data: loc } = await supabase.from('locations').select('name').eq('id', resolvedAssignment.location_id).maybeSingle();
+          if (loc) resolvedAssignment.locations = { name: loc.name };
+        }
+        if (resolvedAssignment.pincode_id && !checkJoined(resolvedAssignment.pincodes, 'code')) {
+          const { data: pin } = await supabase.from('pincodes').select('code').eq('id', resolvedAssignment.pincode_id).maybeSingle();
+          if (pin) resolvedAssignment.pincodes = { code: pin.code };
+        }
+        if (resolvedAssignment.district_id && !checkJoined(resolvedAssignment.districts, 'name')) {
+          const { data: dist } = await supabase.from('districts').select('name').eq('id', resolvedAssignment.district_id).maybeSingle();
+          if (dist) resolvedAssignment.districts = { name: dist.name };
+        }
+        if (resolvedAssignment.state_id && !checkJoined(resolvedAssignment.states, 'name')) {
+          const { data: st } = await supabase.from('states').select('name').eq('id', resolvedAssignment.state_id).maybeSingle();
+          if (st) resolvedAssignment.states = { name: st.name };
+        }
+
+        setActiveAssignment(resolvedAssignment as ExtendedAssignment);
       }
 
       setLoading(false);

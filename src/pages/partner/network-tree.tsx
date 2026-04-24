@@ -93,7 +93,19 @@ export default function PartnerNetworkTree(): JSX.Element {
         // 1. Fetch Root Partner securely
         const { data: rootData, error: rootError } = await supabase
           .from("profiles")
-          .select("id, username, role, upline_profile_id, created_at, partner_details(full_name), territory_assignments(*)")
+          .select(`
+            id, 
+            username, 
+            role, 
+            upline_profile_id, 
+            created_at, 
+            partner_details(full_name), 
+            territory_assignments(*),
+            upline:profiles!profiles_upline_profile_id_fkey(
+              username,
+              partner_details(full_name)
+            )
+          `)
           .eq("id", user.id)
           .maybeSingle();
 
@@ -158,11 +170,20 @@ export default function PartnerNetworkTree(): JSX.Element {
             role: row.role as string,
             position: position,
             upline_profile_id: row.upline_profile_id as string | null,
-            upline_username: null,
+            upline_username: row.id === user.id && row.upline ? (row.upline as any).username : null,
             created_at: row.created_at as string,
             direct_downlines_count: 0,
           });
         });
+
+        // Store root's upline full name safely if available
+        if (rootData.upline) {
+          const uplinePd = (rootData.upline as any).partner_details;
+          const uplineFullName = uplinePd ? (Array.isArray(uplinePd) ? uplinePd[0]?.full_name : uplinePd.full_name) : null;
+          pMap.get(user.id)!.upline_username = (rootData.upline as any).username;
+          // Storing full name temporarily in a custom property just for root card display
+          (pMap.get(user.id) as any)._root_upline_full_name = uplineFullName || (rootData.upline as any).username;
+        }
 
         // 4. Link Uplines and Populate Children
         pMap.forEach((partner) => {
@@ -393,40 +414,66 @@ export default function PartnerNetworkTree(): JSX.Element {
 
               <Card className="border border-muted-foreground/10 shadow-xl overflow-hidden rounded-3xl relative bg-card">
                 <div className="absolute top-0 left-0 h-full w-2.5 bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500" />
-                <CardContent className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pl-10">
-                  <div className="flex items-center gap-6">
-                    <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white dark:border-slate-900 shadow-md flex items-center justify-center shrink-0">
-                      <span className="text-2xl font-black text-blue-700">{selectedPartner.partner_name.substring(0, 2).toUpperCase()}</span>
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-heading font-extrabold text-foreground tracking-tight">{selectedPartner.partner_name}</h2>
-                      <div className="flex items-center mt-3">
-                        <Badge variant="outline" className="font-mono text-[11px] bg-muted/40 px-3 py-1 rounded-md shadow-sm border-muted-foreground/20">
-                          {selectedPartner.user_id}
-                        </Badge>
+                <CardContent className="p-8 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-8 pl-10">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 w-full xl:w-auto">
+                    <div className="flex items-center gap-6">
+                      <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 border-4 border-white dark:border-slate-900 shadow-md flex items-center justify-center shrink-0">
+                        <span className="text-2xl font-black text-blue-700">{selectedPartner.partner_name.substring(0, 2).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-heading font-extrabold text-foreground tracking-tight">{selectedPartner.partner_name}</h2>
+                        <div className="flex items-center mt-3">
+                          <Badge variant="outline" className="font-mono text-[11px] bg-muted/40 px-3 py-1 rounded-md shadow-sm border-muted-foreground/20">
+                            {selectedPartner.user_id}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
+
+                    {/* UPLINE DETAILS (Only shown for Root Partner or when safely known) */}
+                    {selectedProfileId === rootProfileId && (
+                      <div className="md:ml-6 md:pl-6 md:border-l border-border/50 flex flex-col justify-center">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                          <Network className="h-3 w-3" /> Upline
+                        </p>
+                        {selectedPartner.upline_username ? (
+                          <>
+                            <p className="text-sm font-bold text-foreground">
+                              {(selectedPartner as any)._root_upline_full_name || selectedPartner.upline_username}
+                            </p>
+                            <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                              {selectedPartner.upline_username}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-bold text-foreground">Admin / Root</p>
+                            <p className="text-[11px] font-mono text-muted-foreground mt-0.5">Directly Attached</p>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto md:border-l md:pl-8 border-border/50">
-                    <div className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 shadow-sm min-w-[88px] flex-1 text-center">
-                      <p className="text-[11px] font-bold text-blue-700 uppercase tracking-widest mb-1.5">Direct/L1</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 w-full xl:w-auto xl:border-l xl:pl-8 border-border/50">
+                    <div className="bg-blue-50/80 px-3 py-3 rounded-xl border border-blue-200 shadow-sm text-center flex flex-col justify-center">
+                      <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1.5 whitespace-nowrap">Direct/L1</p>
                       <p className="text-2xl font-black text-blue-950 leading-none">{mlmGenerations[0]?.length || 0}</p>
                     </div>
-                    <div className="bg-emerald-50/80 px-4 py-3 rounded-xl border border-emerald-200 shadow-sm min-w-[88px] flex-1 text-center">
-                      <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">L2</p>
+                    <div className="bg-emerald-50/80 px-3 py-3 rounded-xl border border-emerald-200 shadow-sm text-center flex flex-col justify-center">
+                      <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">L2</p>
                       <p className="text-2xl font-black text-emerald-950 leading-none">{mlmGenerations[1]?.length || 0}</p>
                     </div>
-                    <div className="bg-purple-50/80 px-4 py-3 rounded-xl border border-purple-200 shadow-sm min-w-[88px] flex-1 text-center">
-                      <p className="text-[11px] font-bold text-purple-700 uppercase tracking-widest mb-1.5">L3</p>
+                    <div className="bg-purple-50/80 px-3 py-3 rounded-xl border border-purple-200 shadow-sm text-center flex flex-col justify-center">
+                      <p className="text-[10px] font-bold text-purple-700 uppercase tracking-widest mb-1.5">L3</p>
                       <p className="text-2xl font-black text-purple-950 leading-none">{mlmGenerations[2]?.length || 0}</p>
                     </div>
-                    <div className="bg-amber-50/80 px-4 py-3 rounded-xl border border-amber-200 shadow-sm min-w-[88px] flex-1 text-center">
-                      <p className="text-[11px] font-bold text-amber-700 uppercase tracking-widest mb-1.5">L4</p>
+                    <div className="bg-amber-50/80 px-3 py-3 rounded-xl border border-amber-200 shadow-sm text-center flex flex-col justify-center">
+                      <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1.5">L4</p>
                       <p className="text-2xl font-black text-amber-950 leading-none">{mlmGenerations[3]?.length || 0}</p>
                     </div>
-                    <div className="bg-rose-50/80 px-4 py-3 rounded-xl border border-rose-200 shadow-sm min-w-[88px] flex-1 text-center">
-                      <p className="text-[11px] font-bold text-rose-700 uppercase tracking-widest mb-1.5">L5</p>
+                    <div className="bg-rose-50/80 px-3 py-3 rounded-xl border border-rose-200 shadow-sm text-center flex flex-col justify-center col-span-2 sm:col-span-1">
+                      <p className="text-[10px] font-bold text-rose-700 uppercase tracking-widest mb-1.5">L5</p>
                       <p className="text-2xl font-black text-rose-950 leading-none">{mlmGenerations[4]?.length || 0}</p>
                     </div>
                   </div>

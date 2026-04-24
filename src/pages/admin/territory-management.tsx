@@ -188,7 +188,7 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("id, username, partner_details(full_name)")
-      .in("id", profileIds);
+      .in("id", profileIds as string[]);
 
     if (!profilesData) return setStateAssignments({});
 
@@ -236,7 +236,7 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("id, username, partner_details(full_name)")
-      .in("id", profileIds);
+      .in("id", profileIds as string[]);
 
     if (!profilesData) return setDistrictAssignments({});
 
@@ -283,7 +283,7 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("id, username, partner_details(full_name)")
-      .in("id", profileIds);
+      .in("id", profileIds as string[]);
 
     if (!profilesData) return setPincodeAssignments({});
 
@@ -329,7 +329,7 @@ export default function TerritoryManagement(): JSX.Element {
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("id, username, partner_details(full_name)")
-      .in("id", profileIds);
+      .in("id", profileIds as string[]);
 
     if (!profilesData) return setLocationAssignments({});
 

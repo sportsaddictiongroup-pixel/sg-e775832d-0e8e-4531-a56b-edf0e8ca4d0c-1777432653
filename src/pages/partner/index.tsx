@@ -347,7 +347,7 @@ export default function PartnerDashboard(): JSX.Element {
     }
   }
 
-  const userIdToUse = partnerDetails?.user_id || profile?.username || "UNKNOWN";
+  const userIdToUse = profile?.username || "UNKNOWN";
   const verificationId = `SAG-${userIdToUse}-${timeData.suffix}`;
 
   return (
@@ -469,7 +469,7 @@ export default function PartnerDashboard(): JSX.Element {
                   <div className="space-y-1.5">
                     <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
                     <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black font-mono">
-                      {partnerDetails?.user_id || profile.username}
+                      {profile.username}
                     </p>
                   </div>
                   
@@ -490,14 +490,14 @@ export default function PartnerDashboard(): JSX.Element {
                   <div className="space-y-1.5">
                     <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
                     <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
-                      {uplineDetails?.full_name || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
+                      {uplineFullName || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
                     </p>
                   </div>
                   
                   <div className="space-y-1.5">
                     <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
                     <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black font-mono">
-                      {uplineDetails?.user_id || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
+                      {upline?.username || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
                     </p>
                   </div>
                 </div>

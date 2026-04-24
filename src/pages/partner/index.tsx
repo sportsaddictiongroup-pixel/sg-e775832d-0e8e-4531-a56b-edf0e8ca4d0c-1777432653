@@ -175,7 +175,8 @@ export default function PartnerDashboard(): JSX.Element {
           locations(name)
         `)
         .eq("profile_id", user.id)
-        .order("id", { ascending: false })
+        .eq("is_active", true)
+        .order("assigned_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -299,7 +300,7 @@ export default function PartnerDashboard(): JSX.Element {
   };
 
   // Derive the operational role from the active territory assignment
-  let derivedRole = "No Role Defined";
+  let derivedRole = "Network Partner";
   if (activeAssignment) {
     if (activeAssignment.location_id) {
       const val = getJoinedValue(activeAssignment.locations);

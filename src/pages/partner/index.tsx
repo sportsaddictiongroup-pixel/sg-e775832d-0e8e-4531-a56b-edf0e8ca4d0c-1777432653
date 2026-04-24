@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { User, MapPin, Network, Key } from "lucide-react";
+import { User, MapPin, Network, Key, LogOut } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 type PartnerDetails = {
@@ -267,6 +267,15 @@ export default function PartnerDashboard(): JSX.Element {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      router.replace("/partner/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -323,8 +332,8 @@ export default function PartnerDashboard(): JSX.Element {
       <main className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12">
         <div className="mx-auto w-full max-w-5xl space-y-8 md:space-y-10">
           
-          {/* WELCOME AREA (NOW A UNIFIED HEADER BLOCK) */}
-          <header className="relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm p-6 md:p-8 lg:p-10">
+          {/* WELCOME AREA & TOP ACTIONS */}
+          <header className="relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm p-6 md:p-8 lg:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="absolute right-0 top-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
             
             <div className="relative z-10 space-y-3">
@@ -343,6 +352,28 @@ export default function PartnerDashboard(): JSX.Element {
               <p className="text-sm text-muted-foreground pt-1 max-w-xl">
                 View your role, assigned territory, and manage your credentials.
               </p>
+            </div>
+
+            {/* PREMIUM TOP-RIGHT ACTIONS */}
+            <div className="relative z-10 md:ml-auto flex items-center flex-wrap gap-3 mt-2 md:mt-0">
+              <Button 
+                variant="outline"
+                className="bg-blue-50/50 hover:bg-blue-100/50 dark:bg-blue-950/20 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 font-semibold shadow-sm transition-all"
+                onClick={() => {
+                  document.getElementById("change-password")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Change Password
+              </Button>
+              <Button 
+                variant="outline"
+                className="bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-900/30 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 font-semibold shadow-sm transition-all"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </header>
 
@@ -435,7 +466,7 @@ export default function PartnerDashboard(): JSX.Element {
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">
-            <Card className="shadow-sm border-border/60 bg-card/50 hover:bg-card hover:shadow-md transition-all">
+            <Card id="change-password" className="shadow-sm border-border/60 bg-card/50 hover:bg-card hover:shadow-md transition-all scroll-mt-24">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-lg">
                   <div className="bg-muted p-1.5 rounded-md mr-3">

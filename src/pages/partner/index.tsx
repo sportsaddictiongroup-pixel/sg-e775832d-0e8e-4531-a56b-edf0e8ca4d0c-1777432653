@@ -31,10 +31,10 @@ type PartnerDetails = {
 
 type TerritoryAssignment = Tables<"territory_assignments">;
 type ExtendedAssignment = TerritoryAssignment & {
-  states?: { name: string } | null;
-  districts?: { name: string } | null;
-  pincodes?: { code: string } | null;
-  locations?: { name: string } | null;
+  states?: { name: string } | { name: string }[] | null;
+  districts?: { name: string } | { name: string }[] | null;
+  pincodes?: { code: string } | { code: string }[] | null;
+  locations?: { name: string } | { name: string }[] | null;
 };
 
 const formatRoleLabel = (role: string | null | undefined) => {
@@ -264,17 +264,27 @@ export default function PartnerDashboard(): JSX.Element {
     );
   }
 
+  const getJoinedValue = (data: any, key: 'name' | 'code' = 'name') => {
+    if (!data) return null;
+    if (Array.isArray(data)) return data[0]?.[key] || null;
+    return data[key] || null;
+  };
+
   // Derive the operational role from the active territory assignment
   let derivedRole = "No Role Defined";
   if (activeAssignment) {
     if (activeAssignment.location_id) {
-      derivedRole = `Area / Location Head: ${activeAssignment.locations?.name || "Assigned"}`;
+      const val = getJoinedValue(activeAssignment.locations);
+      derivedRole = val ? `Area / Location Head: ${val}` : "Area / Location Head";
     } else if (activeAssignment.pincode_id) {
-      derivedRole = `PIN Code Head: ${activeAssignment.pincodes?.code || "Assigned"}`;
+      const val = getJoinedValue(activeAssignment.pincodes, 'code');
+      derivedRole = val ? `PIN Code Head: ${val}` : "PIN Code Head";
     } else if (activeAssignment.district_id) {
-      derivedRole = `District Head: ${activeAssignment.districts?.name || "Assigned"}`;
+      const val = getJoinedValue(activeAssignment.districts);
+      derivedRole = val ? `District Head: ${val}` : "District Head";
     } else if (activeAssignment.state_id) {
-      derivedRole = `State Head: ${activeAssignment.states?.name || "Assigned"}`;
+      const val = getJoinedValue(activeAssignment.states);
+      derivedRole = val ? `State Head: ${val}` : "State Head";
     }
   }
 

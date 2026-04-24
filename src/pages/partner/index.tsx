@@ -324,7 +324,7 @@ export default function PartnerDashboard(): JSX.Element {
         <div className="mx-auto w-full max-w-5xl space-y-8 md:space-y-10">
           
           {/* WELCOME AREA (NOW A UNIFIED HEADER BLOCK) */}
-          <header className="relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm p-6 md:p-8 lg:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <header className="relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm p-6 md:p-8 lg:p-10">
             <div className="absolute right-0 top-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
             
             <div className="relative z-10 space-y-3">
@@ -344,29 +344,29 @@ export default function PartnerDashboard(): JSX.Element {
                 View your role, assigned territory, and manage your credentials.
               </p>
             </div>
-
-            {/* PREMIUM ROLE BADGE */}
-            <div className="relative z-10 shrink-0 mt-2 md:mt-0">
-              <div className="inline-flex items-center px-5 py-3 rounded-xl border border-orange-200 dark:border-orange-800/60 bg-orange-50/80 dark:bg-orange-950/40 shadow-sm backdrop-blur-sm transition-all hover:shadow-md">
-                <div className="h-2.5 w-2.5 rounded-full bg-orange-500 mr-3 shadow-[0_0_8px_rgba(249,115,22,0.6)] animate-pulse" />
-                <span className="text-sm font-extrabold text-orange-700 dark:text-orange-400 uppercase tracking-widest">
-                  {derivedRole}
-                </span>
-              </div>
-            </div>
           </header>
 
           <section>
             <Card className="w-full border-orange-300/80 dark:border-orange-800/80 bg-gradient-to-br from-orange-50/40 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-orange-600" />
               
-              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 bg-background/50 backdrop-blur-sm px-6 md:px-10">
-                <CardTitle className="text-sm md:text-base font-bold flex items-center text-foreground tracking-widest uppercase">
+              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 bg-background/50 backdrop-blur-sm px-6 md:px-10 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+                <CardTitle className="text-sm md:text-base font-bold flex items-center text-foreground tracking-widest uppercase shrink-0">
                   <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg mr-3 text-orange-700 dark:text-orange-400 shadow-sm">
                     <User className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
                   SAG NETWORK IDENTITY
                 </CardTitle>
+
+                {/* PREMIUM ROLE BADGE (MOVED FROM HEADER) */}
+                <div className="relative z-10 shrink-0">
+                  <div className="inline-flex items-center px-4 py-2 md:px-5 md:py-2.5 rounded-xl border border-orange-200 dark:border-orange-800/60 bg-orange-50/80 dark:bg-orange-950/40 shadow-sm backdrop-blur-sm transition-all hover:shadow-md">
+                    <div className="h-2 w-2 md:h-2.5 md:w-2.5 rounded-full bg-orange-500 mr-2.5 md:mr-3 shadow-[0_0_8px_rgba(249,115,22,0.6)] animate-pulse" />
+                    <span className="text-xs md:text-sm font-extrabold text-orange-700 dark:text-orange-400 uppercase tracking-widest">
+                      {derivedRole}
+                    </span>
+                  </div>
+                </div>
               </CardHeader>
               
               <CardContent className="p-6 md:p-10">

@@ -432,7 +432,7 @@ export default function PartnerNetworkTree(): JSX.Element {
 
                     {/* UPLINE DETAILS (Only shown for Root Partner or when safely known) */}
                     {selectedProfileId === rootProfileId && (
-                      <div className="md:ml-6 md:pl-6 md:border-l border-border/50 flex flex-col justify-center">
+                      <div className="md:ml-6 md:pl-6 md:border-l border-border/50 flex flex-col justify-center mt-4 md:mt-0">
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
                           <Network className="h-3 w-3" /> Upline
                         </p>
@@ -448,31 +448,30 @@ export default function PartnerNetworkTree(): JSX.Element {
                         ) : (
                           <>
                             <p className="text-sm font-bold text-foreground">Admin / Root</p>
-                            <p className="text-[11px] font-mono text-muted-foreground mt-0.5">Directly Attached</p>
                           </>
                         )}
                       </div>
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 w-full xl:w-auto xl:border-l xl:pl-8 border-border/50">
-                    <div className="bg-blue-50/80 px-3 py-3 rounded-xl border border-blue-200 shadow-sm text-center flex flex-col justify-center">
+                  <div className="flex flex-wrap gap-2 md:gap-3 w-full xl:w-auto xl:border-l xl:pl-8 border-border/50 mt-6 xl:mt-0">
+                    <div className="bg-blue-50/80 px-2 py-3 md:p-3 rounded-xl border border-blue-200 shadow-sm text-center flex flex-col justify-center w-[85px] sm:w-[100px]">
                       <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1.5 whitespace-nowrap">Direct/L1</p>
                       <p className="text-2xl font-black text-blue-950 leading-none">{mlmGenerations[0]?.length || 0}</p>
                     </div>
-                    <div className="bg-emerald-50/80 px-3 py-3 rounded-xl border border-emerald-200 shadow-sm text-center flex flex-col justify-center">
+                    <div className="bg-emerald-50/80 px-2 py-3 md:p-3 rounded-xl border border-emerald-200 shadow-sm text-center flex flex-col justify-center w-[85px] sm:w-[100px]">
                       <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">L2</p>
                       <p className="text-2xl font-black text-emerald-950 leading-none">{mlmGenerations[1]?.length || 0}</p>
                     </div>
-                    <div className="bg-purple-50/80 px-3 py-3 rounded-xl border border-purple-200 shadow-sm text-center flex flex-col justify-center">
+                    <div className="bg-purple-50/80 px-2 py-3 md:p-3 rounded-xl border border-purple-200 shadow-sm text-center flex flex-col justify-center w-[85px] sm:w-[100px]">
                       <p className="text-[10px] font-bold text-purple-700 uppercase tracking-widest mb-1.5">L3</p>
                       <p className="text-2xl font-black text-purple-950 leading-none">{mlmGenerations[2]?.length || 0}</p>
                     </div>
-                    <div className="bg-amber-50/80 px-3 py-3 rounded-xl border border-amber-200 shadow-sm text-center flex flex-col justify-center">
+                    <div className="bg-amber-50/80 px-2 py-3 md:p-3 rounded-xl border border-amber-200 shadow-sm text-center flex flex-col justify-center w-[85px] sm:w-[100px]">
                       <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1.5">L4</p>
                       <p className="text-2xl font-black text-amber-950 leading-none">{mlmGenerations[3]?.length || 0}</p>
                     </div>
-                    <div className="bg-rose-50/80 px-3 py-3 rounded-xl border border-rose-200 shadow-sm text-center flex flex-col justify-center col-span-2 sm:col-span-1">
+                    <div className="bg-rose-50/80 px-2 py-3 md:p-3 rounded-xl border border-rose-200 shadow-sm text-center flex flex-col justify-center w-[85px] sm:w-[100px]">
                       <p className="text-[10px] font-bold text-rose-700 uppercase tracking-widest mb-1.5">L5</p>
                       <p className="text-2xl font-black text-rose-950 leading-none">{mlmGenerations[4]?.length || 0}</p>
                     </div>

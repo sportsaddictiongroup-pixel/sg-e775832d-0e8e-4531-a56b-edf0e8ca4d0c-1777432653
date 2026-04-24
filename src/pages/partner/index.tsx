@@ -169,7 +169,8 @@ export default function PartnerDashboard(): JSX.Element {
           locations(name)
         `)
         .eq("profile_id", user.id)
-        .eq("is_active", true)
+        .order("assigned_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
         
       if (assignmentError) {

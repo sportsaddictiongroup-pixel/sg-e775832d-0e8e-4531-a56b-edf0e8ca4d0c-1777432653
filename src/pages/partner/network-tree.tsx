@@ -409,17 +409,25 @@ export default function PartnerNetworkTree(): JSX.Element {
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-3 w-full md:w-auto md:border-l md:pl-8 border-border/50">
-                    <div className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 shadow-sm min-w-[88px] text-center">
+                    <div className="bg-blue-50/80 px-4 py-3 rounded-xl border border-blue-200 shadow-sm min-w-[88px] flex-1 text-center">
                       <p className="text-[11px] font-bold text-blue-700 uppercase tracking-widest mb-1.5">Direct/L1</p>
                       <p className="text-2xl font-black text-blue-950 leading-none">{mlmGenerations[0]?.length || 0}</p>
                     </div>
-                    <div className="bg-emerald-50/80 px-4 py-3 rounded-xl border border-emerald-200 shadow-sm min-w-[88px] text-center">
+                    <div className="bg-emerald-50/80 px-4 py-3 rounded-xl border border-emerald-200 shadow-sm min-w-[88px] flex-1 text-center">
                       <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">L2</p>
                       <p className="text-2xl font-black text-emerald-950 leading-none">{mlmGenerations[1]?.length || 0}</p>
                     </div>
-                    <div className="bg-purple-50/80 px-4 py-3 rounded-xl border border-purple-200 shadow-sm min-w-[88px] text-center">
+                    <div className="bg-purple-50/80 px-4 py-3 rounded-xl border border-purple-200 shadow-sm min-w-[88px] flex-1 text-center">
                       <p className="text-[11px] font-bold text-purple-700 uppercase tracking-widest mb-1.5">L3</p>
                       <p className="text-2xl font-black text-purple-950 leading-none">{mlmGenerations[2]?.length || 0}</p>
+                    </div>
+                    <div className="bg-amber-50/80 px-4 py-3 rounded-xl border border-amber-200 shadow-sm min-w-[88px] flex-1 text-center">
+                      <p className="text-[11px] font-bold text-amber-700 uppercase tracking-widest mb-1.5">L4</p>
+                      <p className="text-2xl font-black text-amber-950 leading-none">{mlmGenerations[3]?.length || 0}</p>
+                    </div>
+                    <div className="bg-rose-50/80 px-4 py-3 rounded-xl border border-rose-200 shadow-sm min-w-[88px] flex-1 text-center">
+                      <p className="text-[11px] font-bold text-rose-700 uppercase tracking-widest mb-1.5">L5</p>
+                      <p className="text-2xl font-black text-rose-950 leading-none">{mlmGenerations[4]?.length || 0}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -427,9 +435,9 @@ export default function PartnerNetworkTree(): JSX.Element {
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-3 h-auto p-1.5 bg-muted/40 border border-muted/50 rounded-2xl shadow-inner mb-8 gap-1">
-                  <TabsTrigger value="overview" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-blue-600 data-[state=active]:text-white">Preview</TabsTrigger>
-                  <TabsTrigger value="downlines" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Direct</TabsTrigger>
-                  <TabsTrigger value="generations" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-purple-600 data-[state=active]:text-white">Full View</TabsTrigger>
+                  <TabsTrigger value="overview" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-blue-600 data-[state=active]:text-white">Overview Preview</TabsTrigger>
+                  <TabsTrigger value="downlines" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Direct Downlines</TabsTrigger>
+                  <TabsTrigger value="generations" className="py-3 px-8 text-sm font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-purple-600 data-[state=active]:text-white">5-Level MLM View</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="overview" className="mt-0">
@@ -502,45 +510,66 @@ export default function PartnerNetworkTree(): JSX.Element {
                   {mlmGenerations.map((levelPartners, index) => {
                     const levelNum = index + 1;
                     const total = levelPartners.length;
-                    const page = genPages[index];
+                    const page = genPages[index] || 1;
                     const totalPages = Math.ceil(total / DOWNLINES_PER_PAGE) || 1;
                     const paginated = levelPartners.slice((page - 1) * DOWNLINES_PER_PAGE, page * DOWNLINES_PER_PAGE);
 
-                    if (total === 0) return null;
+                    // Define premium color themes per level
+                    const colors = [
+                      { bg: "bg-blue-500", headerBg: "bg-blue-50/40", text: "text-blue-600", hover: "hover:bg-blue-50/60", btn: "bg-blue-600 hover:bg-blue-700" },
+                      { bg: "bg-emerald-500", headerBg: "bg-emerald-50/40", text: "text-emerald-600", hover: "hover:bg-emerald-50/60", btn: "bg-emerald-600 hover:bg-emerald-700" },
+                      { bg: "bg-purple-500", headerBg: "bg-purple-50/40", text: "text-purple-600", hover: "hover:bg-purple-50/60", btn: "bg-purple-600 hover:bg-purple-700" },
+                      { bg: "bg-amber-500", headerBg: "bg-amber-50/40", text: "text-amber-600", hover: "hover:bg-amber-50/60", btn: "bg-amber-600 hover:bg-amber-700" },
+                      { bg: "bg-rose-500", headerBg: "bg-rose-50/40", text: "text-rose-600", hover: "hover:bg-rose-50/60", btn: "bg-rose-600 hover:bg-rose-700" },
+                    ];
+                    const theme = colors[index];
 
                     return (
                       <Card key={`gen-level-${levelNum}`} className="shadow-lg border-muted overflow-hidden rounded-3xl">
-                        <div className="h-2 w-full bg-purple-500"></div>
-                        <CardHeader className="border-b py-6 bg-purple-50/40">
-                          <CardTitle className="text-xl font-bold flex items-center gap-3">
-                            <Layers className="h-5 w-5 text-purple-600" />
-                            Level {levelNum}
+                        <div className={`h-2 w-full ${theme.bg}`}></div>
+                        <CardHeader className={`border-b py-6 ${theme.headerBg} flex flex-row items-center justify-between`}>
+                          <CardTitle className={`text-xl font-bold flex items-center gap-3 ${theme.text}`}>
+                            <Layers className="h-5 w-5" />
+                            Generation Level {levelNum}
                           </CardTitle>
+                          <div className="text-sm font-semibold bg-background/80 px-3 py-1 rounded-full shadow-sm border border-border/50 text-foreground">
+                            {total} {total === 1 ? "Partner" : "Partners"}
+                          </div>
                         </CardHeader>
                         <CardContent className="p-0">
-                          <Table>
-                            <TableHeader className="bg-muted/20">
-                              <TableRow>
-                                <TableHead className="h-14 py-4 px-8 font-bold text-[11px] uppercase">Partner</TableHead>
-                                <TableHead className="h-14 py-4 text-right pr-8 font-bold text-[11px] uppercase">Action</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {paginated.map((p) => (
-                                <TableRow key={p.profile_id} className="hover:bg-purple-50/60">
-                                  <TableCell className="py-5 px-8">
-                                    <div className="font-extrabold text-foreground text-sm">{p.partner_name}</div>
-                                    <div className="text-xs font-mono text-muted-foreground mt-1.5">{p.user_id}</div>
-                                  </TableCell>
-                                  <TableCell className="text-right pr-8 py-5">
-                                    <Button size="sm" className="rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold" onClick={() => handleOpenNode(p)}>
-                                      Explore <ChevronRight className="h-4 w-4 ml-1.5" />
-                                    </Button>
-                                  </TableCell>
+                          {total === 0 ? (
+                            <div className="py-12 text-center">
+                              <p className="text-muted-foreground font-medium">No partners at this level.</p>
+                            </div>
+                          ) : (
+                            <Table>
+                              <TableHeader className="bg-muted/20">
+                                <TableRow>
+                                  <TableHead className="h-14 py-4 px-8 font-bold text-[11px] uppercase">Partner</TableHead>
+                                  <TableHead className="h-14 py-4 text-center font-bold text-[11px] uppercase">Direct Downlines</TableHead>
+                                  <TableHead className="h-14 py-4 text-right pr-8 font-bold text-[11px] uppercase">Explore</TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                              </TableHeader>
+                              <TableBody>
+                                {paginated.map((p) => (
+                                  <TableRow key={p.profile_id} className={theme.hover}>
+                                    <TableCell className="py-5 px-8">
+                                      <div className="font-extrabold text-foreground text-sm">{p.partner_name}</div>
+                                      <div className="text-xs font-mono text-muted-foreground mt-1.5 bg-background/50 inline-block px-1.5 py-0.5 rounded border border-border/50">{p.user_id}</div>
+                                    </TableCell>
+                                    <TableCell className="text-center py-5">
+                                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-background text-foreground border shadow-sm">{p.direct_downlines_count}</span>
+                                    </TableCell>
+                                    <TableCell className="text-right pr-8 py-5">
+                                      <Button size="sm" className={`rounded-full text-white font-bold ${theme.btn}`} onClick={() => handleOpenNode(p)}>
+                                        Explore <ChevronRight className="h-4 w-4 ml-1.5" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          )}
                         </CardContent>
                       </Card>
                     );

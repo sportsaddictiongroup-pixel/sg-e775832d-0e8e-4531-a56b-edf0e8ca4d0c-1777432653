@@ -358,17 +358,6 @@ export default function PartnerDashboard(): JSX.Element {
             <div className="relative z-10 md:ml-auto flex items-center flex-wrap gap-3 mt-2 md:mt-0">
               <Button 
                 variant="outline"
-                className="bg-blue-50/50 hover:bg-blue-100/50 dark:bg-blue-950/20 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-900/50 text-blue-700 dark:text-blue-400 font-semibold shadow-sm transition-all"
-                onClick={() => {
-                  document.getElementById("change-password")?.scrollIntoView({ behavior: "smooth" });
-                  setTimeout(() => document.getElementById("new-password")?.focus(), 400);
-                }}
-              >
-                <Key className="h-4 w-4 mr-2" />
-                Change Password
-              </Button>
-              <Button 
-                variant="outline"
                 className="bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-900/30 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 font-semibold shadow-sm transition-all"
                 onClick={handleLogout}
               >
@@ -467,11 +456,11 @@ export default function PartnerDashboard(): JSX.Element {
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">
-            <Card id="change-password" className="shadow-sm border-border/60 bg-card/50 hover:bg-card hover:shadow-md transition-all scroll-mt-24">
+            <Card className="shadow-sm border-border/60 border-l-4 border-l-orange-500 bg-orange-50/10 dark:bg-orange-950/10 hover:bg-orange-50/30 dark:hover:bg-orange-950/20 transition-all">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg">
-                  <div className="bg-muted p-1.5 rounded-md mr-3">
-                    <Key className="h-4 w-4 text-foreground" />
+                <CardTitle className="flex items-center text-lg font-bold text-orange-700 dark:text-orange-400">
+                  <div className="bg-orange-100 dark:bg-orange-900/50 p-1.5 rounded-md mr-3 shadow-sm">
+                    <Key className="h-4 w-4 text-orange-700 dark:text-orange-400" />
                   </div>
                   Change Password
                 </CardTitle>

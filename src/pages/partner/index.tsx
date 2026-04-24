@@ -75,14 +75,27 @@ export default function PartnerDashboard(): JSX.Element {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [currentTime, setCurrentTime] = useState("");
+  const [timeData, setTimeData] = useState({ display: "", suffix: "" });
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' });
-      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      setCurrentTime(`${dateStr} • ${timeStr}`);
+      // Format: 24 April 2026 | 10:45 PM
+      const day = now.getDate();
+      const month = now.toLocaleDateString('en-US', { month: 'long' });
+      const year = now.getFullYear();
+      const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const display = `${day} ${month} ${year} | ${time}`;
+
+      // Format: YYYYMMDD-HHMM
+      const yyyy = year;
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(day).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const suffix = `${yyyy}${mm}${dd}-${hh}${min}`;
+
+      setTimeData({ display, suffix });
     };
     updateTime();
     const timer = setInterval(updateTime, 1000);
@@ -291,14 +304,9 @@ export default function PartnerDashboard(): JSX.Element {
 
   if (loading) {
     return (
-      <>
-        <SEO title="Partner Dashboard" description="Partner overview" />
-        <main className="min-h-screen flex items-center justify-center bg-background text-foreground">
-          <p className="text-sm text-muted-foreground">
-            Loading your dashboard...
-          </p>
-        </main>
-      </>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      </div>
     );
   }
 
@@ -339,11 +347,18 @@ export default function PartnerDashboard(): JSX.Element {
     }
   }
 
+  const userIdToUse = partnerDetails?.user_id || profile?.username || "UNKNOWN";
+  const verificationId = `SAG-${userIdToUse}-${timeData.suffix}`;
+
   return (
     <>
       <SEO title="Partner Dashboard" description="Partner overview" />
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
+          @page {
+            margin: 15mm;
+            size: auto;
+          }
           body * {
             visibility: hidden;
           }
@@ -355,16 +370,21 @@ export default function PartnerDashboard(): JSX.Element {
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
-            margin: 0 !important;
-            padding: 20px !important;
+            margin: 0 auto !important;
             box-shadow: none !important;
             border: 2px solid #ea580c !important;
             border-radius: 12px !important;
             background: white !important;
+            color: black !important;
+            page-break-inside: avoid;
           }
           .print-hidden {
             display: none !important;
           }
+          .print-text-black { color: #000000 !important; }
+          .print-text-gray { color: #6b7280 !important; }
+          .print-border-gray { border-color: #e5e7eb !important; }
+          .print-watermark { opacity: 0.05 !important; color: #000000 !important; }
         }
       `}} />
       <main className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12">
@@ -406,102 +426,94 @@ export default function PartnerDashboard(): JSX.Element {
           </header>
 
           <section>
-            <Card id="printable-identity-card" className="w-full border-orange-300/80 dark:border-orange-800/80 bg-gradient-to-br from-orange-50/40 to-white dark:from-orange-950/20 dark:to-background shadow-md relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-orange-600 print-hidden" />
-              
-              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 bg-background/50 backdrop-blur-sm px-6 md:px-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <Card id="printable-identity-card" className="w-full border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black">
+              {/* Security Watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
+                <span className="text-[3.5rem] sm:text-[5rem] md:text-[7rem] font-black text-slate-900/[0.03] dark:text-white/[0.02] print-watermark -rotate-12 whitespace-nowrap">
+                  SPORTS ADDICTION GROUP
+                </span>
+              </div>
+
+              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 print-border-gray relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                  <CardTitle className="text-sm md:text-base font-bold flex items-center text-foreground tracking-widest uppercase">
-                    <div className="bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg mr-3 text-orange-700 dark:text-orange-400 shadow-sm print-hidden">
-                      <User className="h-4 w-4 md:h-5 md:w-5" />
-                    </div>
+                  <CardTitle className="text-lg md:text-xl font-black flex items-center text-orange-600 dark:text-orange-500 tracking-widest uppercase">
                     SAG NETWORK IDENTITY
                   </CardTitle>
-                  <p className="text-[11px] font-mono text-muted-foreground mt-2 sm:ml-12 uppercase tracking-wider font-semibold text-orange-600/80 dark:text-orange-400/80">
-                    {currentTime ? `Generated: ${currentTime}` : "Loading date..."}
+                </div>
+                <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
+                  <Button 
+                    onClick={() => window.print()}
+                    variant="outline" 
+                    size="sm" 
+                    className="print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Print Identity
+                  </Button>
+                  <p className="text-[11px] font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider">
+                    Generated On: {timeData.display || "Loading..."}
                   </p>
                 </div>
-                <Button 
-                  onClick={() => window.print()}
-                  variant="outline" 
-                  size="sm" 
-                  className="print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
-                >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Identity / PDF
-                </Button>
               </CardHeader>
               
-              <CardContent className="p-6 md:p-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                  {/* Personal Info */}
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                        Full Name
-                      </p>
-                      <p className="text-base font-semibold text-foreground">
-                        {partnerDetails?.full_name || "Not available"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                        User ID / Username
-                      </p>
-                      <p className="text-base font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2.5 py-0.5 rounded-md inline-block border border-orange-100 dark:border-orange-900/30">
-                        {profile.username || "Not available"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                        Registered Mobile Number
-                      </p>
-                      <p className="text-base font-semibold text-foreground">
-                        {partnerDetails?.mobile_number || "Not available"}
-                      </p>
-                    </div>
+              <CardContent className="p-6 md:p-10 relative z-10 space-y-8">
+                {/* 2-Column Identity Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
+                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
+                      {partnerDetails?.full_name || profile.full_name || profile.username}
+                    </p>
                   </div>
-
-                  {/* Upline & Designation Info */}
-                  <div className="space-y-6 md:border-l-2 md:border-orange-100 dark:md:border-orange-900/30 md:pl-12">
-                    {upline ? (
-                      <>
-                        <div>
-                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                            <Network className="h-3.5 w-3.5" /> Upline Full Name
-                          </p>
-                          <p className="text-base font-semibold text-foreground">
-                            {uplineFullName || upline.full_name || upline.username}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                            Upline User ID
-                          </p>
-                          <p className="text-base font-mono font-medium text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2.5 py-0.5 rounded-md inline-block border border-orange-100 dark:border-orange-900/30">
-                            {upline.username}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-start justify-center text-muted-foreground bg-muted/30 p-5 rounded-2xl border border-muted/50">
-                        <Network className="h-6 w-6 mb-3 opacity-30" />
-                        <p className="text-sm font-bold text-foreground">No upline linked</p>
-                        <p className="text-xs mt-1 leading-relaxed max-w-[200px]">You are attached directly to root/admin.</p>
-                      </div>
-                    )}
-
-                    <div className="w-full h-px bg-border/40" />
-
-                    <div>
-                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                        Your Designation In SAG
-                      </p>
-                      <p className="text-base font-semibold text-orange-700 dark:text-orange-400">
-                        {derivedRole}
-                      </p>
-                    </div>
+                  
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
+                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black font-mono">
+                      {partnerDetails?.user_id || profile.username}
+                    </p>
                   </div>
+                  
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
+                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
+                      {partnerDetails?.mobile_number || "N/A"}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
+                    <p className="text-base sm:text-lg font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
+                      {derivedRole}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
+                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
+                      {uplineDetails?.full_name || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
+                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black font-mono">
+                      {uplineDetails?.user_id || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Verification ID */}
+                <div className="pt-6 border-t border-border/40 print-border-gray">
+                  <p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
+                    Verification ID: {verificationId}
+                  </p>
+                </div>
+
+                {/* Official Footer Note */}
+                <div className="pt-2 text-[10px] sm:text-[11px] text-muted-foreground print-text-gray italic leading-relaxed">
+                  <p>This SAG Network Identity is system-generated.</p>
+                  <p>Valid as per generated date and time shown above.</p>
+                  <p>For official verification, match details with SAG Network records.</p>
                 </div>
               </CardContent>
             </Card>

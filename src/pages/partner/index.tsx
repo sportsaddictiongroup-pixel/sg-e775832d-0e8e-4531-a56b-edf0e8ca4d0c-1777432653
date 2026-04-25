@@ -32,6 +32,7 @@ type PartnerDetails = {
   districts?: { name: string } | { name: string }[] | null;
   pincodes?: { code: string } | { code: string }[] | null;
   locations?: { name: string } | { name: string }[] | null;
+  _countryName?: string | null;
 };
 
 type TerritoryAssignment = Tables<"territory_assignments">;
@@ -74,7 +75,6 @@ export default function PartnerDashboard(): JSX.Element {
   const [activeAssignment, setActiveAssignment] = useState<ExtendedAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [countryName, setCountryName] = useState<string | null>(null);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -195,12 +195,14 @@ export default function PartnerDashboard(): JSX.Element {
         };
 
         // DIRECT FETCH FOR COUNTRY (Bypassing relational join issues)
+        let computedCountryName = null;
         if (resolvedPd.country_id) {
           const { data: cData } = await supabase.from('countries').select('name').eq('id', resolvedPd.country_id).maybeSingle();
-          if (cData && isMounted) {
-            setCountryName(cData.name);
+          if (cData) {
+            computedCountryName = cData.name;
           }
         }
+        resolvedPd._countryName = computedCountryName;
 
         // SECONDARY FALLBACK QUERIES for other location levels
         if (resolvedPd.state_id && !checkJoined(resolvedPd.states, 'name')) {
@@ -550,7 +552,7 @@ export default function PartnerDashboard(): JSX.Element {
                     <div className="space-y-1.5">
                       <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Country</p>
                       <p className="text-base font-extrabold text-foreground print-text-black">
-                        {countryName || "Not Assigned"}
+                        {partnerDetails?._countryName || "Not Assigned"}
                       </p>
                     </div>
                     <div className="space-y-1.5">

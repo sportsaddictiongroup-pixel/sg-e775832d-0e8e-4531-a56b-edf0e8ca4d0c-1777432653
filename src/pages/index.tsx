@@ -50,10 +50,10 @@ export default function Home(): JSX.Element {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl md:text-3xl font-extrabold text-slate-700 dark:text-slate-300 tracking-tight">
-                Journey of Local Star to Global Star
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-400 tracking-tight">
+                Journey of Local Stars to Global Stars
               </h2>
-              <h3 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-400 uppercase tracking-widest">
+              <h3 className="text-lg md:text-2xl font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
                 My Own Sports Network
               </h3>
             </div>
@@ -65,20 +65,25 @@ export default function Home(): JSX.Element {
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg md:text-2xl text-slate-600 dark:text-slate-400 max-w-4xl mx-auto font-semibold leading-relaxed pt-2 px-4">
-              India ka pehla aisa platform jahan sports passion ko passive income, identity aur global exposure mein convert kiya ja sakta hai.
-            </p>
+            <div className="space-y-4 pt-2 px-4 max-w-4xl mx-auto">
+              <p className="text-lg md:text-2xl text-slate-600 dark:text-slate-400 font-semibold leading-relaxed">
+                India’s first platform where sports passion is transformed into passive income, identity, and global opportunities.
+              </p>
+              <p className="text-base md:text-xl text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wide">
+                India’s First Sports Affiliation Earning System
+              </p>
+            </div>
           </header>
 
           {/* Benefits Section */}
           <div className="flex flex-wrap justify-center gap-3 md:gap-4 max-w-4xl mx-auto pt-2 px-2">
             {[
-              "Passive Income in Sports – bina heavy effort",
-              "Local to Global Journey",
-              "Earn Respect + Recognition",
+              "Passive Income in Sports — without heavy effort",
+              "Local to Global Growth Journey",
+              "Earn Respect & Recognition",
               "Build Your Own Network",
-              "International Opportunities",
-              "No Experience Needed"
+              "International Exposure Opportunities",
+              "No Experience Required"
             ].map((benefit, i) => (
               <div key={i} className="flex items-center gap-2.5 bg-white/90 dark:bg-slate-900/90 px-4 md:px-5 py-2.5 rounded-full shadow-sm border border-slate-200/80 dark:border-slate-700/80 backdrop-blur-md hover:scale-105 transition-transform cursor-default">
                 <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 dark:text-emerald-500 shrink-0" />
@@ -91,9 +96,9 @@ export default function Home(): JSX.Element {
           <div className="mx-auto max-w-3xl p-1 rounded-2xl bg-gradient-to-r from-orange-500 via-purple-500 to-blue-600 shadow-lg mx-4 md:mx-auto">
             <div className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl rounded-xl p-5 md:p-6">
               <p className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-200 leading-relaxed">
-                Aisa system India hi nahi, world mein pehli baar. <br />
+                A first-of-its-kind system not only in India, but globally. <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-purple-600 font-black text-xl md:text-2xl mt-1 inline-block">
-                  Abhi join karo – aur apni sports journey ko next level par le jao.
+                  Join now and take your sports journey to the next level.
                 </span>
               </p>
             </div>
@@ -102,79 +107,39 @@ export default function Home(): JSX.Element {
           {/* Login Portals Grid */}
           <section className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto pt-8 px-4 md:px-0">
             {/* Admin Portal Card */}
-            <Card className="flex flex-col justify-between border-0 bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white shadow-xl hover:shadow-2xl hover:shadow-blue-900/30 transition-all duration-300 hover:-translate-y-1.5 overflow-hidden group relative">
+            <Card className="flex flex-col justify-center items-center text-center border-0 bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white shadow-xl hover:shadow-2xl hover:shadow-blue-900/30 transition-all duration-300 hover:-translate-y-1.5 overflow-hidden group relative p-8 md:p-12 min-h-[320px]">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
 
-              <div className="relative z-10 text-left">
-                <CardHeader>
-                  <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center mb-4 shadow-inner border border-white/20 group-hover:scale-110 transition-transform">
-                    <Users className="h-7 w-7 text-blue-100" />
-                  </div>
-                  <CardTitle className="text-3xl font-black tracking-tight">Admin Portal</CardTitle>
-                  <CardDescription className="text-base font-medium text-blue-100 mt-2">
-                    Manage master data, partners, and territory assignments from a single, consistent console.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="text-sm text-blue-50 space-y-3 font-medium">
-                    <li className="flex items-center gap-3">
-                       <div className="h-2 w-2 rounded-full bg-blue-300 shadow-[0_0_8px_rgba(147,197,253,0.8)]" /> Location hierarchy management
-                    </li>
-                    <li className="flex items-center gap-3">
-                       <div className="h-2 w-2 rounded-full bg-blue-300 shadow-[0_0_8px_rgba(147,197,253,0.8)]" /> Create and manage partner accounts
-                    </li>
-                    <li className="flex items-center gap-3">
-                       <div className="h-2 w-2 rounded-full bg-blue-300 shadow-[0_0_8px_rgba(147,197,253,0.8)]" /> View territory occupancy and vacancies
-                    </li>
-                  </ul>
-                </CardContent>
-              </div>
-              <CardContent className="pt-6 relative z-10 mt-auto">
-                <Link href="/admin/login" className="block">
-                  <Button className="w-full bg-white hover:bg-blue-50 text-blue-900 shadow-lg hover:shadow-xl border-0 h-12 text-lg font-bold transition-all">
+              <div className="relative z-10 flex flex-col items-center w-full">
+                <div className="h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center mb-6 shadow-inner border border-white/20 group-hover:scale-110 transition-transform">
+                  <Users className="h-8 w-8 text-blue-100" />
+                </div>
+                <CardTitle className="text-3xl md:text-4xl font-black tracking-tight mb-8">Admin Portal</CardTitle>
+                <Link href="/admin/login" className="block w-full max-w-xs mx-auto">
+                  <Button className="w-full bg-white hover:bg-blue-50 text-blue-900 shadow-lg hover:shadow-xl border-0 h-14 text-lg font-bold transition-all rounded-xl">
                     Go to Admin Login
                   </Button>
                 </Link>
-              </CardContent>
+              </div>
             </Card>
 
             {/* Partner Portal Card */}
-            <Card className="flex flex-col justify-between border-0 bg-gradient-to-br from-orange-500 via-red-500 to-purple-700 text-white shadow-xl hover:shadow-2xl hover:shadow-orange-900/30 transition-all duration-300 hover:-translate-y-1.5 overflow-hidden group relative">
+            <Card className="flex flex-col justify-center items-center text-center border-0 bg-gradient-to-br from-orange-500 via-red-500 to-purple-700 text-white shadow-xl hover:shadow-2xl hover:shadow-orange-900/30 transition-all duration-300 hover:-translate-y-1.5 overflow-hidden group relative p-8 md:p-12 min-h-[320px]">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
               <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full blur-3xl translate-y-1/4 -translate-x-1/4"></div>
 
-              <div className="relative z-10 text-left">
-                <CardHeader>
-                  <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center mb-4 shadow-inner border border-white/20 group-hover:scale-110 transition-transform">
-                    <Globe className="h-7 w-7 text-orange-100" />
-                  </div>
-                  <CardTitle className="text-3xl font-black tracking-tight">Partner Portal</CardTitle>
-                  <CardDescription className="text-base font-medium text-orange-100 mt-2">
-                    Partners access their dashboard, see assigned territory, and manage their credentials.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="text-sm text-orange-50 space-y-3 font-medium">
-                    <li className="flex items-center gap-3">
-                       <div className="h-2 w-2 rounded-full bg-orange-300 shadow-[0_0_8px_rgba(253,186,116,0.8)]" /> Role and territory summary
-                    </li>
-                    <li className="flex items-center gap-3">
-                       <div className="h-2 w-2 rounded-full bg-orange-300 shadow-[0_0_8px_rgba(253,186,116,0.8)]" /> Upline information overview
-                    </li>
-                    <li className="flex items-center gap-3">
-                       <div className="h-2 w-2 rounded-full bg-orange-300 shadow-[0_0_8px_rgba(253,186,116,0.8)]" /> Secure password change
-                    </li>
-                  </ul>
-                </CardContent>
-              </div>
-              <CardContent className="pt-6 relative z-10 mt-auto">
-                <Link href="/partner/login" className="block">
-                  <Button className="w-full bg-white hover:bg-orange-50 text-orange-900 shadow-lg hover:shadow-xl border-0 h-12 text-lg font-bold transition-all">
+              <div className="relative z-10 flex flex-col items-center w-full">
+                <div className="h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center mb-6 shadow-inner border border-white/20 group-hover:scale-110 transition-transform">
+                  <Globe className="h-8 w-8 text-orange-100" />
+                </div>
+                <CardTitle className="text-3xl md:text-4xl font-black tracking-tight mb-8">Partner Portal</CardTitle>
+                <Link href="/partner/login" className="block w-full max-w-xs mx-auto">
+                  <Button className="w-full bg-white hover:bg-orange-50 text-orange-900 shadow-lg hover:shadow-xl border-0 h-14 text-lg font-bold transition-all rounded-xl">
                     Go to Partner Login
                   </Button>
                 </Link>
-              </CardContent>
+              </div>
             </Card>
           </section>
 

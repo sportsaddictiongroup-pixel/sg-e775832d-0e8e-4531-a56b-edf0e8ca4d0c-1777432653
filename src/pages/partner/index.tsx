@@ -22,11 +22,16 @@ type Profile = Tables<"profiles">;
 type PartnerDetails = {
   full_name: string | null;
   mobile_number: string | null;
-  countries?: { name: string } | null;
-  states?: { name: string } | null;
-  districts?: { name: string } | null;
-  pincodes?: { code: string } | null;
-  locations?: { name: string } | null;
+  country_id?: string | null;
+  state_id?: string | null;
+  district_id?: string | null;
+  pincode_id?: string | null;
+  location_id?: string | null;
+  countries?: { name: string } | { name: string }[] | null;
+  states?: { name: string } | { name: string }[] | null;
+  districts?: { name: string } | { name: string }[] | null;
+  pincodes?: { code: string } | { code: string }[] | null;
+  locations?: { name: string } | { name: string }[] | null;
 };
 
 type TerritoryAssignment = Tables<"territory_assignments">;
@@ -69,6 +74,7 @@ export default function PartnerDashboard(): JSX.Element {
   const [activeAssignment, setActiveAssignment] = useState<ExtendedAssignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [countryName, setCountryName] = useState<string | null>(null);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -181,7 +187,40 @@ export default function PartnerDashboard(): JSX.Element {
       }
 
       if (!pdError && pdData) {
-        setPartnerDetails(pdData as PartnerDetails);
+        const resolvedPd = { ...pdData } as any;
+        const checkJoined = (data: any, key: 'name' | 'code' = 'name') => {
+          if (!data) return null;
+          if (Array.isArray(data)) return data[0]?.[key] || null;
+          return data[key] || null;
+        };
+
+        // DIRECT FETCH FOR COUNTRY (Bypassing relational join issues)
+        if (resolvedPd.country_id) {
+          const { data: cData } = await supabase.from('countries').select('name').eq('id', resolvedPd.country_id).maybeSingle();
+          if (cData && isMounted) {
+            setCountryName(cData.name);
+          }
+        }
+
+        // SECONDARY FALLBACK QUERIES for other location levels
+        if (resolvedPd.state_id && !checkJoined(resolvedPd.states, 'name')) {
+          const { data: sData } = await supabase.from('states').select('name').eq('id', resolvedPd.state_id).maybeSingle();
+          if (sData) resolvedPd.states = { name: sData.name };
+        }
+        if (resolvedPd.district_id && !checkJoined(resolvedPd.districts, 'name')) {
+          const { data: dData } = await supabase.from('districts').select('name').eq('id', resolvedPd.district_id).maybeSingle();
+          if (dData) resolvedPd.districts = { name: dData.name };
+        }
+        if (resolvedPd.pincode_id && !checkJoined(resolvedPd.pincodes, 'code')) {
+          const { data: pData } = await supabase.from('pincodes').select('code').eq('id', resolvedPd.pincode_id).maybeSingle();
+          if (pData) resolvedPd.pincodes = { code: pData.code };
+        }
+        if (resolvedPd.location_id && !checkJoined(resolvedPd.locations, 'name')) {
+          const { data: lData } = await supabase.from('locations').select('name').eq('id', resolvedPd.location_id).maybeSingle();
+          if (lData) resolvedPd.locations = { name: lData.name };
+        }
+
+        setPartnerDetails(resolvedPd as PartnerDetails);
       }
 
       // Fetch the active territory assignment to derive the operational role badge
@@ -511,7 +550,7 @@ export default function PartnerDashboard(): JSX.Element {
                     <div className="space-y-1.5">
                       <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Country</p>
                       <p className="text-base font-extrabold text-foreground print-text-black">
-                        {getJoinedValue(partnerDetails?.countries) || "Not Assigned"}
+                        {countryName || "Not Assigned"}
                       </p>
                     </div>
                     <div className="space-y-1.5">

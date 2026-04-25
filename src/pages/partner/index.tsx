@@ -194,22 +194,6 @@ export default function PartnerDashboard(): JSX.Element {
           return data[key] || null;
         };
 
-        // DIRECT FETCH FOR COUNTRY (Bypassing relational join issues)
-        console.log("Running country fetch...");
-        if (resolvedPd?.country_id) {
-          const { data: countryRow, error: countryError } = await supabase
-            .from("countries")
-            .select("name")
-            .eq("id", resolvedPd.country_id)
-            .single();
-
-          console.log("Country Row:", countryRow, "Error:", countryError);
-
-          if (countryRow?.name) {
-            resolvedPd._countryName = countryRow.name;
-          }
-        }
-
         // SECONDARY FALLBACK QUERIES for other location levels
         if (resolvedPd.state_id && !checkJoined(resolvedPd.states, 'name')) {
           const { data: sData } = await supabase.from('states').select('name').eq('id', resolvedPd.state_id).maybeSingle();
@@ -483,9 +467,6 @@ export default function PartnerDashboard(): JSX.Element {
 
               <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 print-border-gray relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                  <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 mb-2 inline-block rounded shadow-sm print-hidden">
-                    COUNTRY DEBUG BUILD ACTIVE
-                  </div>
                   <CardTitle className="text-lg md:text-xl font-black flex items-center text-orange-600 dark:text-orange-500 tracking-widest uppercase">
                     SAG NETWORK MEMBERSHIP CARD
                   </CardTitle>
@@ -558,17 +539,6 @@ export default function PartnerDashboard(): JSX.Element {
                     Registered Location Details
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Country</p>
-                      <p className="text-base font-extrabold text-foreground print-text-black">
-                        {partnerDetails?._countryName || "Not Assigned"}
-                      </p>
-                      <div className="text-[10px] text-red-600 font-mono bg-red-50 p-1.5 rounded mt-1 border border-red-200 print-hidden">
-                        <strong>Country Debug:</strong><br/>
-                        country_id = {partnerDetails?.country_id || "empty"}<br/>
-                        countryName = {partnerDetails?._countryName || "empty"}
-                      </div>
-                    </div>
                     <div className="space-y-1.5">
                       <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
                       <p className="text-base font-extrabold text-foreground print-text-black">

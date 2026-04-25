@@ -502,6 +502,45 @@ export default function PartnerDashboard(): JSX.Element {
                   </div>
                 </div>
 
+                {/* Location Details Section */}
+                <div className="pt-6 border-t border-border/40 print-border-gray">
+                  <p className="text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-4 print-text-black">
+                    Registered Location Details
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Country</p>
+                      <p className="text-base font-extrabold text-foreground print-text-black">
+                        {getJoinedValue(partnerDetails?.countries) || "Not Assigned"}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
+                      <p className="text-base font-extrabold text-foreground print-text-black">
+                        {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
+                      <p className="text-base font-extrabold text-foreground print-text-black">
+                        {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
+                      <p className="text-base font-extrabold text-foreground print-text-black font-mono">
+                        {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
+                      <p className="text-base font-extrabold text-foreground print-text-black">
+                        {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Verification ID */}
                 <div className="pt-6 border-t border-border/40 print-border-gray">
                   <p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">

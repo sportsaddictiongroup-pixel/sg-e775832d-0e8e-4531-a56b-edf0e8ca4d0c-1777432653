@@ -169,16 +169,6 @@ export default function AdminDashboard(): JSX.Element {
 
   const features = [
     {
-      title: "Create Partner",
-      description: "Onboard a new partner and securely assign their role, upline, and territory.",
-      href: "/admin/partners/create",
-      icon: UserPlus,
-      cardWrapper: "border-blue-300/70 dark:border-blue-800 hover:border-blue-500 dark:hover:border-blue-500 bg-blue-50/40 hover:bg-blue-50/80 dark:bg-blue-950/20 dark:hover:bg-blue-900/30 hover:shadow-xl hover:shadow-blue-500/10",
-      iconWrapper: "bg-blue-600 dark:bg-blue-500 text-white shadow-sm shadow-blue-600/20",
-      buttonClass: "bg-blue-100 hover:bg-blue-600 text-blue-800 hover:text-white border-transparent dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white",
-      buttonText: "Create Partner",
-    },
-    {
       title: "Location Management",
       description: "Maintain the hierarchical master data for countries, states, districts, and PINs.",
       href: "/admin/locations",
@@ -187,6 +177,16 @@ export default function AdminDashboard(): JSX.Element {
       iconWrapper: "bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm shadow-emerald-600/20",
       buttonClass: "bg-emerald-100 hover:bg-emerald-600 text-emerald-800 hover:text-white border-transparent dark:bg-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-600 dark:hover:text-white",
       buttonText: "Manage Locations",
+    },
+    {
+      title: "Create Partner",
+      description: "Onboard a new partner and securely assign their role, upline, and territory.",
+      href: "/admin/partners/create",
+      icon: UserPlus,
+      cardWrapper: "border-blue-300/70 dark:border-blue-800 hover:border-blue-500 dark:hover:border-blue-500 bg-blue-50/40 hover:bg-blue-50/80 dark:bg-blue-950/20 dark:hover:bg-blue-900/30 hover:shadow-xl hover:shadow-blue-500/10",
+      iconWrapper: "bg-blue-600 dark:bg-blue-500 text-white shadow-sm shadow-blue-600/20",
+      buttonClass: "bg-blue-100 hover:bg-blue-600 text-blue-800 hover:text-white border-transparent dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white",
+      buttonText: "Create Partner",
     },
     {
       title: "Territory Management",

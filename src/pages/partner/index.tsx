@@ -465,13 +465,16 @@ export default function PartnerDashboard(): JSX.Element {
                 </span>
               </div>
 
-              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 print-border-gray relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                <div>
-                  <CardTitle className="text-lg md:text-xl font-black flex items-center text-orange-600 dark:text-orange-500 tracking-widest uppercase">
+              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-6">
+                <div className="w-full text-center">
+                  <CardTitle className="text-lg md:text-xl lg:text-2xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
                     SAG NETWORK MEMBERSHIP CARD
                   </CardTitle>
                 </div>
-                <div className="flex flex-col items-start sm:items-end gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4 sm:gap-0">
+                  <p className="text-[11px] font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
+                    Generated On: {timeData.display || "Loading..."}
+                  </p>
                   <Button 
                     onClick={() => window.print()}
                     variant="outline" 
@@ -481,9 +484,6 @@ export default function PartnerDashboard(): JSX.Element {
                     <Printer className="h-4 w-4 mr-2" />
                     Print Identity
                   </Button>
-                  <p className="text-[11px] font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider">
-                    Generated On: {timeData.display || "Loading..."}
-                  </p>
                 </div>
               </CardHeader>
               
@@ -538,30 +538,37 @@ export default function PartnerDashboard(): JSX.Element {
                   <p className="text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-4 print-text-black">
                     Registered Location Details
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
-                      <p className="text-base font-extrabold text-foreground print-text-black">
-                        {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
-                      </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+                    {/* LEFT COLUMN */}
+                    <div className="space-y-6 md:space-y-8">
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
+                        <p className="text-base font-extrabold text-foreground print-text-black">
+                          {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
+                        <p className="text-base font-extrabold text-foreground print-text-black font-mono">
+                          {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
+                        <p className="text-base font-extrabold text-foreground print-text-black">
+                          {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
-                      <p className="text-base font-extrabold text-foreground print-text-black">
-                        {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
-                      </p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
-                      <p className="text-base font-extrabold text-foreground print-text-black font-mono">
-                        {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
-                      </p>
-                    </div>
-                    <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-                      <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
-                      <p className="text-base font-extrabold text-foreground print-text-black">
-                        {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
-                      </p>
+                    
+                    {/* RIGHT COLUMN */}
+                    <div className="space-y-6 md:space-y-8">
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
+                        <p className="text-base font-extrabold text-foreground print-text-black">
+                          {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

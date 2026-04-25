@@ -407,7 +407,7 @@ export default function PartnerDashboard(): JSX.Element {
           }
           #printable-identity-card {
             width: 100% !important;
-            max-width: 750px !important;
+            max-width: 850px !important;
             margin: 0 auto !important;
             box-shadow: none !important;
             border: 2px solid #ea580c !important;
@@ -464,7 +464,7 @@ export default function PartnerDashboard(): JSX.Element {
           </header>
 
           <section id="printable-identity-card-wrapper" className="w-full flex justify-center">
-            <Card id="printable-identity-card" className="w-full max-w-3xl border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black mx-auto">
+            <Card id="printable-identity-card" className="w-full max-w-4xl border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black mx-auto">
               {/* Security Watermark */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none px-4">
                 <span className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-widest text-slate-900/[0.05] dark:text-white/[0.04] print-watermark -rotate-12 whitespace-nowrap">
@@ -472,14 +472,14 @@ export default function PartnerDashboard(): JSX.Element {
                 </span>
               </div>
 
-              <CardHeader className="pb-3 pt-5 md:pt-6 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-4">
+              <CardHeader className="pb-3 pt-4 md:pt-5 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-2 md:gap-3">
                 <div className="w-full text-center">
                   <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
                     SAG NETWORK MEMBERSHIP CARD
                   </CardTitle>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
-                  <p className="text-[10px] font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
+                  <p className="text-[10px] md:text-xs font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
                     Generated On: {timeData.display || "Loading..."}
                   </p>
                   <Button 
@@ -494,46 +494,46 @@ export default function PartnerDashboard(): JSX.Element {
                 </div>
               </CardHeader>
               
-              <CardContent className="p-5 md:p-8 relative z-10 space-y-5">
+              <CardContent className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-5">
                 {/* 2-Column Identity Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
                     <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {partnerDetails?.full_name || profile.full_name || profile.username}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
                     <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
                       {profile.username}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
                     <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {partnerDetails?.mobile_number || "N/A"}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
                     <p className="text-sm sm:text-base font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
                       {derivedRole}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
                     <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {uplineFullName || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
                     <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
                       {upline?.username || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
                     </p>
@@ -541,27 +541,21 @@ export default function PartnerDashboard(): JSX.Element {
                 </div>
 
                 {/* Location Details Section */}
-                <div className="pt-4 border-t border-border/40 print-border-gray">
-                  <p className="text-[10px] font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-3 print-text-black">
+                <div className="pt-3 md:pt-4 border-t border-border/40 print-border-gray">
+                  <p className="text-[10px] md:text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-3 print-text-black">
                     Registered Location Details
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
                     {/* LEFT COLUMN */}
-                    <div className="space-y-4 md:space-y-5">
+                    <div className="space-y-3 md:space-y-4">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
+                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
                         <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                           {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
-                          {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
+                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
                         <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                           {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
                         </p>
@@ -569,11 +563,17 @@ export default function PartnerDashboard(): JSX.Element {
                     </div>
                     
                     {/* RIGHT COLUMN */}
-                    <div className="space-y-4 md:space-y-5">
+                    <div className="space-y-3 md:space-y-4">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
+                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
                         <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                           {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
+                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
+                          {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
                         </p>
                       </div>
                     </div>
@@ -581,8 +581,8 @@ export default function PartnerDashboard(): JSX.Element {
                 </div>
 
                 {/* Verification ID */}
-                <div className="pt-4 border-t border-border/40 print-border-gray flex flex-col gap-1.5">
-                  <p className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
+                <div className="pt-3 md:pt-4 border-t border-border/40 print-border-gray flex flex-col gap-1.5">
+                  <p className="text-[10px] md:text-xs font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
                     Verification ID: {verificationId}
                   </p>
                   <div className="text-[9px] sm:text-[10px] text-muted-foreground print-text-gray italic leading-relaxed">

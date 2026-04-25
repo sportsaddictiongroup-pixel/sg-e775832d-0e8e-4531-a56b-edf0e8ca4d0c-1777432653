@@ -393,14 +393,21 @@ export default function PartnerDashboard(): JSX.Element {
           body * {
             visibility: hidden;
           }
-          #printable-identity-card, #printable-identity-card * {
-            visibility: visible;
-          }
-          #printable-identity-card {
+          #printable-identity-card-wrapper {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            visibility: visible !important;
+          }
+          #printable-identity-card, #printable-identity-card * {
+            visibility: visible;
+          }
+          #printable-identity-card {
+            width: 100% !important;
+            max-width: 750px !important;
             margin: 0 auto !important;
             box-shadow: none !important;
             border: 2px solid #ea580c !important;
@@ -415,7 +422,7 @@ export default function PartnerDashboard(): JSX.Element {
           .print-text-black { color: #000000 !important; }
           .print-text-gray { color: #6b7280 !important; }
           .print-border-gray { border-color: #e5e7eb !important; }
-          .print-watermark { opacity: 0.08 !important; color: #000000 !important; }
+          .print-watermark { opacity: 0.06 !important; color: #000000 !important; }
         }
       `}} />
       <main className="min-h-screen bg-background text-foreground px-4 py-8 md:py-12">
@@ -456,116 +463,116 @@ export default function PartnerDashboard(): JSX.Element {
             </div>
           </header>
 
-          <section>
-            <Card id="printable-identity-card" className="w-full border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black">
+          <section id="printable-identity-card-wrapper" className="w-full flex justify-center">
+            <Card id="printable-identity-card" className="w-full max-w-3xl border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black mx-auto">
               {/* Security Watermark */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none px-4">
-                <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-widest text-slate-900/[0.07] dark:text-white/[0.06] print-watermark -rotate-12 whitespace-nowrap">
+                <span className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-widest text-slate-900/[0.05] dark:text-white/[0.04] print-watermark -rotate-12 whitespace-nowrap">
                   SPORTS ADDICTION GROUP
                 </span>
               </div>
 
-              <CardHeader className="pb-4 pt-6 md:pt-8 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-6">
+              <CardHeader className="pb-3 pt-5 md:pt-6 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-4">
                 <div className="w-full text-center">
-                  <CardTitle className="text-lg md:text-xl lg:text-2xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
+                  <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
                     SAG NETWORK MEMBERSHIP CARD
                   </CardTitle>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4 sm:gap-0">
-                  <p className="text-[11px] font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
+                  <p className="text-[10px] font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
                     Generated On: {timeData.display || "Loading..."}
                   </p>
                   <Button 
                     onClick={() => window.print()}
                     variant="outline" 
                     size="sm" 
-                    className="print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
+                    className="h-8 print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
                   >
-                    <Printer className="h-4 w-4 mr-2" />
+                    <Printer className="h-3.5 w-3.5 mr-2" />
                     Print Identity
                   </Button>
                 </div>
               </CardHeader>
               
-              <CardContent className="p-6 md:p-10 relative z-10 space-y-8">
+              <CardContent className="p-5 md:p-8 relative z-10 space-y-5">
                 {/* 2-Column Identity Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
-                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {partnerDetails?.full_name || profile.full_name || profile.username}
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
-                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black font-mono">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
                       {profile.username}
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
-                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {partnerDetails?.mobile_number || "N/A"}
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
-                    <p className="text-base sm:text-lg font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
+                    <p className="text-sm sm:text-base font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
                       {derivedRole}
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
-                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {uplineFullName || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
-                    <p className="text-base sm:text-lg font-extrabold text-foreground print-text-black font-mono">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
                       {upline?.username || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
                     </p>
                   </div>
                 </div>
 
                 {/* Location Details Section */}
-                <div className="pt-6 border-t border-border/40 print-border-gray">
-                  <p className="text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-4 print-text-black">
+                <div className="pt-4 border-t border-border/40 print-border-gray">
+                  <p className="text-[10px] font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-3 print-text-black">
                     Registered Location Details
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                     {/* LEFT COLUMN */}
-                    <div className="space-y-6 md:space-y-8">
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
-                        <p className="text-base font-extrabold text-foreground print-text-black">
+                    <div className="space-y-4 md:space-y-5">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
+                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                           {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
                         </p>
                       </div>
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
-                        <p className="text-base font-extrabold text-foreground print-text-black font-mono">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
+                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
                           {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
                         </p>
                       </div>
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
-                        <p className="text-base font-extrabold text-foreground print-text-black">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
+                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                           {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
                         </p>
                       </div>
                     </div>
                     
                     {/* RIGHT COLUMN */}
-                    <div className="space-y-6 md:space-y-8">
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
-                        <p className="text-base font-extrabold text-foreground print-text-black">
+                    <div className="space-y-4 md:space-y-5">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
+                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                           {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
                         </p>
                       </div>
@@ -574,17 +581,14 @@ export default function PartnerDashboard(): JSX.Element {
                 </div>
 
                 {/* Verification ID */}
-                <div className="pt-6 border-t border-border/40 print-border-gray">
-                  <p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
+                <div className="pt-4 border-t border-border/40 print-border-gray flex flex-col gap-1.5">
+                  <p className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
                     Verification ID: {verificationId}
                   </p>
-                </div>
-
-                {/* Official Footer Note */}
-                <div className="pt-2 text-[10px] sm:text-[11px] text-muted-foreground print-text-gray italic leading-relaxed">
-                  <p>This SAG Network Membership Card is system-generated.</p>
-                  <p>Valid as per generated date and time shown above.</p>
-                  <p>For official verification, match details with SAG Network records.</p>
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground print-text-gray italic leading-relaxed">
+                    <p>This SAG Network Membership Card is system-generated. Valid as per generated date and time shown above.</p>
+                    <p>For official verification, match details with SAG Network records.</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -195,14 +195,20 @@ export default function PartnerDashboard(): JSX.Element {
         };
 
         // DIRECT FETCH FOR COUNTRY (Bypassing relational join issues)
-        let computedCountryName = null;
-        if (resolvedPd.country_id) {
-          const { data: cData } = await supabase.from('countries').select('name').eq('id', resolvedPd.country_id).maybeSingle();
-          if (cData) {
-            computedCountryName = cData.name;
+        console.log("Running country fetch...");
+        if (resolvedPd?.country_id) {
+          const { data: countryRow, error: countryError } = await supabase
+            .from("countries")
+            .select("name")
+            .eq("id", resolvedPd.country_id)
+            .single();
+
+          console.log("Country Row:", countryRow, "Error:", countryError);
+
+          if (countryRow?.name) {
+            resolvedPd._countryName = countryRow.name;
           }
         }
-        resolvedPd._countryName = computedCountryName;
 
         // SECONDARY FALLBACK QUERIES for other location levels
         if (resolvedPd.state_id && !checkJoined(resolvedPd.states, 'name')) {

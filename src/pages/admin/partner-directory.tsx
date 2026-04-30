@@ -248,7 +248,7 @@ export default function PartnerDirectory() {
         
         for (let i = 0; i < missingIds.length; i += 200) {
           const chunk = missingIds.slice(i, i + 200);
-          const { data } = await supabase.from(table).select(`id, ${field}`).in('id', chunk);
+          const { data } = await (supabase as any).from(table).select(`id, ${field}`).in('id', chunk);
           if (data) {
             data.forEach((d: any) => { mapObj[d.id] = d[field]; });
           }

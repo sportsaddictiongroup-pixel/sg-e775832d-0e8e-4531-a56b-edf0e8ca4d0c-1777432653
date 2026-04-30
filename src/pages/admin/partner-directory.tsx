@@ -76,6 +76,15 @@ export default function PartnerDirectory() {
   const [pincodes, setPincodes] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
 
+  // Lookup maps for exact location names (Address Details)
+  const [locationMaps, setLocationMaps] = useState({
+    countries: {} as Record<string, string>,
+    states: {} as Record<string, string>,
+    districts: {} as Record<string, string>,
+    pincodes: {} as Record<string, string>,
+    locations: {} as Record<string, string>,
+  });
+
   // 1. Auth Check
   useEffect(() => {
     const checkAuth = async () => {
@@ -214,6 +223,52 @@ export default function PartnerDirectory() {
     fetchAllPartners();
   }, [authChecked]);
 
+  // 3.5 Fetch exact location names for the Address maps
+  useEffect(() => {
+    if (allPartners.length === 0) return;
+
+    const fetchLocationNames = async () => {
+      const cIds = [...new Set(allPartners.map(p => p.partner_details?.country_id).filter(Boolean))] as string[];
+      const sIds = [...new Set(allPartners.map(p => p.partner_details?.state_id).filter(Boolean))] as string[];
+      const dIds = [...new Set(allPartners.map(p => p.partner_details?.district_id).filter(Boolean))] as string[];
+      const pIds = [...new Set(allPartners.map(p => p.partner_details?.pincode_id).filter(Boolean))] as string[];
+      const lIds = [...new Set(allPartners.map(p => p.partner_details?.location_id).filter(Boolean))] as string[];
+
+      const maps = {
+        countries: { ...locationMaps.countries },
+        states: { ...locationMaps.states },
+        districts: { ...locationMaps.districts },
+        pincodes: { ...locationMaps.pincodes },
+        locations: { ...locationMaps.locations },
+      };
+
+      const fetchMissing = async (table: string, ids: string[], mapObj: Record<string, string>, field = 'name') => {
+        const missingIds = ids.filter(id => !mapObj[id]);
+        if (missingIds.length === 0) return;
+        
+        for (let i = 0; i < missingIds.length; i += 200) {
+          const chunk = missingIds.slice(i, i + 200);
+          const { data } = await supabase.from(table).select(`id, ${field}`).in('id', chunk);
+          if (data) {
+            data.forEach((d: any) => { mapObj[d.id] = d[field]; });
+          }
+        }
+      };
+
+      await Promise.all([
+        fetchMissing('countries', cIds, maps.countries),
+        fetchMissing('states', sIds, maps.states),
+        fetchMissing('districts', dIds, maps.districts),
+        fetchMissing('pincodes', pIds, maps.pincodes, 'code'),
+        fetchMissing('locations', lIds, maps.locations)
+      ]);
+
+      setLocationMaps(maps);
+    };
+
+    fetchLocationNames();
+  }, [allPartners]);
+
   // 4. Frontend Filter & Pagination Engine
   useEffect(() => {
     let filtered = [...allPartners];
@@ -273,6 +328,11 @@ export default function PartnerDirectory() {
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPage(1); // Reset pagination on filter change
+  };
+
+  const renderAddressField = (id: string | undefined | null, map: Record<string, string>) => {
+    if (!id) return "Not provided";
+    return map[id] || "Name not found";
   };
 
   if (!authChecked) return null;
@@ -503,7 +563,7 @@ export default function PartnerDirectory() {
 
         {/* View Partner Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl">
+          <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl">
             <DialogHeader className="p-6 border-b bg-muted/10 sticky top-0 z-10 backdrop-blur-md">
               <DialogTitle className="text-xl font-heading font-bold flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
@@ -560,31 +620,31 @@ export default function PartnerDirectory() {
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Country</span>
                       <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {selectedPartner.partner_details?.country_id ? (countries.find(c => c.id === selectedPartner.partner_details?.country_id)?.name || "Assigned") : "Not available"}
+                        {renderAddressField(selectedPartner.partner_details?.country_id, locationMaps.countries)}
                       </span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">State</span>
                       <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {selectedPartner.partner_details?.state_id ? (states.find(s => s.id === selectedPartner.partner_details?.state_id)?.name || "Assigned") : "Not available"}
+                        {renderAddressField(selectedPartner.partner_details?.state_id, locationMaps.states)}
                       </span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">District</span>
                       <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {selectedPartner.partner_details?.district_id ? (districts.find(d => d.id === selectedPartner.partner_details?.district_id)?.name || "Assigned") : "Not available"}
+                        {renderAddressField(selectedPartner.partner_details?.district_id, locationMaps.districts)}
                       </span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">PIN Code</span>
                       <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {selectedPartner.partner_details?.pincode_id ? (pincodes.find(p => p.id === selectedPartner.partner_details?.pincode_id)?.code || "Assigned") : "Not available"}
+                        {renderAddressField(selectedPartner.partner_details?.pincode_id, locationMaps.pincodes)}
                       </span>
                     </div>
                     <div className="flex flex-col sm:col-span-2">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Location / Area</span>
                       <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {selectedPartner.partner_details?.location_id ? (locations.find(l => l.id === selectedPartner.partner_details?.location_id)?.name || "Assigned") : "Not available"}
+                        {renderAddressField(selectedPartner.partner_details?.location_id, locationMaps.locations)}
                       </span>
                     </div>
                   </div>

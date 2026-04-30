@@ -50,13 +50,8 @@ export default function PartnerDirectory() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
-  // Modal State
-  const [selectedPartner, setSelectedPartner] = useState<PartnerData | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const handleViewPartner = (partner: PartnerData) => {
-    setSelectedPartner(partner);
-    setIsModalOpen(true);
+    router.push(`/admin/partner-directory/${partner.id}`);
   };
 
   // Search & Filters
@@ -560,108 +555,6 @@ export default function PartnerDirectory() {
             )}
           </div>
         </div>
-
-        {/* View Partner Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl">
-            <DialogHeader className="p-6 border-b bg-muted/10 sticky top-0 z-10 backdrop-blur-md">
-              <DialogTitle className="text-xl font-heading font-bold flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Partner Details
-              </DialogTitle>
-              <DialogDescription className="sr-only">Detailed read-only view of the selected partner.</DialogDescription>
-            </DialogHeader>
-            {selectedPartner && (
-              <div className="p-6 flex flex-col gap-8 bg-background">
-                {/* Basic Details */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
-                    <User className="h-4 w-4" /> Basic Details
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Full Name</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.full_name || "Not available"}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">User ID / Username</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.username || "Not available"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Details */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
-                    <Phone className="h-4 w-4" /> Contact Details
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Mobile Number</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.mobile_number || "Not available"}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">WhatsApp Number</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.whatsapp_number || "Not available"}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Email Address</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.email || "Not available"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Address Details */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
-                    <MapIcon className="h-4 w-4" /> Address Details
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Country</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {renderAddressField(selectedPartner.partner_details?.country_id, locationMaps.countries)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">State</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {renderAddressField(selectedPartner.partner_details?.state_id, locationMaps.states)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">District</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {renderAddressField(selectedPartner.partner_details?.district_id, locationMaps.districts)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">PIN Code</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {renderAddressField(selectedPartner.partner_details?.pincode_id, locationMaps.pincodes)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col sm:col-span-2">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Location / Area</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {renderAddressField(selectedPartner.partner_details?.location_id, locationMaps.locations)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="p-6 border-t bg-muted/10 flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-md">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto">
-                Close
-              </Button>
-              <Button disabled variant="secondary" className="w-full sm:w-auto opacity-70">
-                Edit Partner Details - Coming Next
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </main>
     </>
   );

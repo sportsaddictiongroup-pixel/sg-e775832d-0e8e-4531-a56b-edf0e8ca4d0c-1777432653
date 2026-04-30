@@ -170,7 +170,7 @@ export default function PartnerDirectory() {
           return;
         }
 
-        setPartners(data || []);
+        setPartners((data as unknown as PartnerData[]) || []);
         setTotalCount(count || 0);
       } catch (err) {
         console.error("Failed to fetch partners:", err);

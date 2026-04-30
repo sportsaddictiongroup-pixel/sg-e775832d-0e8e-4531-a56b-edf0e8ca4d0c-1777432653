@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,22 +13,36 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Search, Eye, Users, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
+interface PartnerDetails {
+  profile_id: string;
+  full_name: string;
+  mobile_number: string;
+  whatsapp_number: string;
+  email: string;
+  country_id: string;
+  state_id: string;
+  district_id: string;
+  pincode_id: string;
+  location_id: string;
+}
+
 interface PartnerData {
   id: string;
   username: string;
-  email: string;
   role: string;
-  full_name: string;
-  mobile_number: string;
-  partner_details?: any;
-  territory_assignments?: any[];
+  upline_profile_id: string | null;
+  created_at: string;
+  partner_details: PartnerDetails | null;
 }
 
 export default function PartnerDirectory() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-  const [partners, setPartners] = useState<PartnerData[]>([]);
+  
+  // Data storage
+  const [allPartners, setAllPartners] = useState<PartnerData[]>([]);
+  const [displayedPartners, setDisplayedPartners] = useState<PartnerData[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
   // Pagination
@@ -123,55 +137,63 @@ export default function PartnerDirectory() {
     }
   }, [filters.pincode_id]);
 
-  // 3. Fetch Partners Data
+  // 3. Fetch All Partners Data (Two queries, merged in frontend)
   useEffect(() => {
     if (!authChecked) return;
     
-    const fetchPartners = async () => {
+    const fetchAllPartners = async () => {
       setLoading(true);
       try {
-        // If a location filter is applied, we must use an inner join to filter the parent correctly
-        const hasLocationFilter = 
-          filters.country_id !== "all" || 
-          filters.state_id !== "all" || 
-          filters.district_id !== "all" || 
-          filters.pincode_id !== "all" || 
-          filters.location_id !== "all";
-
-        const selectQuery = `
-          id, username, email, role, full_name, mobile_number,
-          partner_details (full_name, mobile_number),
-          territory_assignments${hasLocationFilter ? '!inner' : ''} (
-            country_id, state_id, district_id, pincode_id, location_id
-          )
-        `;
-
-        let query = supabase
+        // Query 1: Fetch Profiles
+        const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
-          .select(selectQuery, { count: "exact" })
+          .select("id, username, role, upline_profile_id, created_at")
           .eq("role", "partner");
 
-        if (searchQuery.trim()) {
-          query = query.or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%,mobile_number.ilike.%${searchQuery}%`);
-        }
-
-        if (filters.country_id !== "all") query = query.eq("territory_assignments.country_id", filters.country_id);
-        if (filters.state_id !== "all") query = query.eq("territory_assignments.state_id", filters.state_id);
-        if (filters.district_id !== "all") query = query.eq("territory_assignments.district_id", filters.district_id);
-        if (filters.pincode_id !== "all") query = query.eq("territory_assignments.pincode_id", filters.pincode_id);
-        if (filters.location_id !== "all") query = query.eq("territory_assignments.location_id", filters.location_id);
-
-        const { data, count, error } = await query
-          .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error fetching partners:", error);
+        if (profilesError) throw profilesError;
+        
+        if (!profilesData || profilesData.length === 0) {
+          setAllPartners([]);
+          setLoading(false);
           return;
         }
 
-        setPartners((data as unknown as PartnerData[]) || []);
-        setTotalCount(count || 0);
+        // Chunk IDs safely for Query 2
+        const profileIds = profilesData.map(p => p.id);
+        const chunkSize = 150;
+        let allDetails: PartnerDetails[] = [];
+
+        // Query 2: Fetch Partner Details iteratively
+        for (let i = 0; i < profileIds.length; i += chunkSize) {
+          const chunk = profileIds.slice(i, i + chunkSize);
+          const { data: detailsData, error: detailsError } = await supabase
+            .from("partner_details")
+            .select("profile_id, full_name, mobile_number, whatsapp_number, email, country_id, state_id, district_id, pincode_id, location_id")
+            .in("profile_id", chunk);
+
+          if (detailsError) throw detailsError;
+          if (detailsData) {
+            allDetails = [...allDetails, ...(detailsData as PartnerDetails[])];
+          }
+        }
+
+        // Merge Frontend
+        const mergedData: PartnerData[] = profilesData.map((profile) => {
+          const details = allDetails.find(d => d.profile_id === profile.id);
+          return {
+            id: profile.id,
+            username: profile.username,
+            role: profile.role,
+            upline_profile_id: profile.upline_profile_id,
+            created_at: profile.created_at,
+            partner_details: details || null
+          };
+        });
+
+        // Sort globally by newest
+        mergedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setAllPartners(mergedData);
+
       } catch (err) {
         console.error("Failed to fetch partners:", err);
       } finally {
@@ -179,18 +201,63 @@ export default function PartnerDirectory() {
       }
     };
 
-    fetchPartners();
-  }, [authChecked, page, searchQuery, filters]);
+    fetchAllPartners();
+  }, [authChecked]);
 
-  // Safe data extraction helpers
-  const extractFullName = (p: PartnerData) => {
-    const pd = Array.isArray(p.partner_details) ? p.partner_details[0] : p.partner_details;
-    return pd?.full_name || p.full_name || "Unknown";
-  };
+  // 4. Frontend Filter & Pagination Engine
+  useEffect(() => {
+    let filtered = [...allPartners];
 
-  const extractMobile = (p: PartnerData) => {
-    const pd = Array.isArray(p.partner_details) ? p.partner_details[0] : p.partner_details;
-    return pd?.mobile_number || p.mobile_number || "N/A";
+    // Search Logic
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        (p.username && p.username.toLowerCase().includes(query)) ||
+        (p.partner_details?.full_name && p.partner_details.full_name.toLowerCase().includes(query)) ||
+        (p.partner_details?.mobile_number && p.partner_details.mobile_number.includes(query))
+      );
+    }
+
+    // Filter Logic
+    if (filters.country_id !== "all") {
+      filtered = filtered.filter(p => p.partner_details?.country_id === filters.country_id);
+    }
+    if (filters.state_id !== "all") {
+      filtered = filtered.filter(p => p.partner_details?.state_id === filters.state_id);
+    }
+    if (filters.district_id !== "all") {
+      filtered = filtered.filter(p => p.partner_details?.district_id === filters.district_id);
+    }
+    if (filters.pincode_id !== "all") {
+      filtered = filtered.filter(p => p.partner_details?.pincode_id === filters.pincode_id);
+    }
+    if (filters.location_id !== "all") {
+      filtered = filtered.filter(p => p.partner_details?.location_id === filters.location_id);
+    }
+
+    setTotalCount(filtered.length);
+
+    // Apply Pagination
+    const startIdx = (page - 1) * PAGE_SIZE;
+    const paginated = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+    
+    setDisplayedPartners(paginated);
+  }, [allPartners, searchQuery, filters, page]);
+
+  // Helpers
+  const extractFullName = (p: PartnerData) => p.partner_details?.full_name || "Details not added";
+  const extractMobile = (p: PartnerData) => p.partner_details?.mobile_number || "N/A";
+  const extractEmail = (p: PartnerData) => p.partner_details?.email || "No Email";
+  
+  const getTerritoryCount = (p: PartnerData) => {
+    if (!p.partner_details) return 0;
+    return [
+      p.partner_details.country_id,
+      p.partner_details.state_id,
+      p.partner_details.district_id,
+      p.partner_details.pincode_id,
+      p.partner_details.location_id
+    ].filter(Boolean).length;
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -297,7 +364,7 @@ export default function PartnerDirectory() {
               </div>
             ) : null}
 
-            {partners.length === 0 && !loading ? (
+            {displayedPartners.length === 0 && !loading ? (
               <Card className="border-dashed shadow-none bg-muted/10">
                 <CardContent className="flex flex-col items-center justify-center h-64 text-center">
                   <Users className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
@@ -320,20 +387,23 @@ export default function PartnerDirectory() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {partners.map((p) => (
+                      {displayedPartners.map((p) => (
                         <TableRow key={p.id} className="hover:bg-muted/10">
-                          <TableCell className="font-medium text-foreground">{extractFullName(p)}</TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {extractFullName(p)}
+                            {!p.partner_details && <div className="text-xs text-amber-600 mt-1 font-medium">Pending setup</div>}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="font-mono bg-background">{p.username || "N/A"}</Badge>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">{extractMobile(p)}</div>
-                            <div className="text-xs text-muted-foreground truncate max-w-[200px]">{p.email || "No Email"}</div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[200px]">{extractEmail(p)}</div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                               <MapPin className="h-3.5 w-3.5" />
-                              <span>{p.territory_assignments?.length || 0} Assigned</span>
+                              <span>{getTerritoryCount(p)} Levels Set</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
@@ -350,13 +420,16 @@ export default function PartnerDirectory() {
 
                 {/* Mobile Card View (Hidden on desktop) */}
                 <div className="md:hidden flex flex-col gap-4">
-                  {partners.map((p) => (
+                  {displayedPartners.map((p) => (
                     <Card key={p.id} className="shadow-sm border-muted">
                       <CardContent className="p-4 flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-2">
                           <div>
-                            <h3 className="font-bold text-foreground truncate">{extractFullName(p)}</h3>
+                            <h3 className="font-bold text-foreground truncate">
+                              {extractFullName(p)}
+                            </h3>
                             <Badge variant="outline" className="font-mono mt-1 text-xs">{p.username || "N/A"}</Badge>
+                            {!p.partner_details && <div className="text-xs text-amber-600 mt-1 font-medium">Pending setup</div>}
                           </div>
                         </div>
                         
@@ -367,14 +440,14 @@ export default function PartnerDirectory() {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Email</span>
-                            <span className="font-medium truncate">{p.email || "N/A"}</span>
+                            <span className="font-medium truncate">{extractEmail(p)}</span>
                           </div>
                         </div>
                         
                         <div className="flex items-center justify-between mt-2 border-t pt-3">
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                             <MapPin className="h-3.5 w-3.5" />
-                            {p.territory_assignments?.length || 0} Territories
+                            {getTerritoryCount(p)} Levels Set
                           </div>
                           <Button size="sm" variant="secondary" className="h-8 rounded-full px-4" onClick={() => alert("Placeholder: View Partner Profile")}>
                             <Eye className="h-3.5 w-3.5 mr-1.5" />
@@ -389,13 +462,13 @@ export default function PartnerDirectory() {
                 {/* Pagination */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-2">
                   <p className="text-sm text-muted-foreground font-medium">
-                    Showing {((page - 1) * PAGE_SIZE) + 1} to {Math.min(page * PAGE_SIZE, totalCount)} of {totalCount} partners
+                    Showing {totalCount === 0 ? 0 : ((page - 1) * PAGE_SIZE) + 1} to {Math.min(page * PAGE_SIZE, totalCount)} of {totalCount} partners
                   </p>
                   <div className="flex items-center gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      disabled={page === 1}
+                      disabled={page === 1 || totalCount === 0}
                       onClick={() => setPage(p => p - 1)}
                       className="shadow-sm"
                     >
@@ -405,7 +478,7 @@ export default function PartnerDirectory() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      disabled={page * PAGE_SIZE >= totalCount}
+                      disabled={page * PAGE_SIZE >= totalCount || totalCount === 0}
                       onClick={() => setPage(p => p + 1)}
                       className="shadow-sm"
                     >

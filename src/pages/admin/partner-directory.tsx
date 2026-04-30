@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Search, Eye, Users, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ArrowLeft, Search, Eye, Users, MapPin, ChevronLeft, ChevronRight, User, Phone, Map as MapIcon, Shield } from "lucide-react";
 
 interface PartnerDetails {
   profile_id: string;
@@ -48,6 +49,15 @@ export default function PartnerDirectory() {
   // Pagination
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
+
+  // Modal State
+  const [selectedPartner, setSelectedPartner] = useState<PartnerData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewPartner = (partner: PartnerData) => {
+    setSelectedPartner(partner);
+    setIsModalOpen(true);
+  };
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -407,7 +417,7 @@ export default function PartnerDirectory() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary font-semibold" onClick={() => alert("Placeholder: View Partner Profile")}>
+                            <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary font-semibold" onClick={() => handleViewPartner(p)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View
                             </Button>
@@ -449,7 +459,7 @@ export default function PartnerDirectory() {
                             <MapPin className="h-3.5 w-3.5" />
                             {getTerritoryCount(p)} Levels Set
                           </div>
-                          <Button size="sm" variant="secondary" className="h-8 rounded-full px-4" onClick={() => alert("Placeholder: View Partner Profile")}>
+                          <Button size="sm" variant="secondary" className="h-8 rounded-full px-4" onClick={() => handleViewPartner(p)}>
                             <Eye className="h-3.5 w-3.5 mr-1.5" />
                             View
                           </Button>
@@ -490,6 +500,108 @@ export default function PartnerDirectory() {
             )}
           </div>
         </div>
+
+        {/* View Partner Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl">
+            <DialogHeader className="p-6 border-b bg-muted/10 sticky top-0 z-10 backdrop-blur-md">
+              <DialogTitle className="text-xl font-heading font-bold flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Partner Details
+              </DialogTitle>
+              <DialogDescription className="sr-only">Detailed read-only view of the selected partner.</DialogDescription>
+            </DialogHeader>
+            {selectedPartner && (
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 bg-background">
+                {/* Basic Info */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
+                    <User className="h-4 w-4" /> Basic Information
+                  </h4>
+                  <div className="grid gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Full Name</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.full_name || "Details not added"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">User ID / Username</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.username || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
+                    <Phone className="h-4 w-4" /> Contact Details
+                  </h4>
+                  <div className="grid gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Mobile Number</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.mobile_number || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">WhatsApp Number</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.whatsapp_number || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Email Address</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.email || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Info */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
+                    <Shield className="h-4 w-4" /> System & Hierarchy
+                  </h4>
+                  <div className="grid gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Upline Profile ID</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.upline_profile_id || "Root / No Upline"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Created At</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
+                        {selectedPartner.created_at ? new Date(selectedPartner.created_at).toLocaleString() : "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location IDs */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
+                    <MapIcon className="h-4 w-4" /> Location Assignment IDs
+                  </h4>
+                  <div className="grid gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Country ID</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.country_id || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">State ID</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.state_id || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">District ID</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.district_id || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Pincode ID</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.pincode_id || "N/A"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Location ID</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.location_id || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </>
   );

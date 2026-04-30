@@ -166,14 +166,14 @@ export default function PartnerDirectory() {
         // Query 2: Fetch Partner Details iteratively
         for (let i = 0; i < profileIds.length; i += chunkSize) {
           const chunk = profileIds.slice(i, i + chunkSize);
-          const { data: detailsData, error: detailsError } = await supabase
+          const { data: detailsData, error: detailsError } = await (supabase as any)
             .from("partner_details")
             .select("profile_id, full_name, mobile_number, whatsapp_number, email, country_id, state_id, district_id, pincode_id, location_id")
             .in("profile_id", chunk);
 
           if (detailsError) throw detailsError;
           if (detailsData) {
-            allDetails = [...allDetails, ...(detailsData as PartnerDetails[])];
+            allDetails = [...allDetails, ...(detailsData as any as PartnerDetails[])];
           }
         }
 

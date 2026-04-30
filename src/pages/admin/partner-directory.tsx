@@ -512,94 +512,94 @@ export default function PartnerDirectory() {
               <DialogDescription className="sr-only">Detailed read-only view of the selected partner.</DialogDescription>
             </DialogHeader>
             {selectedPartner && (
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 bg-background">
-                {/* Basic Info */}
+              <div className="p-6 flex flex-col gap-8 bg-background">
+                {/* Basic Details */}
                 <div className="space-y-4">
                   <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
-                    <User className="h-4 w-4" /> Basic Information
+                    <User className="h-4 w-4" /> Basic Details
                   </h4>
-                  <div className="grid gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Full Name</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.full_name || "Details not added"}</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.full_name || "Not available"}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">User ID / Username</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.username || "N/A"}</span>
+                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.username || "Not available"}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Contact Info */}
+                {/* Contact Details */}
                 <div className="space-y-4">
                   <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
                     <Phone className="h-4 w-4" /> Contact Details
                   </h4>
-                  <div className="grid gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Mobile Number</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.mobile_number || "N/A"}</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.mobile_number || "Not available"}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">WhatsApp Number</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.whatsapp_number || "N/A"}</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.whatsapp_number || "Not available"}</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Email Address</span>
-                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.email || "N/A"}</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">{selectedPartner.partner_details?.email || "Not available"}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* System Info */}
+                {/* Address Details */}
                 <div className="space-y-4">
                   <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
-                    <Shield className="h-4 w-4" /> System & Hierarchy
+                    <MapIcon className="h-4 w-4" /> Address Details
                   </h4>
-                  <div className="grid gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Upline Profile ID</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.upline_profile_id || "Root / No Upline"}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Created At</span>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Country</span>
                       <span className="text-sm font-medium text-foreground break-words whitespace-normal">
-                        {selectedPartner.created_at ? new Date(selectedPartner.created_at).toLocaleString() : "N/A"}
+                        {selectedPartner.partner_details?.country_id ? (countries.find(c => c.id === selectedPartner.partner_details?.country_id)?.name || "Assigned") : "Not available"}
                       </span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Location IDs */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-primary flex items-center gap-2 border-b pb-2 border-border/50">
-                    <MapIcon className="h-4 w-4" /> Location Assignment IDs
-                  </h4>
-                  <div className="grid gap-3">
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Country ID</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.country_id || "N/A"}</span>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">State</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
+                        {selectedPartner.partner_details?.state_id ? (states.find(s => s.id === selectedPartner.partner_details?.state_id)?.name || "Assigned") : "Not available"}
+                      </span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">State ID</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.state_id || "N/A"}</span>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">District</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
+                        {selectedPartner.partner_details?.district_id ? (districts.find(d => d.id === selectedPartner.partner_details?.district_id)?.name || "Assigned") : "Not available"}
+                      </span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">District ID</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.district_id || "N/A"}</span>
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">PIN Code</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
+                        {selectedPartner.partner_details?.pincode_id ? (pincodes.find(p => p.id === selectedPartner.partner_details?.pincode_id)?.code || "Assigned") : "Not available"}
+                      </span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Pincode ID</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.pincode_id || "N/A"}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Location ID</span>
-                      <span className="text-sm font-mono text-foreground break-words whitespace-normal bg-muted/30 w-fit px-1.5 rounded">{selectedPartner.partner_details?.location_id || "N/A"}</span>
+                    <div className="flex flex-col sm:col-span-2">
+                      <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Location / Area</span>
+                      <span className="text-sm font-medium text-foreground break-words whitespace-normal">
+                        {selectedPartner.partner_details?.location_id ? (locations.find(l => l.id === selectedPartner.partner_details?.location_id)?.name || "Assigned") : "Not available"}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             )}
+            
+            <div className="p-6 border-t bg-muted/10 flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-md">
+              <Button variant="outline" onClick={() => setIsModalOpen(false)} className="w-full sm:w-auto">
+                Close
+              </Button>
+              <Button disabled variant="secondary" className="w-full sm:w-auto opacity-70">
+                Edit Partner Details - Coming Next
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </main>

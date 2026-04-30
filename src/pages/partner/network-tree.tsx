@@ -32,7 +32,8 @@ import {
   Home,
   FolderTree,
   Info,
-  Layers
+  Layers,
+  LogOut
 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,6 +70,15 @@ export default function PartnerNetworkTree(): JSX.Element {
   const [activeTab, setActiveTab] = useState("overview");
   const [downlinesPage, setDownlinesPage] = useState(1);
   const [genPages, setGenPages] = useState<number[]>([1, 1, 1, 1, 1]);
+
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      router.replace("/partner/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -369,7 +379,7 @@ export default function PartnerNetworkTree(): JSX.Element {
   return (
     <>
       <SEO title="My Network Tree" description="View your securely scoped partner downline hierarchy." />
-      <main className="min-h-screen bg-background text-foreground px-4 py-8 overflow-x-hidden">
+      <main className="min-h-screen bg-background text-foreground px-4 pt-8 pb-24 md:py-8 overflow-x-hidden">
         <div className="mx-auto w-full max-w-7xl space-y-6">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -652,6 +662,28 @@ export default function PartnerNetworkTree(): JSX.Element {
 
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-[0_-4px_10px_rgba(0,0,0,0.05)] pb-2 pt-1 px-1">
+        <div className="grid grid-cols-4 h-14">
+          <Link href="/partner" className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
+            <Home className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Home</span>
+          </Link>
+          <Link href="/partner/network-tree" className="flex flex-col items-center justify-center gap-1 text-blue-600 dark:text-blue-400">
+            <Network className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Network</span>
+          </Link>
+          <Link href="/partner/profile" className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
+            <User className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </Link>
+          <button onClick={handleLogout} className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-red-600">
+            <LogOut className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Logout</span>
+          </button>
+        </div>
+      </nav>
     </>
   );
 }

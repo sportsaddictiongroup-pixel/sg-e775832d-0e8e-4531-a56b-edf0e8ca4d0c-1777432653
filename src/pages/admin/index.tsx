@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key } from "lucide-react";
+import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key, Users } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 
@@ -207,6 +207,16 @@ export default function AdminDashboard(): JSX.Element {
       iconWrapper: "bg-amber-500 dark:bg-amber-600 text-white shadow-sm shadow-amber-500/20",
       buttonClass: "bg-amber-100 hover:bg-amber-500 text-amber-900 hover:text-white border-transparent dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-600 dark:hover:text-white",
       buttonText: "Explore Network",
+    },
+    {
+      title: "Partner Directory",
+      description: "View, search and manage partner information.",
+      href: "/admin/partner-directory",
+      icon: Users,
+      cardWrapper: "border-indigo-300/70 dark:border-indigo-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50/80 dark:bg-indigo-950/20 dark:hover:bg-indigo-900/30 hover:shadow-xl hover:shadow-indigo-500/10",
+      iconWrapper: "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm shadow-indigo-600/20",
+      buttonClass: "bg-indigo-100 hover:bg-indigo-600 text-indigo-800 hover:text-white border-transparent dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-600 dark:hover:text-white",
+      buttonText: "Open Directory",
     },
   ];
 

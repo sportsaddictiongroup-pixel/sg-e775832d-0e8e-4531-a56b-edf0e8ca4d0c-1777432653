@@ -499,11 +499,13 @@ export default function PartnerNetworkTree(): JSX.Element {
               </Card>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full flex flex-col sm:flex-row gap-2 h-auto p-2 overflow-hidden sm:overflow-visible bg-muted/40 border border-muted/50 rounded-2xl shadow-inner mb-8">
-                  <TabsTrigger value="overview" className="w-full sm:w-auto whitespace-nowrap text-sm sm:text-base min-w-0 py-3 px-4 sm:px-8 font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-blue-600 data-[state=active]:text-white">Overview Preview</TabsTrigger>
-                  <TabsTrigger value="downlines" className="w-full sm:w-auto whitespace-nowrap text-sm sm:text-base min-w-0 py-3 px-4 sm:px-8 font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Direct Downlines</TabsTrigger>
-                  <TabsTrigger value="generations" className="w-full sm:w-auto whitespace-nowrap text-sm sm:text-base min-w-0 py-3 px-4 sm:px-8 font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-purple-600 data-[state=active]:text-white">5-Level MLM View</TabsTrigger>
-                </TabsList>
+                <div className="w-full overflow-x-auto mb-8">
+                  <TabsList className="w-full flex flex-col sm:flex-row gap-2 h-auto p-2 overflow-x-auto sm:overflow-visible bg-muted/40 border border-muted/50 rounded-2xl shadow-inner">
+                    <TabsTrigger value="overview" className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm px-3 py-2 min-w-[120px] font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-blue-600 data-[state=active]:text-white">Overview Preview</TabsTrigger>
+                    <TabsTrigger value="downlines" className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm px-3 py-2 min-w-[120px] font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Direct Downlines</TabsTrigger>
+                    <TabsTrigger value="generations" className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm px-3 py-2 min-w-[120px] font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-purple-600 data-[state=active]:text-white">5-Level MLM View</TabsTrigger>
+                  </TabsList>
+                </div>
                 
                 <TabsContent value="overview" className="mt-0">
                   <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">

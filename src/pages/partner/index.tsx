@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { User, MapPin, Network, Key, LogOut, ChevronRight, Printer, Home } from "lucide-react";
+import { User, MapPin, Network, Key, LogOut, ChevronRight, Printer, Home, IdCard, ArrowRight } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 type PartnerDetails = {
@@ -463,136 +463,203 @@ export default function PartnerDashboard(): JSX.Element {
             </div>
           </header>
 
-          <section id="printable-identity-card-wrapper" className="w-full flex justify-center">
-            <Card id="printable-identity-card" className="w-full max-w-4xl border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black mx-auto">
-              {/* Security Watermark */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none px-4">
-                <span className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-widest text-slate-900/[0.05] dark:text-white/[0.04] print-watermark -rotate-12 whitespace-nowrap">
-                  SPORTS ADDICTION GROUP
-                </span>
-              </div>
-
-              <CardHeader className="pb-3 pt-4 md:pt-5 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-2 md:gap-3">
-                <div className="w-full text-center">
-                  <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
-                    SAG NETWORK MEMBERSHIP CARD
-                  </CardTitle>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
-                  <p className="text-[10px] md:text-xs font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
-                    Generated On: {timeData.display || "Loading..."}
-                  </p>
-                  <Button 
-                    onClick={() => window.print()}
-                    variant="outline" 
-                    size="sm" 
-                    className="h-8 print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
-                  >
-                    <Printer className="h-3.5 w-3.5 mr-2" />
-                    Print Identity
-                  </Button>
-                </div>
-              </CardHeader>
+          {/* QUICK ACTIONS */}
+          <section className="space-y-4">
+            <h3 className="text-xl font-bold tracking-tight text-foreground px-1">Quick Actions</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               
-              <CardContent className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-5">
-                {/* 2-Column Identity Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                      {partnerDetails?.full_name || profile.full_name || profile.username}
-                    </p>
+              {/* Membership Card Block */}
+              <Card 
+                className="group relative overflow-hidden bg-card hover:bg-orange-50/40 dark:hover:bg-orange-950/20 border-border/60 hover:border-orange-500/30 transition-all cursor-pointer shadow-sm hover:shadow-md" 
+                onClick={() => document.getElementById("membership-card")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                <CardContent className="p-6 flex flex-col items-start gap-4 h-full">
+                  <div className="p-3 rounded-xl bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-500 group-hover:scale-110 transition-transform">
+                    <IdCard className="h-6 w-6" />
                   </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
-                      {profile.username}
-                    </p>
+                  <div className="space-y-1 flex-1">
+                    <h4 className="font-bold text-foreground">View Membership Card</h4>
+                    <p className="text-sm text-muted-foreground leading-snug">View your SAG Network identity and registered details</p>
                   </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                      {partnerDetails?.mobile_number || "N/A"}
-                    </p>
+                  <div className="mt-auto pt-2 flex items-center text-sm font-semibold text-orange-600 dark:text-orange-500">
+                    View Membership Card <ArrowRight className="h-4 w-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
                   </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
-                    <p className="text-sm sm:text-base font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
-                      {derivedRole}
-                    </p>
+                </CardContent>
+              </Card>
+
+              {/* My Network Tree Block */}
+              <Card 
+                className="group relative overflow-hidden bg-card hover:bg-blue-50/40 dark:hover:bg-blue-950/20 border-border/60 hover:border-blue-500/30 transition-all cursor-pointer shadow-sm hover:shadow-md" 
+                onClick={() => router.push("/partner/network-tree")}
+              >
+                <CardContent className="p-6 flex flex-col items-start gap-4 h-full">
+                  <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-500 group-hover:scale-110 transition-transform">
+                    <Network className="h-6 w-6" />
                   </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                      {uplineFullName || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
-                    </p>
+                  <div className="space-y-1 flex-1">
+                    <h4 className="font-bold text-foreground">My Network Tree</h4>
+                    <p className="text-sm text-muted-foreground leading-snug">Explore your downline and partner levels</p>
                   </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
-                      {upline?.username || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
-                    </p>
+                  <div className="mt-auto pt-2 flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400">
+                    View My Network <ArrowRight className="h-4 w-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Change Password Block */}
+              <Card 
+                className="group relative overflow-hidden bg-card hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 border-border/60 hover:border-emerald-500/30 transition-all cursor-pointer shadow-sm hover:shadow-md" 
+                onClick={() => document.getElementById("change-password")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                <CardContent className="p-6 flex flex-col items-start gap-4 h-full">
+                  <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-500 group-hover:scale-110 transition-transform">
+                    <Key className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1 flex-1">
+                    <h4 className="font-bold text-foreground">Change Password</h4>
+                    <p className="text-sm text-muted-foreground leading-snug">Update your account password securely</p>
+                  </div>
+                  <div className="mt-auto pt-2 flex items-center text-sm font-semibold text-emerald-600 dark:text-emerald-500">
+                    Change Password <ArrowRight className="h-4 w-4 ml-1.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
+          </section>
+
+          <div id="membership-card" className="scroll-mt-8">
+            <section id="printable-identity-card-wrapper" className="w-full flex justify-center">
+              <Card id="printable-identity-card" className="w-full max-w-4xl border-2 border-orange-300/80 dark:border-orange-800/80 bg-white dark:bg-card shadow-lg relative overflow-hidden print-text-black mx-auto">
+                {/* Security Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none px-4">
+                  <span className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-widest text-slate-900/[0.05] dark:text-white/[0.04] print-watermark -rotate-12 whitespace-nowrap">
+                    SPORTS ADDICTION GROUP
+                  </span>
                 </div>
 
-                {/* Location Details Section */}
-                <div className="pt-3 md:pt-4 border-t border-border/40 print-border-gray">
-                  <p className="text-[10px] md:text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-3 print-text-black">
-                    Registered Location Details
-                  </p>
+                <CardHeader className="pb-3 pt-4 md:pt-5 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-2 md:gap-3">
+                  <div className="w-full text-center">
+                    <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
+                      SAG NETWORK MEMBERSHIP CARD
+                    </CardTitle>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
+                    <p className="text-[10px] md:text-xs font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
+                      Generated On: {timeData.display || "Loading..."}
+                    </p>
+                    <Button 
+                      onClick={() => window.print()}
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 print-hidden bg-orange-50/50 hover:bg-orange-100/50 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-900/50 text-orange-700 dark:text-orange-400 font-semibold shadow-sm w-full sm:w-auto"
+                    >
+                      <Printer className="h-3.5 w-3.5 mr-2" />
+                      Print Identity
+                    </Button>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-5">
+                  {/* 2-Column Identity Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
-                    {/* LEFT COLUMN */}
-                    <div className="space-y-3 md:space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
-                        </p>
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
+                      <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                        {partnerDetails?.full_name || profile.full_name || profile.username}
+                      </p>
                     </div>
                     
-                    {/* RIGHT COLUMN */}
-                    <div className="space-y-3 md:space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
-                        </p>
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
+                      <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
+                        {profile.username}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
+                      <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                        {partnerDetails?.mobile_number || "N/A"}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
+                      <p className="text-sm sm:text-base font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
+                        {derivedRole}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
+                      <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                        {uplineFullName || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
+                      <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
+                        {upline?.username || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Location Details Section */}
+                  <div className="pt-3 md:pt-4 border-t border-border/40 print-border-gray">
+                    <p className="text-[10px] md:text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-3 print-text-black">
+                      Registered Location Details
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
+                      {/* LEFT COLUMN */}
+                      <div className="space-y-3 md:space-y-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
+                          <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                            {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
+                          <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                            {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
-                          {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
-                        </p>
+                      
+                      {/* RIGHT COLUMN */}
+                      <div className="space-y-3 md:space-y-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
+                          <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                            {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
+                          <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
+                            {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Verification ID */}
-                <div className="pt-3 md:pt-4 border-t border-border/40 print-border-gray flex flex-col gap-1.5">
-                  <p className="text-[10px] md:text-xs font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
-                    Verification ID: {verificationId}
-                  </p>
-                  <div className="text-[9px] sm:text-[10px] text-muted-foreground print-text-gray italic leading-relaxed">
-                    <p>This SAG Network Membership Card is system-generated. Valid as per generated date and time shown above.</p>
-                    <p>For official verification, match details with SAG Network records.</p>
+                  {/* Verification ID */}
+                  <div className="pt-3 md:pt-4 border-t border-border/40 print-border-gray flex flex-col gap-1.5">
+                    <p className="text-[10px] md:text-xs font-mono font-bold text-slate-700 dark:text-slate-300 print-text-black">
+                      Verification ID: {verificationId}
+                    </p>
+                    <div className="text-[9px] sm:text-[10px] text-muted-foreground print-text-gray italic leading-relaxed">
+                      <p>This SAG Network Membership Card is system-generated. Valid as per generated date and time shown above.</p>
+                      <p>For official verification, match details with SAG Network records.</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+                </CardContent>
+              </Card>
+            </section>
+          </div>
 
           {/* MY NETWORK TREE ENTRY BANNER */}
           <section>
@@ -620,97 +687,99 @@ export default function PartnerDashboard(): JSX.Element {
             </Card>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">
-            <Card className="shadow-sm border-border/60 border-l-4 border-l-orange-500 bg-orange-50/10 dark:bg-orange-950/10 hover:bg-orange-50/30 dark:hover:bg-orange-950/20 transition-all">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-bold text-orange-700 dark:text-orange-400">
-                  <div className="bg-orange-100 dark:bg-orange-900/50 p-1.5 rounded-md mr-3 shadow-sm">
-                    <Key className="h-4 w-4 text-orange-700 dark:text-orange-400" />
-                  </div>
-                  Change Password
-                </CardTitle>
-                <CardDescription className="pt-1">
-                  Update your password to keep your account secure.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {passwordError && (
-                  <p className="mb-4 text-sm text-destructive bg-destructive/10 p-3 rounded-md font-medium" role="alert">
-                    {passwordError}
-                  </p>
-                )}
-                {passwordSuccess && (
-                  <p className="mb-4 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-md font-medium border border-emerald-200 dark:border-emerald-900/50" role="status">
-                    {passwordSuccess}
-                  </p>
-                )}
-                <form
-                  className="space-y-5"
-                  onSubmit={handleChangePassword}
-                  noValidate
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(event) =>
-                        setNewPassword(event.target.value)
-                      }
-                      placeholder="Enter a strong password"
-                      className="bg-background"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(event) =>
-                        setConfirmPassword(event.target.value)
-                      }
-                      placeholder="Re-enter the new password"
-                      className="bg-background"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full sm:w-auto"
-                    disabled={changingPassword}
+          <div id="change-password" className="scroll-mt-8">
+            <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">
+              <Card className="shadow-sm border-border/60 border-l-4 border-l-orange-500 bg-orange-50/10 dark:bg-orange-950/10 hover:bg-orange-50/30 dark:hover:bg-orange-950/20 transition-all">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold text-orange-700 dark:text-orange-400">
+                    <div className="bg-orange-100 dark:bg-orange-900/50 p-1.5 rounded-md mr-3 shadow-sm">
+                      <Key className="h-4 w-4 text-orange-700 dark:text-orange-400" />
+                    </div>
+                    Change Password
+                  </CardTitle>
+                  <CardDescription className="pt-1">
+                    Update your password to keep your account secure.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {passwordError && (
+                    <p className="mb-4 text-sm text-destructive bg-destructive/10 p-3 rounded-md font-medium" role="alert">
+                      {passwordError}
+                    </p>
+                  )}
+                  {passwordSuccess && (
+                    <p className="mb-4 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-md font-medium border border-emerald-200 dark:border-emerald-900/50" role="status">
+                      {passwordSuccess}
+                    </p>
+                  )}
+                  <form
+                    className="space-y-5"
+                    onSubmit={handleChangePassword}
+                    noValidate
                   >
-                    {changingPassword ? "Updating..." : "Update Password"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(event) =>
+                          setNewPassword(event.target.value)
+                        }
+                        placeholder="Enter a strong password"
+                        className="bg-background"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(event) =>
+                          setConfirmPassword(event.target.value)
+                        }
+                        placeholder="Re-enter the new password"
+                        className="bg-background"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full sm:w-auto"
+                      disabled={changingPassword}
+                    >
+                      {changingPassword ? "Updating..." : "Update Password"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
 
-            <Card className="shadow-sm border-orange-200/60 dark:border-orange-900/40 bg-orange-50/30 dark:bg-orange-950/10 hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-all flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-orange-300 dark:bg-orange-700/50" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-bold text-orange-800 dark:text-orange-400">
-                  Need Help?
-                </CardTitle>
-                <CardDescription className="pt-1 text-orange-700/80 dark:text-orange-400/70 text-[13px]">
-                  Contact your admin if your role or territory looks incorrect.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-[13px] flex-1 flex flex-col text-orange-900/80 dark:text-orange-200/70">
-                <p className="leading-relaxed">
-                  If you see an unexpected role or no territory assignment here,
-                  please reach out to your admin so they can review your
-                  profile.
-                </p>
-                <div className="bg-orange-100/50 dark:bg-orange-900/20 p-3.5 rounded-lg border border-orange-200/50 dark:border-orange-800/30 mt-auto">
-                  <p className="text-[12px] leading-relaxed">
-                    <strong className="text-orange-800 dark:text-orange-400">Note:</strong> You can also sign out and sign back in if you recently changed
-                    your credentials or if your assignment was just updated.
+              <Card className="shadow-sm border-orange-200/60 dark:border-orange-900/40 bg-orange-50/30 dark:bg-orange-950/10 hover:bg-orange-50/60 dark:hover:bg-orange-950/20 transition-all flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-orange-300 dark:bg-orange-700/50" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-bold text-orange-800 dark:text-orange-400">
+                    Need Help?
+                  </CardTitle>
+                  <CardDescription className="pt-1 text-orange-700/80 dark:text-orange-400/70 text-[13px]">
+                    Contact your admin if your role or territory looks incorrect.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-[13px] flex-1 flex flex-col text-orange-900/80 dark:text-orange-200/70">
+                  <p className="leading-relaxed">
+                    If you see an unexpected role or no territory assignment here,
+                    please reach out to your admin so they can review your
+                    profile.
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+                  <div className="bg-orange-100/50 dark:bg-orange-900/20 p-3.5 rounded-lg border border-orange-200/50 dark:border-orange-800/30 mt-auto">
+                    <p className="text-[12px] leading-relaxed">
+                      <strong className="text-orange-800 dark:text-orange-400">Note:</strong> You can also sign out and sign back in if you recently changed
+                      your credentials or if your assignment was just updated.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          </div>
         </div>
       </main>
     </>

@@ -425,7 +425,7 @@ export default function PartnerDashboard(): JSX.Element {
           .print-watermark { opacity: 0.06 !important; color: #000000 !important; }
         }
       `}} />
-      <main className="min-h-screen bg-background text-foreground px-4 pt-8 pb-24 md:py-12">
+      <main className="min-h-screen bg-background text-foreground px-4 pt-8 pb-12 md:py-12">
         <div className="mx-auto w-full max-w-5xl space-y-8 md:space-y-10">
           
           {/* WELCOME AREA & TOP ACTIONS */}
@@ -713,28 +713,6 @@ export default function PartnerDashboard(): JSX.Element {
           </section>
         </div>
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-[0_-4px_10px_rgba(0,0,0,0.05)] pb-2 pt-1 px-1">
-        <div className="grid grid-cols-4 h-14">
-          <Link href="/partner" className="flex flex-col items-center justify-center gap-1 text-orange-600 dark:text-orange-500">
-            <Home className="h-5 w-5" />
-            <span className="text-[10px] font-bold">Home</span>
-          </Link>
-          <Link href="/partner/network-tree" className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
-            <Network className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Network</span>
-          </Link>
-          <Link href="/partner/profile" className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
-            <User className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Profile</span>
-          </Link>
-          <button onClick={handleLogout} className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-red-600">
-            <LogOut className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Logout</span>
-          </button>
-        </div>
-      </nav>
     </>
   );
 }

@@ -230,6 +230,8 @@ export default function PartnerDetailsPage() {
     if (!profileId || !formData) return;
     setSaving(true);
     try {
+      const cleanProfileId = String(profileId || "").trim();
+
       const payload = {
         full_name: formData.full_name || null,
         mobile_number: formData.mobile_number || null,
@@ -242,33 +244,47 @@ export default function PartnerDetailsPage() {
         location_id: formData.location_id || null
       };
 
-      console.log("route profileId:", profileId);
-      console.log("partner_details row before update:", partnerDetails);
-      console.log("update payload:", payload);
+      console.log("cleanProfileId:", cleanProfileId);
+      console.log("payload:", payload);
 
-      const { data: updatedRow, error } = await (supabase as any)
+      // Pre-fetch check
+      const { data: existingDetails, error: existingError } = await (supabase as any)
         .from("partner_details")
-        .update(payload)
-        .eq("profile_id", profileId)
-        .select()
+        .select("*")
+        .eq("profile_id", cleanProfileId)
         .maybeSingle();
 
-      console.log("update result:", updatedRow);
-      console.log("update error:", error);
+      console.log("existingDetails:", existingDetails);
 
-      if (error) {
-        throw error;
+      if (existingError) {
+        throw existingError;
       }
 
-      if (!updatedRow) {
-        // Diagnostic read
-        const { data: diagData, error: diagError } = await (supabase as any)
-          .from("partner_details")
-          .select("*")
-          .eq("profile_id", profileId);
-        
-        console.log("Diagnostic read after update failure:", { diagData, diagError });
-        toast({ title: "Error", description: "Partner details row not found for this profile ID.", variant: "destructive" });
+      if (!existingDetails) {
+        toast({ 
+          title: "Error", 
+          description: `Partner details row not found for ID: ${cleanProfileId}. Cannot update.`, 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Perform update without .single() to avoid PGRST116 on mismatch
+      const { data: updatedRows, error: updateError } = await (supabase as any)
+        .from("partner_details")
+        .update(payload)
+        .eq("profile_id", cleanProfileId)
+        .select("*");
+
+      console.log("updatedRows:", updatedRows);
+      console.log("updateError:", updateError);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      if (!updatedRows || updatedRows.length === 0) {
+        toast({ title: "Error", description: "Failed to apply updates. Row not modified.", variant: "destructive" });
         return;
       }
 

@@ -99,6 +99,8 @@ export default function PartnerDetailsPage() {
     if (!authChecked || !profileId) return;
     setLoading(true);
     try {
+      console.log("route profileId:", profileId);
+
       const { data: profData, error: profErr } = await supabase
         .from("profiles")
         .select("id, username, role, upline_profile_id, created_at")
@@ -110,6 +112,7 @@ export default function PartnerDetailsPage() {
         router.push("/admin/partner-directory");
         return;
       }
+      console.log("fetched profile row:", profData);
       setProfile(profData);
 
       const { data: detailsData, error: detailsErr } = await (supabase as any)
@@ -240,6 +243,7 @@ export default function PartnerDetailsPage() {
       };
 
       console.log("route profileId:", profileId);
+      console.log("partner_details row before update:", partnerDetails);
       console.log("update payload:", payload);
 
       const { data: updatedRow, error } = await (supabase as any)
@@ -247,22 +251,24 @@ export default function PartnerDetailsPage() {
         .update(payload)
         .eq("profile_id", profileId)
         .select()
-        .single();
+        .maybeSingle();
 
       console.log("update result:", updatedRow);
       console.log("update error:", error);
 
       if (error) {
-        // If error is PGRST116, row was not found
-        if (error.code === 'PGRST116') {
-          toast({ title: "Error", description: "Partner details row not found. Cannot update.", variant: "destructive" });
-          return;
-        }
         throw error;
       }
 
       if (!updatedRow) {
-        toast({ title: "Error", description: "Partner details row not found. Cannot update.", variant: "destructive" });
+        // Diagnostic read
+        const { data: diagData, error: diagError } = await (supabase as any)
+          .from("partner_details")
+          .select("*")
+          .eq("profile_id", profileId);
+        
+        console.log("Diagnostic read after update failure:", { diagData, diagError });
+        toast({ title: "Error", description: "Partner details row not found for this profile ID.", variant: "destructive" });
         return;
       }
 

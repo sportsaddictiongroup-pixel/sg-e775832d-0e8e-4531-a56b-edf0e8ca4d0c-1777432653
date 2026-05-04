@@ -269,6 +269,7 @@ export default function PartnerDetailsPage() {
         return;
       }
 
+      console.log("Updating profile_id:", cleanProfileId);
       // Perform update without .single() to avoid PGRST116 on mismatch
       const { data: updatedRows, error: updateError } = await (supabase as any)
         .from("partner_details")
@@ -276,7 +277,7 @@ export default function PartnerDetailsPage() {
         .eq("profile_id", cleanProfileId)
         .select("*");
 
-      console.log("updatedRows:", updatedRows);
+      console.log("Updated rows:", updatedRows);
       console.log("updateError:", updateError);
 
       if (updateError) {
@@ -284,7 +285,7 @@ export default function PartnerDetailsPage() {
       }
 
       if (!updatedRows || updatedRows.length === 0) {
-        toast({ title: "Error", description: "Failed to apply updates. Row not modified.", variant: "destructive" });
+        toast({ title: "Error", description: "No matching partner_details row found for this profile_id", variant: "destructive" });
         return;
       }
 

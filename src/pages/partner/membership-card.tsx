@@ -349,17 +349,17 @@ export default function MembershipCardPage(): JSX.Element {
 
               <CardHeader className="pb-3 pt-4 md:pt-5 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-2 md:gap-3">
                 <div className="w-full relative flex flex-col sm:flex-row items-center justify-center">
-                  <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase text-center z-10">
+                  <CardTitle className="text-[13px] min-[375px]:text-[15px] sm:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-wide sm:tracking-widest uppercase text-center z-10 whitespace-nowrap">
                     SAG NETWORK MEMBERSHIP CARD
                   </CardTitle>
-                  <div className="sm:absolute sm:right-0 mt-2 sm:mt-0 flex flex-col items-center sm:items-end z-10">
-                    <span className="text-[9px] md:text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-widest leading-tight">Date of Joining</span>
-                    <span className="text-[11px] md:text-xs font-extrabold text-foreground print-text-black leading-tight">
+                  <div className="sm:absolute sm:right-0 mt-2 sm:mt-0 flex flex-row items-center justify-center sm:justify-end z-10 gap-1.5">
+                    <span className="text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Date of Joining:</span>
+                    <span className="text-[11px] sm:text-xs font-extrabold text-foreground print-text-black leading-tight">
                       {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A"}
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
+                <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0 mt-1 sm:mt-0">
                   <p className="text-[10px] md:text-xs font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">
                     Generated On: {timeData.display || "Loading..."}
                   </p>
@@ -376,59 +376,59 @@ export default function MembershipCardPage(): JSX.Element {
               </CardHeader>
               
               <CardContent className="p-4 md:p-6 relative z-10 space-y-4 md:space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Full Name</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-x-6 sm:gap-y-4">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Full Name</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                       {partnerDetails?.full_name || profile.full_name || profile.username}
                     </p>
                   </div>
                   
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">User ID</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">User ID</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black font-mono break-words leading-tight">
                       {profile.username}
                     </p>
                   </div>
                   
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Mobile Number</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Mobile Number</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                       {partnerDetails?.mobile_number || "N/A"}
                     </p>
                   </div>
 
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">WhatsApp Number</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">WhatsApp Number</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                       {partnerDetails?.whatsapp_number || "N/A"}
                     </p>
                   </div>
 
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Email Address</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Email Address</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                       {partnerDetails?.email || "N/A"}
                     </p>
                   </div>
                   
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Your Designation In SAG</p>
-                    <p className="text-sm sm:text-base font-extrabold text-orange-700 dark:text-orange-400 print-text-black">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Designation</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-orange-700 dark:text-orange-400 print-text-black break-words leading-tight">
                       {derivedRole}
                     </p>
                   </div>
                   
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline Full Name</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Upline Full Name</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                       {uplineFullName || (profile.upline_profile_id ? "Loading..." : "SAG Root")}
                     </p>
                   </div>
                   
-                  <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Upline User ID</p>
-                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                    <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Upline User ID</p>
+                    <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black font-mono break-words leading-tight">
                       {upline?.username || (profile.upline_profile_id ? "..." : "SAG-ADMIN")}
                     </p>
                   </div>
@@ -438,41 +438,40 @@ export default function MembershipCardPage(): JSX.Element {
                   <p className="text-[10px] md:text-xs font-bold text-orange-600 dark:text-orange-500 uppercase tracking-widest mb-3 print-text-black">
                     Registered Location Details
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
-                    <div className="space-y-3 md:space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Country</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.countries) || "Not Assigned"}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Location / Area</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
-                        </p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-x-6 sm:gap-y-4">
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                      <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Country</p>
+                      <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
+                        {getJoinedValue(partnerDetails?.countries) || "Not Assigned"}
+                      </p>
                     </div>
                     
-                    <div className="space-y-3 md:space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">District</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
-                          {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">PIN Code</p>
-                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black font-mono">
-                          {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
-                        </p>
-                      </div>
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                      <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">State</p>
+                      <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
+                        {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                      <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">District</p>
+                      <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
+                        {getJoinedValue(partnerDetails?.districts) || "Not Assigned"}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                      <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">PIN Code</p>
+                      <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black font-mono break-words leading-tight">
+                        {getJoinedValue(partnerDetails?.pincodes, 'code') || "Not Assigned"}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0 col-span-2 sm:col-span-1">
+                      <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Location / Area</p>
+                      <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
+                        {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}
+                      </p>
                     </div>
                   </div>
                 </div>

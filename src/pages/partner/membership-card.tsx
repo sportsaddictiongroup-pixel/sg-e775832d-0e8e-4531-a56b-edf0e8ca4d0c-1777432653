@@ -440,13 +440,6 @@ export default function MembershipCardPage(): JSX.Element {
                   </p>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:gap-x-6 sm:gap-y-4">
                     <div className="space-y-0.5 sm:space-y-1 min-w-0">
-                      <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Country</p>
-                      <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
-                        {getJoinedValue(partnerDetails?.countries) || "Not Assigned"}
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
                       <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">State</p>
                       <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                         {getJoinedValue(partnerDetails?.states) || "Not Assigned"}
@@ -467,7 +460,7 @@ export default function MembershipCardPage(): JSX.Element {
                       </p>
                     </div>
                     
-                    <div className="space-y-0.5 sm:space-y-1 min-w-0 col-span-2 sm:col-span-1">
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0">
                       <p className="text-[9px] sm:text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider leading-tight">Location / Area</p>
                       <p className="text-[11px] min-[375px]:text-xs sm:text-sm md:text-base font-extrabold text-foreground print-text-black break-words leading-tight">
                         {getJoinedValue(partnerDetails?.locations) || "Not Assigned"}

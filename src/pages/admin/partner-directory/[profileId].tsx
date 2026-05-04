@@ -123,6 +123,7 @@ export default function PartnerDetailsPage() {
       if (!detailsData) {
         setDetailsMissing(true);
       } else {
+        console.log("refetched partner_details row:", detailsData);
         setPartnerDetails(detailsData);
         setFormData(detailsData);
         await fetchLocationNames(detailsData);
@@ -226,22 +227,44 @@ export default function PartnerDetailsPage() {
     if (!profileId || !formData) return;
     setSaving(true);
     try {
-      const { error } = await (supabase as any)
-        .from("partner_details")
-        .update({
-          full_name: formData.full_name,
-          mobile_number: formData.mobile_number,
-          whatsapp_number: formData.whatsapp_number,
-          email: formData.email,
-          country_id: formData.country_id,
-          state_id: formData.state_id,
-          district_id: formData.district_id,
-          pincode_id: formData.pincode_id,
-          location_id: formData.location_id
-        })
-        .eq("profile_id", profileId);
+      const payload = {
+        full_name: formData.full_name || null,
+        mobile_number: formData.mobile_number || null,
+        whatsapp_number: formData.whatsapp_number || null,
+        email: formData.email || null,
+        country_id: formData.country_id || null,
+        state_id: formData.state_id || null,
+        district_id: formData.district_id || null,
+        pincode_id: formData.pincode_id || null,
+        location_id: formData.location_id || null
+      };
 
-      if (error) throw error;
+      console.log("route profileId:", profileId);
+      console.log("update payload:", payload);
+
+      const { data: updatedRow, error } = await (supabase as any)
+        .from("partner_details")
+        .update(payload)
+        .eq("profile_id", profileId)
+        .select()
+        .single();
+
+      console.log("update result:", updatedRow);
+      console.log("update error:", error);
+
+      if (error) {
+        // If error is PGRST116, row was not found
+        if (error.code === 'PGRST116') {
+          toast({ title: "Error", description: "Partner details row not found. Cannot update.", variant: "destructive" });
+          return;
+        }
+        throw error;
+      }
+
+      if (!updatedRow) {
+        toast({ title: "Error", description: "Partner details row not found. Cannot update.", variant: "destructive" });
+        return;
+      }
 
       toast({ title: "Success", description: "Partner details updated successfully." });
       

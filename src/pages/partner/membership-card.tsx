@@ -13,6 +13,8 @@ type Profile = Tables<"profiles">;
 type PartnerDetails = {
   full_name: string | null;
   mobile_number: string | null;
+  whatsapp_number?: string | null;
+  email?: string | null;
   country_id?: string | null;
   state_id?: string | null;
   district_id?: string | null;
@@ -146,6 +148,10 @@ export default function MembershipCardPage(): JSX.Element {
           return data[key] || null;
         };
 
+        if (resolvedPd.country_id && !checkJoined(resolvedPd.countries, 'name')) {
+          const { data: cData } = await supabase.from('countries').select('name').eq('id', resolvedPd.country_id).maybeSingle();
+          if (cData) resolvedPd.countries = { name: cData.name };
+        }
         if (resolvedPd.state_id && !checkJoined(resolvedPd.states, 'name')) {
           const { data: sData } = await supabase.from('states').select('name').eq('id', resolvedPd.state_id).maybeSingle();
           if (sData) resolvedPd.states = { name: sData.name };
@@ -380,9 +386,23 @@ export default function MembershipCardPage(): JSX.Element {
                   </div>
                   
                   <div className="space-y-1">
-                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Registered Mobile Number</p>
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Mobile Number</p>
                     <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
                       {partnerDetails?.mobile_number || "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">WhatsApp Number</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                      {partnerDetails?.whatsapp_number || "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Email Address</p>
+                    <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                      {partnerDetails?.email || "N/A"}
                     </p>
                   </div>
                   
@@ -414,6 +434,12 @@ export default function MembershipCardPage(): JSX.Element {
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 md:gap-y-4">
                     <div className="space-y-3 md:space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">Country</p>
+                        <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">
+                          {getJoinedValue(partnerDetails?.countries) || "Not Assigned"}
+                        </p>
+                      </div>
                       <div className="space-y-1">
                         <p className="text-[10px] md:text-xs font-bold text-muted-foreground print-text-gray uppercase tracking-wider">State</p>
                         <p className="text-sm sm:text-base font-extrabold text-foreground print-text-black">

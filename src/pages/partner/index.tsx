@@ -480,10 +480,16 @@ export default function PartnerDashboard(): JSX.Element {
                 </div>
 
                 <CardHeader className="pb-3 pt-4 md:pt-5 border-b border-border/40 print-border-gray relative z-10 flex flex-col items-center justify-center gap-2 md:gap-3">
-                  <div className="w-full text-center">
-                    <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase w-full justify-center flex text-center">
+                  <div className="w-full relative flex flex-col sm:flex-row items-center justify-center">
+                    <CardTitle className="text-base md:text-lg lg:text-xl font-black text-orange-600 dark:text-orange-500 tracking-widest uppercase text-center z-10">
                       SAG NETWORK MEMBERSHIP CARD
                     </CardTitle>
+                    <div className="sm:absolute sm:right-0 mt-2 sm:mt-0 flex flex-col items-center sm:items-end z-10">
+                      <span className="text-[9px] md:text-[10px] font-bold text-muted-foreground print-text-gray uppercase tracking-widest leading-tight">Date of Joining</span>
+                      <span className="text-[11px] md:text-xs font-extrabold text-foreground print-text-black leading-tight">
+                        {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A"}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-2 sm:gap-0">
                     <p className="text-[10px] md:text-xs font-mono font-bold text-muted-foreground print-text-gray uppercase tracking-wider text-center sm:text-left">

@@ -314,17 +314,17 @@ export default function PartnerNetworkTree(): JSX.Element {
     const theme = getLevelTheme(level > 1 ? 2 : level);
 
     return (
-      <Card className={`w-36 h-[124px] shadow-sm hover:shadow-md z-10 relative overflow-hidden rounded-2xl border-2 ${theme.card} transition-all duration-200 hover:-translate-y-0.5`}>
+      <Card className={`shrink-0 min-w-[140px] max-w-[180px] w-[140px] sm:w-[160px] h-[110px] sm:h-[124px] shadow-sm hover:shadow-md z-10 relative overflow-hidden rounded-2xl border-2 ${theme.card} transition-all duration-200 hover:-translate-y-0.5`}>
         <div className={`h-1 w-full absolute top-0 left-0 ${theme.accent}`} />
-        <CardContent className="p-3 flex flex-col items-center text-center h-full mt-1">
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center mb-1.5 shadow-sm shrink-0 ${theme.iconBg}`}>
-            <span className="text-base font-black tracking-tight">{partner.partner_name.substring(0, 2).toUpperCase()}</span>
+        <CardContent className="p-2 sm:p-3 flex flex-col items-center text-center h-full mt-0.5 sm:mt-1">
+          <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center mb-1 sm:mb-1.5 shadow-sm shrink-0 ${theme.iconBg}`}>
+            <span className="text-sm sm:text-base font-black tracking-tight">{partner.partner_name.substring(0, 2).toUpperCase()}</span>
           </div>
-          <h4 className={`text-xs font-extrabold truncate w-full ${theme.title}`} title={partner.partner_name}>{partner.partner_name}</h4>
-          <p className="text-[9px] text-muted-foreground font-mono mt-0.5 px-1.5 py-0.5 rounded bg-background/80 shadow-sm border border-muted-foreground/10 truncate max-w-[95%]">{partner.user_id}</p>
+          <h4 className={`text-[10px] sm:text-xs font-extrabold truncate w-full px-1 ${theme.title}`} title={partner.partner_name}>{partner.partner_name}</h4>
+          <p className="text-[8px] sm:text-[9px] text-muted-foreground font-mono mt-0.5 px-1.5 py-0.5 rounded bg-background/80 shadow-sm border border-muted-foreground/10 truncate max-w-[95%]">{partner.user_id}</p>
           {partner.direct_downlines_count > 0 && (
-            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 w-[85%] flex items-center justify-center text-[9px] font-bold px-1.5 py-0.5 rounded-full border shadow-sm ${theme.count}`}>
-              <Users className="h-2.5 w-2.5 mr-1 opacity-80 shrink-0" />
+            <div className={`absolute bottom-1.5 sm:bottom-2 left-1/2 -translate-x-1/2 w-[90%] sm:w-[85%] flex items-center justify-center text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full border shadow-sm ${theme.count}`}>
+              <Users className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-1 opacity-80 shrink-0" />
               <span className="truncate">{partner.direct_downlines_count} Direct</span>
             </div>
           )}
@@ -335,15 +335,18 @@ export default function PartnerNetworkTree(): JSX.Element {
 
   const renderPreviewTree = (parent: NormalizedPartner, children: NormalizedPartner[]) => {
     return (
-      <div className="flex flex-col items-center py-8">
-        {renderNodeCard(parent, 0)}
+      <div className="flex flex-col w-full min-w-max pb-4">
+        <div className="flex justify-center w-full relative z-10">
+          {renderNodeCard(parent, 0)}
+        </div>
+        
         {children.length > 0 && (
-          <div className="flex flex-col items-center">
-            <div className="w-0.5 h-8 bg-border" />
-            <div className="flex flex-row gap-4 items-start pt-8 border-t-2 border-border relative">
+          <div className="flex flex-col items-center w-full">
+            <div className="w-0.5 h-6 sm:h-8 bg-border" />
+            <div className={`flex flex-row flex-nowrap gap-4 items-start pt-6 sm:pt-8 border-t-2 border-border relative w-full ${children.length <= 6 ? 'justify-center' : 'justify-start px-4'}`}>
               {children.map((child) => (
-                <div key={child.profile_id} className="flex flex-col items-center relative">
-                  <div className="w-0.5 h-8 bg-border absolute -top-8 left-1/2 -translate-x-1/2" />
+                <div key={child.profile_id} className="flex flex-col items-center relative shrink-0">
+                  <div className="w-0.5 h-6 sm:h-8 bg-border absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2" />
                   {renderNodeCard(child, 1)}
                 </div>
               ))}
@@ -520,22 +523,25 @@ export default function PartnerNetworkTree(): JSX.Element {
                 <TabsContent value="overview" className="mt-0">
                   <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
                     <div className="h-1.5 w-full bg-blue-500"></div>
-                    <CardContent className="p-0 bg-slate-50/30">
-                      {selectedChildren.length <= PREVIEW_THRESHOLD ? (
-                        <div className="w-full overflow-x-auto p-12 flex justify-center min-w-max">
-                          {renderPreviewTree(selectedPartner, selectedChildren)}
+                    <CardContent className="p-0 bg-slate-50/30 overflow-hidden">
+                      <div className="flex flex-col items-center w-full">
+                        <div className="w-full overflow-x-auto overflow-y-auto p-4 sm:p-8 md:p-12 scroll-smooth">
+                          {renderPreviewTree(selectedPartner, selectedChildren.slice(0, 30))}
                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-24 text-center max-w-md mx-auto">
-                          <div className="h-16 w-16 rounded-2xl bg-amber-100 flex items-center justify-center mb-6 shadow-sm border border-amber-200">
-                            <Info className="h-8 w-8 text-amber-600" />
+                        {selectedChildren.length > 30 && (
+                          <div className="py-6 flex flex-col items-center border-t border-border/50 w-full bg-muted/10">
+                             <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center mb-3 shadow-sm border border-amber-200">
+                               <Info className="h-5 w-5 text-amber-600" />
+                             </div>
+                             <p className="text-sm font-medium text-muted-foreground mb-4 text-center px-4">
+                               Showing first 30 of <strong className="text-foreground">{selectedChildren.length}</strong> direct downlines to maintain performance.
+                             </p>
+                             <Button onClick={() => setActiveTab("downlines")} className="shadow-sm rounded-full px-6 font-bold bg-amber-600 hover:bg-amber-700 text-white transition-all hover:scale-105">
+                               View Full List <ChevronRight className="h-4 w-4 ml-1.5" />
+                             </Button>
                           </div>
-                          <h3 className="text-xl font-bold text-foreground mb-3">High Volume Downline</h3>
-                          <Button onClick={() => setActiveTab("downlines")} className="shadow-md rounded-full px-8 h-12 font-bold bg-amber-600 hover:bg-amber-700 text-white">
-                            View List
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>

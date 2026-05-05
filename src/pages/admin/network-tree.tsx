@@ -422,7 +422,7 @@ export default function NetworkTree(): JSX.Element {
 
   const renderPreviewTree = (parent: NormalizedPartner, children: NormalizedPartner[]) => {
     return (
-      <div className="flex flex-col w-full min-w-max pb-4">
+      <div className="flex flex-col min-w-max pb-4">
         {/* Root Node */}
         <div className="flex justify-center w-full relative z-10">
           {renderNodeCard(parent, 0)}
@@ -434,7 +434,7 @@ export default function NetworkTree(): JSX.Element {
             <div className="w-0.5 h-6 sm:h-8 bg-border dark:bg-border" />
             
             {/* Horizontal line container spanning all children */}
-            <div className={`flex flex-row flex-nowrap gap-4 items-start pt-6 sm:pt-8 border-t-2 border-border dark:border-border relative w-full ${children.length <= 6 ? 'justify-center' : 'justify-start px-4'}`}>
+            <div className="min-w-max flex flex-row flex-nowrap gap-4 items-start pt-6 sm:pt-8 border-t-2 border-border dark:border-border relative px-4 justify-center">
               {children.map((child) => (
                 <div key={child.profile_id} className="flex flex-col items-center relative shrink-0">
                   {/* Vertical connect line going up */}
@@ -653,7 +653,8 @@ export default function NetworkTree(): JSX.Element {
                     </CardHeader>
                     <CardContent className="p-0 bg-slate-50/30 dark:bg-muted/5 overflow-hidden">
                       <div className="flex flex-col items-center w-full">
-                        <div className="w-full overflow-x-auto overflow-y-auto p-4 sm:p-8 md:p-12 scroll-smooth">
+                        <div className="w-full max-w-full overflow-x-auto overflow-y-hidden p-4 sm:p-8 md:p-12 scroll-smooth">
+                          <div className="text-center font-bold text-xs bg-red-500 text-white py-1 mb-4 rounded-md mx-auto max-w-max px-4">VISUAL NODE PREVIEW UI v2</div>
                           {renderPreviewTree(selectedPartner, selectedChildren.slice(0, 30))}
                         </div>
                         {selectedChildren.length > 30 && (

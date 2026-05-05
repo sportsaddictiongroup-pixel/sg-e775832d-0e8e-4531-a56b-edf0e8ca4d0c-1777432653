@@ -335,7 +335,7 @@ export default function PartnerNetworkTree(): JSX.Element {
 
   const renderPreviewTree = (parent: NormalizedPartner, children: NormalizedPartner[]) => {
     return (
-      <div className="flex flex-col w-full min-w-max pb-4">
+      <div className="flex flex-col min-w-max pb-4">
         <div className="flex justify-center w-full relative z-10">
           {renderNodeCard(parent, 0)}
         </div>
@@ -343,7 +343,7 @@ export default function PartnerNetworkTree(): JSX.Element {
         {children.length > 0 && (
           <div className="flex flex-col items-center w-full">
             <div className="w-0.5 h-6 sm:h-8 bg-border" />
-            <div className={`flex flex-row flex-nowrap gap-4 items-start pt-6 sm:pt-8 border-t-2 border-border relative w-full ${children.length <= 6 ? 'justify-center' : 'justify-start px-4'}`}>
+            <div className="min-w-max flex flex-row flex-nowrap gap-4 items-start pt-6 sm:pt-8 border-t-2 border-border relative px-4 justify-center">
               {children.map((child) => (
                 <div key={child.profile_id} className="flex flex-col items-center relative shrink-0">
                   <div className="w-0.5 h-6 sm:h-8 bg-border absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2" />
@@ -525,7 +525,8 @@ export default function PartnerNetworkTree(): JSX.Element {
                     <div className="h-1.5 w-full bg-blue-500"></div>
                     <CardContent className="p-0 bg-slate-50/30 overflow-hidden">
                       <div className="flex flex-col items-center w-full">
-                        <div className="w-full overflow-x-auto overflow-y-auto p-4 sm:p-8 md:p-12 scroll-smooth">
+                        <div className="w-full max-w-full overflow-x-auto overflow-y-hidden p-4 sm:p-8 md:p-12 scroll-smooth">
+                          <div className="text-center font-bold text-xs bg-red-500 text-white py-1 mb-4 rounded-md mx-auto max-w-max px-4">VISUAL NODE PREVIEW UI v2</div>
                           {renderPreviewTree(selectedPartner, selectedChildren.slice(0, 30))}
                         </div>
                         {selectedChildren.length > 30 && (

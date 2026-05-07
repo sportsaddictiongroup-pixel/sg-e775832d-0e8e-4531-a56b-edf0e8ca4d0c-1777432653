@@ -201,6 +201,32 @@ export function TalentManagement({ profile }: { profile: Profile }) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const finalWaNumber = formData.whatsappSame ? formData.mobileNumber : formData.whatsappNumber;
+
+      // 1. Check for Mobile Duplicate against existing rows
+      let mQuery = (supabase as any).from('talent_registrations').select('id').eq('mobile_number', formData.mobileNumber);
+      if (editId) mQuery = mQuery.neq('id', editId);
+      const { data: existingMobile } = await mQuery.limit(1);
+
+      if (existingMobile && existingMobile.length > 0) {
+        toast({ title: "Registration Failed", description: "Mobile number already exists.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Check for WhatsApp Duplicate against existing rows
+      if (finalWaNumber) {
+        let wQuery = (supabase as any).from('talent_registrations').select('id').eq('whatsapp_number', finalWaNumber);
+        if (editId) wQuery = wQuery.neq('id', editId);
+        const { data: existingWa } = await wQuery.limit(1);
+
+        if (existingWa && existingWa.length > 0) {
+          toast({ title: "Registration Failed", description: "WhatsApp number already exists.", variant: "destructive" });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const payload = {
         full_name: formData.fullName,
         date_of_birth: `${formData.dobYear}-${formData.dobMonth}-${formData.dobDay}`,
@@ -208,7 +234,8 @@ export function TalentManagement({ profile }: { profile: Profile }) {
         gender: formData.gender,
         mobile_country_code: formData.mobileCountryCode,
         mobile_number: formData.mobileNumber,
-        whatsapp_number: formData.whatsappSame ? formData.mobileNumber : formData.whatsappNumber,
+        whatsapp_country_code: formData.whatsappSame ? formData.mobileCountryCode : formData.mobileCountryCode,
+        whatsapp_number: finalWaNumber,
         sport_activity_id: formData.sportId,
         level: formData.level,
         goal: formData.goal,
@@ -237,14 +264,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
       setIsModalOpen(false);
       fetchTalents();
     } catch (error: any) {
-      const msg = error.message?.toLowerCase() || "";
-      if (msg.includes("mobile")) {
-        toast({ title: "Registration Failed", description: "This mobile number already exists.", variant: "destructive" });
-      } else if (msg.includes("whatsapp")) {
-        toast({ title: "Registration Failed", description: "This WhatsApp number already exists.", variant: "destructive" });
-      } else {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      }
+      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }

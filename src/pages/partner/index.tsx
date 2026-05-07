@@ -17,6 +17,7 @@ import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { User, MapPin, Network, Key, LogOut, ChevronRight, Printer, Home, IdCard, ArrowRight } from "lucide-react";
+import { TalentManagement } from "@/components/partner/TalentManagement";
 
 type Profile = Tables<"profiles">;
 type PartnerDetails = {
@@ -643,6 +644,9 @@ export default function PartnerDashboard(): JSX.Element {
               </CardContent>
             </Card>
           </section>
+
+          {/* ADD TALENT & TALENT DIRECTORY MODULE */}
+          <TalentManagement profile={profile} />
 
           <div id="change-password" className="scroll-mt-8">
             <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">

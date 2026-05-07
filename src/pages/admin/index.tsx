@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key, Users } from "lucide-react";
+import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key, Users, Activity } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 
@@ -217,6 +217,16 @@ export default function AdminDashboard(): JSX.Element {
       iconWrapper: "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm shadow-indigo-600/20",
       buttonClass: "bg-indigo-100 hover:bg-indigo-600 text-indigo-800 hover:text-white border-transparent dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-600 dark:hover:text-white",
       buttonText: "Open Directory",
+    },
+    {
+      title: "Sports & Activities",
+      description: "Manage master list of sports, activities, and their specific skills.",
+      href: "/admin/sports-activities",
+      icon: Activity,
+      cardWrapper: "border-pink-300/70 dark:border-pink-800 hover:border-pink-500 dark:hover:border-pink-500 bg-pink-50/40 hover:bg-pink-50/80 dark:bg-pink-950/20 dark:hover:bg-pink-900/30 hover:shadow-xl hover:shadow-pink-500/10",
+      iconWrapper: "bg-pink-500 dark:bg-pink-600 text-white shadow-sm shadow-pink-500/20",
+      buttonClass: "bg-pink-100 hover:bg-pink-500 text-pink-900 hover:text-white border-transparent dark:bg-pink-900/50 dark:text-pink-300 dark:hover:bg-pink-600 dark:hover:text-white",
+      buttonText: "Manage Activities",
     },
   ];
 

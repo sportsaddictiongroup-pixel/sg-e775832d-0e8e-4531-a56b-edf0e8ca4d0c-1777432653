@@ -44,6 +44,8 @@ export function TalentManagement({ profile }: { profile: Profile }) {
   const [locations, setLocations] = useState<Location[]>([]);
 
   // Modal States
+  const [isHubOpen, setIsHubOpen] = useState(false);
+  const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -254,76 +256,129 @@ export function TalentManagement({ profile }: { profile: Profile }) {
               <Users className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-foreground tracking-tight">Add Talent to My Network</h3>
+              <h3 className="text-xl font-bold text-foreground tracking-tight">Talent Management</h3>
               <p className="text-sm text-muted-foreground mt-1 max-w-md">
-                Register new players, athletes, and talent directly under your organization.
+                Register new players and manage your existing talent network directory.
               </p>
             </div>
           </div>
-          <Button onClick={() => handleOpenModal()} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold h-11 px-8 rounded-xl shrink-0">
-            Add Talent
+          <Button onClick={() => setIsHubOpen(true)} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold h-11 px-8 rounded-xl shrink-0">
+            Manage Talent
             <Plus className="h-5 w-5 ml-2" />
           </Button>
         </CardContent>
       </Card>
 
-      {/* Directory Table */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
-          My Talent / Player Directory
-        </h3>
-        <Card className="shadow-sm border-border/60 overflow-hidden bg-card">
-          {talents.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground font-medium">
-              No talents registered yet.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Sport</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Registered Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {talents.map((t) => (
-                    <TableRow key={t.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10">
-                      <TableCell className="font-semibold">{t.full_name}</TableCell>
-                      <TableCell>{t.sport_name}</TableCell>
-                      <TableCell>
-                        <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 text-xs px-2 py-1 rounded-md font-medium">
-                          {t.level || "N/A"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3" />
-                          {t.location_name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {new Date(t.registered_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenModal(t)} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800">
-                          <Pencil className="h-4 w-4 mr-1.5" />
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Card>
-      </div>
+      {/* Talent Management Hub Dialog */}
+      <Dialog open={isHubOpen} onOpenChange={setIsHubOpen}>
+        <DialogContent className="max-w-2xl p-6 sm:p-8 rounded-3xl">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-2xl text-emerald-700 dark:text-emerald-500">Talent Management Hub</DialogTitle>
+            <DialogDescription>
+              Choose an action to manage your talent network.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <Card 
+              className="cursor-pointer border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md transition-all group"
+              onClick={() => { setIsHubOpen(false); handleOpenModal(); }}
+            >
+              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Plus className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold">Register New Talent</h4>
+                  <p className="text-sm text-muted-foreground mt-1">Add a new player or athlete to your network.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer border-blue-200 dark:border-blue-800 hover:border-blue-500 hover:shadow-md transition-all group"
+              onClick={() => { setIsHubOpen(false); setIsDirectoryOpen(true); }}
+            >
+              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold">View All Registered Talent</h4>
+                  <p className="text-sm text-muted-foreground mt-1">Browse, edit, and manage your directory.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Directory Table Dialog */}
+      <Dialog open={isDirectoryOpen} onOpenChange={setIsDirectoryOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-2xl flex items-center gap-2 text-foreground">
+              <Activity className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+              My Talent / Player Directory
+            </DialogTitle>
+            <DialogDescription>
+              View and manage all the talents you have registered.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Card className="shadow-sm border-border/60 overflow-hidden bg-card">
+              {talents.length === 0 ? (
+                <div className="py-16 text-center text-muted-foreground font-medium">
+                  No talents registered yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Sport</TableHead>
+                        <TableHead>Level</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Registered Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {talents.map((t) => (
+                        <TableRow key={t.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10">
+                          <TableCell className="font-semibold">{t.full_name}</TableCell>
+                          <TableCell>{t.sport_name}</TableCell>
+                          <TableCell>
+                            <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 text-xs px-2 py-1 rounded-md font-medium">
+                              {t.level || "N/A"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="h-3 w-3" />
+                              {t.location_name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {new Date(t.registered_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(t)} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800">
+                              <Pencil className="h-4 w-4 mr-1.5" />
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">

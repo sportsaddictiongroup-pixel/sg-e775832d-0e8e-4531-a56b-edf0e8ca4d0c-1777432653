@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { locationService, Country, State, District, Pincode, Location } from "@/services/locationService";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, Pencil, Calendar, MapPin, Activity, Eye } from "lucide-react";
+import { Plus, Users, Pencil, Calendar, MapPin, Activity, Eye, Download, FilterX } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -52,6 +52,16 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+
+  // Filter States
+  const [filterCountry, setFilterCountry] = useState("All");
+  const [filterState, setFilterState] = useState("All");
+  const [filterDistrict, setFilterDistrict] = useState("All");
+  const [filterPincode, setFilterPincode] = useState("All");
+  const [filterLocation, setFilterLocation] = useState("All");
+  const [filterGender, setFilterGender] = useState("All");
+  const [filterAge, setFilterAge] = useState("All");
+  const [filterSport, setFilterSport] = useState("All");
 
   // Form States
   const [formData, setFormData] = useState({
@@ -123,6 +133,96 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
       setAgeCategory("");
     }
   }, [formData.dobDay, formData.dobMonth, formData.dobYear]);
+
+  // Derived Filter Options
+  const uniqueCountries = useMemo(() => Array.from(new Set(talents.map(t => String(t.country_id)))).filter(Boolean).map(id => ({ id, name: countries.find(c => String(c.id) === id)?.name || "Unknown" })), [talents, countries]);
+  const uniqueStates = useMemo(() => Array.from(new Set(talents.map(t => String(t.state_id)))).filter(Boolean).map(id => ({ id, name: talents.find(t => String(t.state_id) === id)?.state_name || "Unknown" })), [talents]);
+  const uniqueDistricts = useMemo(() => Array.from(new Set(talents.map(t => String(t.district_id)))).filter(Boolean).map(id => ({ id, name: talents.find(t => String(t.district_id) === id)?.district_name || "Unknown" })), [talents]);
+  const uniquePincodes = useMemo(() => Array.from(new Set(talents.map(t => String(t.pincode_id)))).filter(Boolean).map(id => ({ id, name: talents.find(t => String(t.pincode_id) === id)?.pincode_code || "Unknown" })), [talents]);
+  const uniqueLocations = useMemo(() => Array.from(new Set(talents.map(t => String(t.location_id)))).filter(Boolean).map(id => ({ id, name: talents.find(t => String(t.location_id) === id)?.location_name || "Unknown" })), [talents]);
+  const uniqueSports = useMemo(() => Array.from(new Set(talents.map(t => String(t.sport_activity_id)))).filter(Boolean).map(id => ({ id, name: talents.find(t => String(t.sport_activity_id) === id)?.sport_name || "Unknown" })), [talents]);
+  const uniqueGenders = useMemo(() => Array.from(new Set(talents.map(t => t.gender))).filter(Boolean), [talents]);
+  const uniqueAgeCategories = useMemo(() => Array.from(new Set(talents.map(t => t.age_category))).filter(Boolean), [talents]);
+
+  // Filtered Talents Logic
+  const filteredTalents = useMemo(() => {
+    return talents.filter(t => {
+      if (filterCountry !== "All" && String(t.country_id) !== filterCountry) return false;
+      if (filterState !== "All" && String(t.state_id) !== filterState) return false;
+      if (filterDistrict !== "All" && String(t.district_id) !== filterDistrict) return false;
+      if (filterPincode !== "All" && String(t.pincode_id) !== filterPincode) return false;
+      if (filterLocation !== "All" && String(t.location_id) !== filterLocation) return false;
+      if (filterGender !== "All" && t.gender !== filterGender) return false;
+      if (filterAge !== "All" && t.age_category !== filterAge) return false;
+      if (filterSport !== "All" && String(t.sport_activity_id) !== filterSport) return false;
+      return true;
+    });
+  }, [talents, filterCountry, filterState, filterDistrict, filterPincode, filterLocation, filterGender, filterAge, filterSport]);
+
+  const clearFilters = () => {
+    setFilterCountry("All");
+    setFilterState("All");
+    setFilterDistrict("All");
+    setFilterPincode("All");
+    setFilterLocation("All");
+    setFilterGender("All");
+    setFilterAge("All");
+    setFilterSport("All");
+  };
+
+  const exportToCSV = () => {
+    if (filteredTalents.length === 0) {
+      toast({ title: "Export Failed", description: "No records to export.", variant: "destructive" });
+      return;
+    }
+
+    const headers = [
+      "Registration Date", "Full Name", "Gender", "Mobile Number", "WhatsApp Number", 
+      "Sport / Activity", "Level", "Goal", "Age Category", 
+      "Country", "State", "District", "PIN Code", "Location / Area", "Submitted By Username"
+    ];
+
+    const escapeCSV = (str: any) => {
+      if (str === null || str === undefined) return '""';
+      const s = String(str);
+      if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return `"${s}"`;
+    };
+
+    const csvRows = filteredTalents.map(t => {
+      return [
+        new Date(t.registered_at).toLocaleDateString(),
+        t.full_name,
+        t.gender || '',
+        `${t.mobile_country_code || ''} ${t.mobile_number || ''}`.trim(),
+        `${t.whatsapp_country_code || ''} ${t.whatsapp_number || ''}`.trim(),
+        t.sport_name,
+        t.level || '',
+        t.goal || '',
+        t.age_category || '',
+        countries.find(c => String(c.id) === String(t.country_id))?.name || '',
+        t.state_name || '',
+        t.district_name || '',
+        t.pincode_code || '',
+        t.location_name || '',
+        t.submitted_by_username || ''
+      ].map(escapeCSV).join(',');
+    });
+
+    const csvContent = [headers.map(escapeCSV).join(','), ...csvRows].join('\n');
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `talent_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const fetchSports = async () => {
     const { data } = await (supabase as any).from('sports_activities').select('*').eq('is_active', true).order('name');
@@ -587,81 +687,139 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
       )}
 
       {mode === "directory" && (
-        <Card className="shadow-sm border-border/60 overflow-hidden bg-card rounded-2xl">
-          {talents.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground font-medium">
-              No talents registered yet.
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 sm:p-5 rounded-2xl border border-border/60 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold px-4 py-2 rounded-xl text-sm flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Total Talents: {filteredTalents.length}
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-slate-50/80 dark:bg-slate-900/80 border-b">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registration Date</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Name</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Gender</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registered Mobile Number</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Sport / Activity</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Country</TableHead>
-                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {talents.map((t) => (
-                    <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group border-b border-slate-100 dark:border-slate-800">
-                      <TableCell className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold bg-slate-100 dark:bg-slate-800 w-fit px-2.5 py-1.5 rounded-md">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {new Date(t.registered_at).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 font-bold text-foreground">
-                        {t.full_name}
-                      </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                          t.gender === 'Male' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
-                          t.gender === 'Female' ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800' :
-                          'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                        }`}>
-                          {t.gender || 'Other'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                        {t.mobile_country_code} {t.mobile_number}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-sm">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
-                            {t.sport_name}
-                          </span>
-                          {t.level && (
-                            <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 uppercase tracking-wider">
-                              {t.level}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-sm font-medium text-slate-500">
-                        {countries.find(c => String(c.id) === String(t.country_id))?.name || "Unknown"}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => { setSelectedTalentDetail(t); setIsDetailOpen(true); }} 
-                          className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors h-8 w-8 p-0 rounded-full"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+            <Button onClick={exportToCSV} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold">
+              <Download className="h-4 w-4 mr-2" />
+              Download CSV
+            </Button>
+          </div>
+
+          <Card className="shadow-sm border-border/60 overflow-hidden bg-card rounded-2xl">
+            <div className="bg-slate-50/50 dark:bg-slate-900/50 border-b pb-4 px-6 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="text-lg font-bold flex items-center gap-2">
+                  <FilterX className="h-5 w-5 text-emerald-600" /> Filters
+                </div>
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8 text-slate-500 hover:text-slate-900 font-bold rounded-lg">Clear All</Button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 mt-4">
+                <Select value={filterCountry} onValueChange={setFilterCountry}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Country" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Countries</SelectItem>{uniqueCountries.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterState} onValueChange={setFilterState}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="State" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All States</SelectItem>{uniqueStates.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterDistrict} onValueChange={setFilterDistrict}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="District" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Districts</SelectItem>{uniqueDistricts.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterPincode} onValueChange={setFilterPincode}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="PIN Code" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All PINs</SelectItem>{uniquePincodes.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterLocation} onValueChange={setFilterLocation}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Location" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Locations</SelectItem>{uniqueLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterGender} onValueChange={setFilterGender}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Gender" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Genders</SelectItem>{uniqueGenders.map(g => <SelectItem key={String(g)} value={String(g)}>{g}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterAge} onValueChange={setFilterAge}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Age Category" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Ages</SelectItem>{uniqueAgeCategories.map(a => <SelectItem key={String(a)} value={String(a)}>{a}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={filterSport} onValueChange={setFilterSport}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Sport" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Sports</SelectItem>{uniqueSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {filteredTalents.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground font-medium">
+                No talents match the selected filters.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-slate-50/80 dark:bg-slate-900/80 border-b">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registration Date</TableHead>
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Name</TableHead>
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Gender</TableHead>
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registered Mobile Number</TableHead>
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Sport / Activity</TableHead>
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Country</TableHead>
+                      <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3 text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTalents.map((t) => (
+                      <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group border-b border-slate-100 dark:border-slate-800">
+                        <TableCell className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold bg-slate-100 dark:bg-slate-800 w-fit px-2.5 py-1.5 rounded-md">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {new Date(t.registered_at).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 font-bold text-foreground">
+                          {t.full_name}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                            t.gender === 'Male' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                            t.gender === 'Female' ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800' :
+                            'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                          }`}>
+                            {t.gender || 'Other'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                          {t.mobile_country_code} {t.mobile_number}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
+                              {t.sport_name}
+                            </span>
+                            {t.level && (
+                              <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 uppercase tracking-wider">
+                                {t.level}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm font-medium text-slate-500">
+                          {countries.find(c => String(c.id) === String(t.country_id))?.name || "Unknown"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => { setSelectedTalentDetail(t); setIsDetailOpen(true); }} 
+                            className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors h-8 w-8 p-0 rounded-full"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
       {/* View Detail Dialog */}

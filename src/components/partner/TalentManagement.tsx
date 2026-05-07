@@ -527,7 +527,7 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <Card 
                   className="cursor-pointer border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md transition-all group"
-                  onClick={() => { setIsHubOpen(false); handleOpenModal(); }}
+                  onClick={() => { setIsHubOpen(false); router.push('/partner/register-talent'); }}
                 >
                   <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
                     <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">

@@ -31,7 +31,7 @@ const days = Array.from({length: 31}, (_, i) => String(i + 1).padStart(2, '0'));
 const months = Array.from({length: 12}, (_, i) => String(i + 1).padStart(2, '0'));
 const years = Array.from({length: 100}, (_, i) => String(new Date().getFullYear() - i));
 
-export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; mode?: "hub" | "directory" }) {
+export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; mode?: "hub" | "directory" | "register" }) {
   const router = useRouter();
   const { toast } = useToast();
   
@@ -290,12 +290,205 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
       
       setIsModalOpen(false);
       fetchTalents();
+      
+      if (mode === "register") {
+        router.push("/partner/talent-directory");
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const talentForm = (
+    <form onSubmit={handleSubmit} className="space-y-8 py-4">
+      {/* Personal Details */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Personal Details</h4>
+        <div className="space-y-2">
+          <Label>Full Name *</Label>
+          <Input required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="h-11 rounded-xl" />
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Date of Birth *</Label>
+            <div className="flex gap-2">
+              <Select required value={formData.dobDay} onValueChange={v => setFormData({...formData, dobDay: v})}>
+                <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="DD" /></SelectTrigger>
+                <SelectContent className="max-h-[200px]"><SelectItem value=" ">DD</SelectItem>{days.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select required value={formData.dobMonth} onValueChange={v => setFormData({...formData, dobMonth: v})}>
+                <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="MM" /></SelectTrigger>
+                <SelectContent className="max-h-[200px]"><SelectItem value=" ">MM</SelectItem>{months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select required value={formData.dobYear} onValueChange={v => setFormData({...formData, dobYear: v})}>
+                <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="YYYY" /></SelectTrigger>
+                <SelectContent className="max-h-[200px]"><SelectItem value=" ">YYYY</SelectItem>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Age Category</Label>
+            <Input disabled value={ageCategory} className="h-11 rounded-xl bg-muted font-bold text-emerald-600" placeholder="Auto-calculated" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Gender *</Label>
+          <Select required value={formData.gender} onValueChange={v => setFormData({...formData, gender: v})}>
+            <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Gender" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Male">Male</SelectItem>
+              <SelectItem value="Female">Female</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Contact Details */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Contact Details</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Mobile Number *</Label>
+            <div className="flex gap-2">
+              <Select value={formData.mobileCountryCode} onValueChange={v => setFormData({...formData, mobileCountryCode: v})}>
+                <SelectTrigger className="w-[120px] h-11 rounded-xl shrink-0"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {countryCodes.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input required type="tel" value={formData.mobileNumber} onChange={e => setFormData({...formData, mobileNumber: e.target.value})} className="h-11 rounded-xl flex-1" />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between h-[20px] mb-2">
+              <Label>WhatsApp Number</Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="wa-same" 
+                  checked={formData.whatsappSame} 
+                  onCheckedChange={(c) => {
+                    setFormData(prev => ({...prev, whatsappSame: !!c, whatsappNumber: c ? prev.mobileNumber : prev.whatsappNumber}))
+                  }} 
+                />
+                <label htmlFor="wa-same" className="text-xs text-muted-foreground cursor-pointer">Same as Mobile</label>
+              </div>
+            </div>
+            <Input disabled={formData.whatsappSame} type="tel" value={formData.whatsappSame ? formData.mobileNumber : formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="h-11 rounded-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* Sport Details */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Sport Profile</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label>Sport / Activity *</Label>
+            <Select required value={formData.sportId ? String(formData.sportId) : ""} onValueChange={v => setFormData({...formData, sportId: v})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Sport" /></SelectTrigger>
+              <SelectContent>
+                {sports.map(s => (
+                  <SelectItem key={s.id} value={String(s.id)}>
+                    {s.name || "Unknown Sport"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Level *</Label>
+            <Select required value={formData.level} onValueChange={v => setFormData({...formData, level: v})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Level" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Beginner">Beginner</SelectItem>
+                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                <SelectItem value="Advanced">Advanced</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Goal *</Label>
+            <Select required value={formData.goal} onValueChange={v => setFormData({...formData, goal: v})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Goal" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Professional">Professional</SelectItem>
+                <SelectItem value="Corporate">Corporate</SelectItem>
+                <SelectItem value="Hobby">Hobby</SelectItem>
+                <SelectItem value="Timepass">Timepass</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Location Details */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Location</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label>Country *</Label>
+            <Select required value={formData.countryId ? String(formData.countryId) : ""} onValueChange={v => setFormData({...formData, countryId: v, stateId: "", districtId: "", pincodeId: "", locationId: ""})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Country" /></SelectTrigger>
+              <SelectContent>
+                {countries.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>State *</Label>
+            <Select required disabled={!formData.countryId} value={formData.stateId ? String(formData.stateId) : ""} onValueChange={v => setFormData({...formData, stateId: v, districtId: "", pincodeId: "", locationId: ""})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select State" /></SelectTrigger>
+              <SelectContent>
+                {states.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>District *</Label>
+            <Select required disabled={!formData.stateId} value={formData.districtId ? String(formData.districtId) : ""} onValueChange={v => setFormData({...formData, districtId: v, pincodeId: "", locationId: ""})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select District" /></SelectTrigger>
+              <SelectContent>
+                {districts.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>PIN Code *</Label>
+            <Select required disabled={!formData.districtId} value={formData.pincodeId ? String(formData.pincodeId) : ""} onValueChange={v => setFormData({...formData, pincodeId: v, locationId: ""})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select PIN" /></SelectTrigger>
+              <SelectContent>
+                {pincodes.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.code}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2 lg:col-span-2">
+            <Label>Location / Area *</Label>
+            <Select required disabled={!formData.pincodeId} value={formData.locationId ? String(formData.locationId) : ""} onValueChange={v => setFormData({...formData, locationId: v})}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Location" /></SelectTrigger>
+              <SelectContent>
+                {locations.map(l => <SelectItem key={l.id} value={String(l.id)}>{l.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-6 flex justify-end gap-3 border-t border-border/50 mt-8">
+        <Button type="button" variant="outline" onClick={() => {
+          if (mode === "register") router.push('/partner');
+          else setIsModalOpen(false);
+        }} className="rounded-xl font-bold">Cancel</Button>
+        <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-8">
+          {isSubmitting ? "Saving..." : (editId ? "Save Changes" : "Register Talent")}
+        </Button>
+      </div>
+    </form>
+  );
 
   return (
     <div className={mode === "hub" ? "space-y-8 mt-10" : "space-y-6"}>
@@ -577,203 +770,29 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-emerald-700 dark:text-emerald-500">
-              {editId ? "Edit Talent" : "Register New Talent"}
-            </DialogTitle>
-            <DialogDescription>
-              Fill out the details below to add a new talent to your directory.
-            </DialogDescription>
-          </DialogHeader>
+      {mode === "directory" && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-emerald-700 dark:text-emerald-500">
+                Edit Talent
+              </DialogTitle>
+              <DialogDescription>
+                Update the details for this talent.
+              </DialogDescription>
+            </DialogHeader>
+            {talentForm}
+          </DialogContent>
+        </Dialog>
+      )}
 
-          <form onSubmit={handleSubmit} className="space-y-8 py-4">
-            
-            {/* Personal Details */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Personal Details</h4>
-              <div className="space-y-2">
-                <Label>Full Name *</Label>
-                <Input required value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="h-11 rounded-xl" />
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Date of Birth *</Label>
-                  <div className="flex gap-2">
-                    <Select required value={formData.dobDay} onValueChange={v => setFormData({...formData, dobDay: v})}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="DD" /></SelectTrigger>
-                      <SelectContent className="max-h-[200px]"><SelectItem value=" ">DD</SelectItem>{days.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <Select required value={formData.dobMonth} onValueChange={v => setFormData({...formData, dobMonth: v})}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="MM" /></SelectTrigger>
-                      <SelectContent className="max-h-[200px]"><SelectItem value=" ">MM</SelectItem>{months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <Select required value={formData.dobYear} onValueChange={v => setFormData({...formData, dobYear: v})}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="YYYY" /></SelectTrigger>
-                      <SelectContent className="max-h-[200px]"><SelectItem value=" ">YYYY</SelectItem>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Age Category</Label>
-                  <Input disabled value={ageCategory} className="h-11 rounded-xl bg-muted font-bold text-emerald-600" placeholder="Auto-calculated" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Gender *</Label>
-                <Select required value={formData.gender} onValueChange={v => setFormData({...formData, gender: v})}>
-                  <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Gender" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Contact Details */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Contact Details</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Mobile Number *</Label>
-                  <div className="flex gap-2">
-                    <Select value={formData.mobileCountryCode} onValueChange={v => setFormData({...formData, mobileCountryCode: v})}>
-                      <SelectTrigger className="w-[120px] h-11 rounded-xl shrink-0"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {countryCodes.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Input required type="tel" value={formData.mobileNumber} onChange={e => setFormData({...formData, mobileNumber: e.target.value})} className="h-11 rounded-xl flex-1" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between h-[20px] mb-2">
-                    <Label>WhatsApp Number</Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="wa-same" 
-                        checked={formData.whatsappSame} 
-                        onCheckedChange={(c) => {
-                          setFormData(prev => ({...prev, whatsappSame: !!c, whatsappNumber: c ? prev.mobileNumber : prev.whatsappNumber}))
-                        }} 
-                      />
-                      <label htmlFor="wa-same" className="text-xs text-muted-foreground cursor-pointer">Same as Mobile</label>
-                    </div>
-                  </div>
-                  <Input disabled={formData.whatsappSame} type="tel" value={formData.whatsappSame ? formData.mobileNumber : formData.whatsappNumber} onChange={e => setFormData({...formData, whatsappNumber: e.target.value})} className="h-11 rounded-xl" />
-                </div>
-              </div>
-            </div>
-
-            {/* Sport Details */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Sport Profile</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Sport / Activity *</Label>
-                  <Select required value={formData.sportId ? String(formData.sportId) : ""} onValueChange={v => setFormData({...formData, sportId: v})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Sport" /></SelectTrigger>
-                    <SelectContent>
-                      {sports.map(s => (
-                        <SelectItem key={s.id} value={String(s.id)}>
-                          {s.name || "Unknown Sport"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Level *</Label>
-                  <Select required value={formData.level} onValueChange={v => setFormData({...formData, level: v})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Level" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Goal *</Label>
-                  <Select required value={formData.goal} onValueChange={v => setFormData({...formData, goal: v})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Goal" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Professional">Professional</SelectItem>
-                      <SelectItem value="Corporate">Corporate</SelectItem>
-                      <SelectItem value="Hobby">Hobby</SelectItem>
-                      <SelectItem value="Timepass">Timepass</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Location Details */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b pb-2">Location</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Country *</Label>
-                  <Select required value={formData.countryId ? String(formData.countryId) : ""} onValueChange={v => setFormData({...formData, countryId: v, stateId: "", districtId: "", pincodeId: "", locationId: ""})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Country" /></SelectTrigger>
-                    <SelectContent>
-                      {countries.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>State *</Label>
-                  <Select required disabled={!formData.countryId} value={formData.stateId ? String(formData.stateId) : ""} onValueChange={v => setFormData({...formData, stateId: v, districtId: "", pincodeId: "", locationId: ""})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select State" /></SelectTrigger>
-                    <SelectContent>
-                      {states.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>District *</Label>
-                  <Select required disabled={!formData.stateId} value={formData.districtId ? String(formData.districtId) : ""} onValueChange={v => setFormData({...formData, districtId: v, pincodeId: "", locationId: ""})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select District" /></SelectTrigger>
-                    <SelectContent>
-                      {districts.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>PIN Code *</Label>
-                  <Select required disabled={!formData.districtId} value={formData.pincodeId ? String(formData.pincodeId) : ""} onValueChange={v => setFormData({...formData, pincodeId: v, locationId: ""})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select PIN" /></SelectTrigger>
-                    <SelectContent>
-                      {pincodes.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.code}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 lg:col-span-2">
-                  <Label>Location / Area *</Label>
-                  <Select required disabled={!formData.pincodeId} value={formData.locationId ? String(formData.locationId) : ""} onValueChange={v => setFormData({...formData, locationId: v})}>
-                    <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Location" /></SelectTrigger>
-                    <SelectContent>
-                      {locations.map(l => <SelectItem key={l.id} value={String(l.id)}>{l.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="pt-6">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold">Cancel</Button>
-              <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white">
-                {isSubmitting ? "Saving..." : (editId ? "Save Changes" : "Register Talent")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {mode === "register" && (
+        <Card className="shadow-sm border-border/60 bg-card rounded-3xl overflow-hidden mt-2">
+          <CardContent className="p-6 sm:p-8">
+            {talentForm}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -526,46 +526,46 @@ export function TalentManagement({ profile }: { profile: Profile }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Country *</Label>
-                  <Select required value={formData.countryId} onValueChange={v => setFormData({...formData, countryId: v, stateId: "", districtId: "", pincodeId: "", locationId: ""})}>
+                  <Select required value={formData.countryId ? String(formData.countryId) : ""} onValueChange={v => setFormData({...formData, countryId: v, stateId: "", districtId: "", pincodeId: "", locationId: ""})}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Country" /></SelectTrigger>
                     <SelectContent>
-                      {countries.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {countries.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>State *</Label>
-                  <Select required disabled={!formData.countryId} value={formData.stateId} onValueChange={v => setFormData({...formData, stateId: v, districtId: "", pincodeId: "", locationId: ""})}>
+                  <Select required disabled={!formData.countryId} value={formData.stateId ? String(formData.stateId) : ""} onValueChange={v => setFormData({...formData, stateId: v, districtId: "", pincodeId: "", locationId: ""})}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select State" /></SelectTrigger>
                     <SelectContent>
-                      {states.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      {states.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>District *</Label>
-                  <Select required disabled={!formData.stateId} value={formData.districtId} onValueChange={v => setFormData({...formData, districtId: v, pincodeId: "", locationId: ""})}>
+                  <Select required disabled={!formData.stateId} value={formData.districtId ? String(formData.districtId) : ""} onValueChange={v => setFormData({...formData, districtId: v, pincodeId: "", locationId: ""})}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select District" /></SelectTrigger>
                     <SelectContent>
-                      {districts.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                      {districts.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>PIN Code *</Label>
-                  <Select required disabled={!formData.districtId} value={formData.pincodeId} onValueChange={v => setFormData({...formData, pincodeId: v, locationId: ""})}>
+                  <Select required disabled={!formData.districtId} value={formData.pincodeId ? String(formData.pincodeId) : ""} onValueChange={v => setFormData({...formData, pincodeId: v, locationId: ""})}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select PIN" /></SelectTrigger>
                     <SelectContent>
-                      {pincodes.map(p => <SelectItem key={p.id} value={p.id}>{p.code}</SelectItem>)}
+                      {pincodes.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.code}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
                   <Label>Location / Area *</Label>
-                  <Select required disabled={!formData.pincodeId} value={formData.locationId} onValueChange={v => setFormData({...formData, locationId: v})}>
+                  <Select required disabled={!formData.pincodeId} value={formData.locationId ? String(formData.locationId) : ""} onValueChange={v => setFormData({...formData, locationId: v})}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Location" /></SelectTrigger>
                     <SelectContent>
-                      {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                      {locations.map(l => <SelectItem key={l.id} value={String(l.id)}>{l.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

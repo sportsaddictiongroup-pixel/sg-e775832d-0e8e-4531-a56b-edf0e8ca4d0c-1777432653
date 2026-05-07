@@ -630,29 +630,29 @@ export default function PartnerDirectory() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {Math.ceil(filteredPartners.length / PAGE_SIZE) > 1 && (
                 <div className="flex items-center justify-between pt-6 pb-2">
                   <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                    Showing <span className="font-bold text-slate-700 dark:text-slate-300">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-slate-700 dark:text-slate-300">{Math.min(currentPage * itemsPerPage, filteredPartners.length)}</span> of <span className="font-bold text-slate-700 dark:text-slate-300">{filteredPartners.length}</span> results
+                    Showing <span className="font-bold text-slate-700 dark:text-slate-300">{(page - 1) * PAGE_SIZE + 1}</span> to <span className="font-bold text-slate-700 dark:text-slate-300">{Math.min(page * PAGE_SIZE, filteredPartners.length)}</span> of <span className="font-bold text-slate-700 dark:text-slate-300">{filteredPartners.length}</span> results
                   </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
                       className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <div className="flex items-center px-3 text-sm font-bold bg-white dark:bg-card border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm">
-                      {currentPage} / {totalPages}
+                      {page} / {Math.ceil(filteredPartners.length / PAGE_SIZE)}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
+                      onClick={() => setPage(p => Math.min(Math.ceil(filteredPartners.length / PAGE_SIZE), p + 1))}
+                      disabled={page === Math.ceil(filteredPartners.length / PAGE_SIZE)}
                       className="shadow-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg"
                     >
                       <ChevronRight className="h-4 w-4" />

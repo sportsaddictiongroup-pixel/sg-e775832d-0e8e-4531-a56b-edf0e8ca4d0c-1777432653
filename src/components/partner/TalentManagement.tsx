@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { locationService, Country, State, District, Pincode, Location } from "@/services/locationService";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, Pencil, Calendar, MapPin, Activity } from "lucide-react";
+import { Plus, Users, Pencil, Calendar, MapPin, Activity, Eye } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -46,6 +46,8 @@ export function TalentManagement({ profile }: { profile: Profile }) {
   // Modal States
   const [isHubOpen, setIsHubOpen] = useState(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedTalentDetail, setSelectedTalentDetail] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -338,7 +340,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
 
       {/* Directory Table Dialog */}
       <Dialog open={isDirectoryOpen} onOpenChange={setIsDirectoryOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-2xl flex items-center gap-2 text-foreground">
               <Activity className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
@@ -358,39 +360,62 @@ export function TalentManagement({ profile }: { profile: Profile }) {
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader className="bg-muted/30">
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Sport</TableHead>
-                        <TableHead>Level</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Registered Date</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                    <TableHeader className="bg-muted/50 border-b">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="font-semibold px-4 py-3">Registration Date</TableHead>
+                        <TableHead className="font-semibold px-4 py-3">Name</TableHead>
+                        <TableHead className="font-semibold px-4 py-3">Gender</TableHead>
+                        <TableHead className="font-semibold px-4 py-3">Mobile Number</TableHead>
+                        <TableHead className="font-semibold px-4 py-3">Sport / Activity</TableHead>
+                        <TableHead className="font-semibold px-4 py-3">Country</TableHead>
+                        <TableHead className="font-semibold px-4 py-3 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {talents.map((t) => (
-                        <TableRow key={t.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10">
-                          <TableCell className="font-semibold">{t.full_name}</TableCell>
-                          <TableCell>{t.sport_name}</TableCell>
-                          <TableCell>
-                            <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 text-xs px-2 py-1 rounded-md font-medium">
-                              {t.level || "N/A"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                              <MapPin className="h-3 w-3" />
-                              {t.location_name}
+                        <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group">
+                          <TableCell className="px-4 py-3">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {new Date(t.registered_at).toLocaleDateString()}
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm">
-                            {new Date(t.registered_at).toLocaleDateString()}
+                          <TableCell className="px-4 py-3 font-bold text-foreground">
+                            {t.full_name}
                           </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(t)} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-800">
-                              <Pencil className="h-4 w-4 mr-1.5" />
-                              Edit
+                          <TableCell className="px-4 py-3">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                              t.gender === 'Male' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
+                              t.gender === 'Female' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300' :
+                              'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                            }`}>
+                              {t.gender || 'Other'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm">
+                            {t.mobile_country_code} {t.mobile_number}
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm">
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className="font-medium">{t.sport_name}</span>
+                              {t.level && (
+                                <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                                  {t.level}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                            {countries.find(c => String(c.id) === String(t.country_id))?.name || "Unknown"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => { setSelectedTalentDetail(t); setIsDetailOpen(true); }} 
+                              className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            >
+                              <Eye className="h-4 w-4" />
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -401,6 +426,72 @@ export function TalentManagement({ profile }: { profile: Profile }) {
               )}
             </Card>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-2xl rounded-3xl p-6 sm:p-8">
+          {selectedTalentDetail && (
+            <>
+              <DialogHeader className="mb-4 flex flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <DialogTitle className="text-2xl text-foreground">{selectedTalentDetail.full_name}</DialogTitle>
+                  <DialogDescription>Talent Details & Information</DialogDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => { setIsDetailOpen(false); handleOpenModal(selectedTalentDetail); }}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 shrink-0 m-0"
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Detail
+                </Button>
+              </DialogHeader>
+              <div className="space-y-6 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4 text-sm bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Gender</span>
+                    <span className="font-medium text-foreground">{selectedTalentDetail.gender || "Not specified"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Date of Birth</span>
+                    <span className="font-medium text-foreground">
+                      {new Date(selectedTalentDetail.date_of_birth).toLocaleDateString()} 
+                      <span className="text-muted-foreground ml-1">({selectedTalentDetail.age_category})</span>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Mobile Number</span>
+                    <span className="font-medium text-foreground">{selectedTalentDetail.mobile_country_code} {selectedTalentDetail.mobile_number}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">WhatsApp Number</span>
+                    <span className="font-medium text-foreground">{selectedTalentDetail.whatsapp_country_code} {selectedTalentDetail.whatsapp_number}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Sport / Activity</span>
+                    <span className="font-medium text-foreground">{selectedTalentDetail.sport_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Level / Goal</span>
+                    <span className="font-medium text-foreground">{selectedTalentDetail.level || "N/A"} / {selectedTalentDetail.goal || "N/A"}</span>
+                  </div>
+                  <div className="col-span-1 sm:col-span-2">
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Location</span>
+                    <span className="font-medium text-foreground">
+                      {selectedTalentDetail.location_name}, {countries.find(c => String(c.id) === String(selectedTalentDetail.country_id))?.name || "Unknown"}
+                    </span>
+                  </div>
+                  <div className="col-span-1 sm:col-span-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Registered On</span>
+                    <span className="font-medium text-foreground">{new Date(selectedTalentDetail.registered_at).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -730,17 +730,17 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
                   <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Location" /></SelectTrigger>
                   <SelectContent><SelectItem value="All">All Locations</SelectItem>{uniqueLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
                 </Select>
-                <Select value={filterGender} onValueChange={setFilterGender}>
-                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Gender" /></SelectTrigger>
-                  <SelectContent><SelectItem value="All">All Genders</SelectItem>{uniqueGenders.map(g => <SelectItem key={String(g)} value={String(g)}>{g}</SelectItem>)}</SelectContent>
+                <Select value={filterSport} onValueChange={setFilterSport}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Sport" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Sports</SelectItem>{uniqueSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={filterAge} onValueChange={setFilterAge}>
                   <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Age Category" /></SelectTrigger>
                   <SelectContent><SelectItem value="All">All Ages</SelectItem>{uniqueAgeCategories.map(a => <SelectItem key={String(a)} value={String(a)}>{a}</SelectItem>)}</SelectContent>
                 </Select>
-                <Select value={filterSport} onValueChange={setFilterSport}>
-                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Sport" /></SelectTrigger>
-                  <SelectContent><SelectItem value="All">All Sports</SelectItem>{uniqueSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                <Select value={filterGender} onValueChange={setFilterGender}>
+                  <SelectTrigger className="h-9 text-xs rounded-lg"><SelectValue placeholder="Gender" /></SelectTrigger>
+                  <SelectContent><SelectItem value="All">All Genders</SelectItem>{uniqueGenders.map(g => <SelectItem key={String(g)} value={String(g)}>{g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

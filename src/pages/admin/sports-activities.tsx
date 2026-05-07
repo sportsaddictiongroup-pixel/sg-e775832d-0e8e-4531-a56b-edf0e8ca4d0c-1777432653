@@ -2,17 +2,28 @@ import { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { supabase } from "@/integrations/supabase/client";
-import { authService } from "@/services/authService";
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Activity, Plus, Trash2, Dumbbell, FolderTree, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  ArrowLeft, 
+  Activity, 
+  Plus, 
+  Search, 
+  Dumbbell, 
+  Gamepad2, 
+  Pencil, 
+  Trash2, 
+  AlertTriangle 
+} from "lucide-react";
 
 interface SportActivity {
   id: string;
@@ -21,388 +32,339 @@ interface SportActivity {
   is_active: boolean;
 }
 
-interface SportSkill {
-  id: string;
-  sport_activity_id: string;
-  name: string;
-  is_active: boolean;
-}
-
-export default function SportsActivities() {
+export default function SportsActivitiesAdmin() {
   const router = useRouter();
+  const { toast } = useToast();
+  
   const [authChecked, setAuthChecked] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activities, setActivities] = useState<SportActivity[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const [items, setItems] = useState<SportActivity[]>([]);
-  const [skills, setSkills] = useState<SportSkill[]>([]);
+  // Modals state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const [currentView, setCurrentView] = useState<"list" | "detail">("list");
-  const [selectedItem, setSelectedItem] = useState<SportActivity | null>(null);
+  // Form state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", type: "sport" });
+  const [selectedActivity, setSelectedActivity] = useState<SportActivity | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  // Modals
-  const [isAddSportOpen, setIsAddSportOpen] = useState(false);
-  const [newSportName, setNewSportName] = useState("");
-  const [newSportType, setNewSportType] = useState("sport");
-  const [isAddingSport, setIsAddingSport] = useState(false);
-
-  const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
-  const [newSkillName, setNewSkillName] = useState("");
-  const [isAddingSkill, setIsAddingSkill] = useState(false);
-
-  // 1. Auth Check
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const user = await authService.getCurrentUser();
-        if (!user) {
-          router.replace("/admin/login");
-          return;
-        }
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-          
-        if (!profile || profile.role !== "admin") {
-          router.replace("/partner/login");
-          return;
-        }
-        setAuthChecked(true);
-      } catch (err) {
-        console.error("Auth error", err);
-        router.replace("/admin/login");
-      }
-    };
     checkAuth();
-  }, [router]);
+  }, []);
 
-  // 2. Fetch Active Sports & Activities
-  const fetchSports = async () => {
-    setLoading(true);
+  const checkAuth = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from("sports_activities")
-        .select("*")
-        .eq("is_active", true)
-        .order("name", { ascending: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/admin/login');
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
 
-      if (error) throw error;
-      setItems(data || []);
-    } catch (err) {
-      console.error("Error fetching sports/activities:", err);
-    } finally {
-      setLoading(false);
+      if (profile?.role !== 'admin') {
+        router.push('/admin/login');
+        return;
+      }
+      setAuthChecked(true);
+      fetchActivities();
+    } catch (error) {
+      router.push('/admin/login');
     }
   };
 
-  useEffect(() => {
-    if (authChecked) {
-      fetchSports();
-    }
-  }, [authChecked]);
-
-  // 3. Fetch Skills for Detail View
-  const fetchSkills = async (sportId: string) => {
-    setLoading(true);
+  const fetchActivities = async () => {
+    setIsLoading(true);
     try {
-      const { data, error } = await (supabase as any)
-        .from("sports_activity_skills")
-        .select("*")
-        .eq("sport_activity_id", sportId)
-        .eq("is_active", true)
-        .order("name", { ascending: true });
-
-      if (error) throw error;
-      setSkills(data || []);
-    } catch (err) {
-      console.error("Error fetching skills:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add Sport/Activity
-  const handleAddSport = async () => {
-    if (!newSportName.trim()) return;
-    setIsAddingSport(true);
-    try {
-      const { error } = await (supabase as any).from("sports_activities").insert({
-        name: newSportName.trim(),
-        type: newSportType,
-        is_active: true
-      });
-      if (error) throw error;
-      
-      setNewSportName("");
-      setNewSportType("sport");
-      setIsAddSportOpen(false);
-      await fetchSports();
-    } catch (err) {
-      console.error("Failed to add sport/activity:", err);
-      alert("Failed to add record. Please try again.");
-    } finally {
-      setIsAddingSport(false);
-    }
-  };
-
-  // Soft Delete Sport/Activity
-  const handleDeleteSport = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (!window.confirm("Are you sure you want to remove this item?")) return;
-    
-    try {
-      const { error } = await (supabase as any)
-        .from("sports_activities")
-        .update({ is_active: false })
-        .eq("id", id);
+      const { data, error } = await supabase
+        .from('sports_activities')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
         
       if (error) throw error;
-      await fetchSports();
-    } catch (err) {
-      console.error("Failed to remove sport/activity:", err);
-      alert("Failed to remove record.");
-    }
-  };
-
-  // Navigate to Detail View
-  const handleViewDetail = (item: SportActivity) => {
-    setSelectedItem(item);
-    setCurrentView("detail");
-    fetchSkills(item.id);
-  };
-
-  // Add Skill
-  const handleAddSkill = async () => {
-    if (!newSkillName.trim() || !selectedItem) return;
-    setIsAddingSkill(true);
-    try {
-      const { error } = await (supabase as any).from("sports_activity_skills").insert({
-        sport_activity_id: selectedItem.id,
-        name: newSkillName.trim(),
-        is_active: true
+      setActivities(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching activities",
+        description: error.message,
+        variant: "destructive",
       });
-      if (error) throw error;
-      
-      setNewSkillName("");
-      setIsAddSkillOpen(false);
-      await fetchSkills(selectedItem.id);
-    } catch (err) {
-      console.error("Failed to add skill:", err);
-      alert("Failed to add skill. Please try again.");
     } finally {
-      setIsAddingSkill(false);
+      setIsLoading(false);
     }
   };
 
-  // Soft Delete Skill
-  const handleDeleteSkill = async (id: string) => {
-    if (!selectedItem) return;
-    if (!window.confirm("Are you sure you want to remove this skill/sub-activity?")) return;
-    
+  const handleAdd = async () => {
+    if (!formData.name.trim()) return;
+    setIsSubmitting(true);
     try {
-      const { error } = await (supabase as any)
-        .from("sports_activity_skills")
-        .update({ is_active: false })
-        .eq("id", id);
+      const { error } = await supabase
+        .from('sports_activities')
+        .insert([{ name: formData.name.trim(), type: formData.type, is_active: true }]);
         
       if (error) throw error;
-      await fetchSkills(selectedItem.id);
-    } catch (err) {
-      console.error("Failed to remove skill:", err);
-      alert("Failed to remove record.");
+      
+      toast({
+        title: "Success",
+        description: "Activity added successfully.",
+      });
+      setIsAddModalOpen(false);
+      setFormData({ name: "", type: "sport" });
+      fetchActivities();
+    } catch (error: any) {
+      toast({
+        title: "Error adding activity",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const handleEdit = async () => {
+    if (!selectedActivity || !formData.name.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('sports_activities')
+        .update({ name: formData.name.trim(), type: formData.type })
+        .eq('id', selectedActivity.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Activity updated successfully.",
+      });
+      setIsEditModalOpen(false);
+      fetchActivities();
+    } catch (error: any) {
+      toast({
+        title: "Error updating activity",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedActivity || deleteConfirmText !== selectedActivity.name) return;
+    setIsSubmitting(true);
+    try {
+      // Soft Delete: update is_active to false instead of deleting row
+      const { error } = await supabase
+        .from('sports_activities')
+        .update({ is_active: false })
+        .eq('id', selectedActivity.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Deleted",
+        description: `${selectedActivity.name} has been removed.`,
+      });
+      setIsDeleteModalOpen(false);
+      setDeleteConfirmText("");
+      fetchActivities();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting activity",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditModal = (item: SportActivity) => {
+    setSelectedActivity(item);
+    setFormData({ name: item.name, type: item.type });
+    setIsEditModalOpen(true);
+  };
+
+  const openDeleteModal = (item: SportActivity) => {
+    setSelectedActivity(item);
+    setDeleteConfirmText("");
+    setIsDeleteModalOpen(true);
+  };
+
+  const filteredActivities = activities.filter(a => 
+    a.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (!authChecked) return null;
 
   return (
     <>
-      <Head>
-        <title>Sports & Activities | Admin | SAG Network</title>
-      </Head>
-
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50/20 to-orange-50/30 dark:from-background dark:via-background/95 dark:to-background text-foreground pb-12">
+      <SEO title="Sports & Activities | Admin Dashboard" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50/20 to-rose-50/30 dark:from-background dark:via-background/95 dark:to-background pb-12">
+        
         {/* Header */}
         <header className="bg-white/80 dark:bg-card/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => currentView === 'list' ? router.push('/admin') : setCurrentView('list')} className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-                <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                <Link href="/admin">
+                  <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                </Link>
               </Button>
               <h1 className="text-xl font-bold font-heading flex items-center gap-2 text-slate-800 dark:text-slate-100">
                 <Activity className="h-5 w-5 text-pink-600 dark:text-pink-500" />
-                {currentView === 'list' ? 'Sports & Activities' : selectedItem?.name}
+                Sports & Activities
               </h1>
             </div>
-            
-            {/* Top Right Action Button */}
-            <div className="flex items-center">
-              {currentView === 'list' ? (
-                <Button 
-                  onClick={() => setIsAddSportOpen(true)} 
-                  className="shadow-sm font-bold bg-pink-600 hover:bg-pink-700 text-white transition-all rounded-full px-4 sm:px-5"
-                >
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  <span className="hidden sm:inline">Add Sport / Activity</span>
-                  <span className="sm:hidden">Add New</span>
-                </Button>
-              ) : (
-                <Button 
-                  onClick={() => setIsAddSkillOpen(true)} 
-                  className="shadow-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all rounded-full px-4 sm:px-5"
-                >
-                  <Plus className="h-4 w-4 mr-1.5" />
-                  <span className="hidden sm:inline">Add Skill / Sub Activity</span>
-                  <span className="sm:hidden">Add Skill</span>
-                </Button>
-              )}
+            <div>
+              <Button 
+                onClick={() => {
+                  setFormData({ name: "", type: "sport" });
+                  setIsAddModalOpen(true);
+                }}
+                className="bg-pink-600 hover:bg-pink-700 text-white shadow-md shadow-pink-500/20 transition-all font-bold rounded-full px-4 sm:px-6"
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Add Sport / Activity</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
             </div>
           </div>
         </header>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
           
-          {/* VIEW: MAIN LIST */}
-          {currentView === 'list' && (
-            <div className="space-y-6">
-              {loading ? (
-                <div className="py-20 text-center flex flex-col items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mb-4"></div>
-                  <p className="text-muted-foreground font-medium">Loading records...</p>
+          {/* Search */}
+          <div className="mb-8 max-w-md relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search sports & activities..." 
+              className="pl-9 h-12 bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm focus-visible:ring-pink-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {isLoading ? (
+            <div className="py-20 text-center flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mb-4"></div>
+              <p className="text-muted-foreground font-medium">Loading sports and activities...</p>
+            </div>
+          ) : filteredActivities.length === 0 ? (
+            <Card className="shadow-sm border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-card/50 rounded-3xl">
+              <CardContent className="py-24 text-center flex flex-col items-center justify-center">
+                <div className="h-16 w-16 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-4">
+                  <Activity className="h-8 w-8 text-pink-500 dark:text-pink-400" />
                 </div>
-              ) : items.length === 0 ? (
-                <Card className="shadow-sm border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-card/50 rounded-2xl">
-                  <CardContent className="py-20 text-center flex flex-col items-center justify-center">
-                    <div className="h-16 w-16 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-4">
-                      <Activity className="h-8 w-8 text-pink-500 dark:text-pink-400" />
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">No sports or activities added yet</h3>
+                <p className="text-muted-foreground font-medium mb-6 max-w-sm">
+                  {searchQuery ? "No results match your search." : "Get started by adding your first sport or activity to the master list."}
+                </p>
+                {!searchQuery && (
+                  <Button 
+                    onClick={() => {
+                      setFormData({ name: "", type: "sport" });
+                      setIsAddModalOpen(true);
+                    }}
+                    className="bg-pink-600 hover:bg-pink-700 text-white rounded-full font-bold px-8 shadow-md"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Sport / Activity
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredActivities.map((item) => (
+                <Card 
+                  key={item.id} 
+                  className="group relative shadow-sm border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white/90 dark:bg-card/90 hover:shadow-md hover:border-pink-300 dark:hover:border-pink-800 transition-all duration-300"
+                >
+                  {/* Decorative top border */}
+                  <div className={`h-1.5 w-full ${item.type === 'sport' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                  
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`p-2.5 rounded-xl ${item.type === 'sport' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'}`}>
+                        {item.type === 'sport' ? <Dumbbell className="h-5 w-5" /> : <Gamepad2 className="h-5 w-5" />}
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-full"
+                          onClick={() => openEditModal(item)}
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-full"
+                          onClick={() => openDeleteModal(item)}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">No sports or activities added yet</h3>
-                    <p className="text-muted-foreground text-sm max-w-sm mb-6">Create the master list of sports and activities available for partners and users.</p>
-                    <Button onClick={() => setIsAddSportOpen(true)} className="bg-pink-600 hover:bg-pink-700 text-white rounded-full font-bold">
-                      <Plus className="h-4 w-4 mr-2" /> Add First Record
-                    </Button>
+                    
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 line-clamp-1 mb-1" title={item.name}>
+                      {item.name}
+                    </h3>
+                    
+                    <Badge variant="outline" className={`capitalize text-xs font-semibold ${item.type === 'sport' ? 'border-blue-200 text-blue-700 bg-blue-50/50 dark:border-blue-900/50 dark:text-blue-400 dark:bg-blue-900/10' : 'border-emerald-200 text-emerald-700 bg-emerald-50/50 dark:border-emerald-900/50 dark:text-emerald-400 dark:bg-emerald-900/10'}`}>
+                      {item.type}
+                    </Badge>
                   </CardContent>
                 </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {items.map((item) => (
-                    <Card 
-                      key={item.id} 
-                      onClick={() => handleViewDetail(item)}
-                      className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-slate-200/80 dark:border-slate-800/80 overflow-hidden bg-white/90 dark:bg-card/90 backdrop-blur-sm rounded-2xl hover:-translate-y-1 relative"
-                    >
-                      <div className={`h-1.5 w-full ${item.type === 'sport' ? 'bg-gradient-to-r from-orange-400 to-pink-500' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`}></div>
-                      <CardContent className="p-5">
-                        <div className="flex justify-between items-start mb-3">
-                          <Badge variant="secondary" className={`${item.type === 'sport' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'} font-bold uppercase tracking-wider text-[10px] px-2 py-0.5`}>
-                            {item.type}
-                          </Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={(e) => handleDeleteSport(e, item.id)}
-                            className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors -mr-2 -mt-2 opacity-0 group-hover:opacity-100"
-                            title="Remove"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 pr-4 line-clamp-2 leading-tight">
-                          {item.name}
-                        </h3>
-                        <div className="mt-4 flex items-center text-sm font-medium text-pink-600 dark:text-pink-400 group-hover:text-pink-700 dark:group-hover:text-pink-300">
-                          Manage Skills <ArrowRight className="h-4 w-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           )}
-
-          {/* VIEW: DETAIL (SKILLS) */}
-          {currentView === 'detail' && selectedItem && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 bg-white/60 dark:bg-card/40 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm backdrop-blur-sm">
-                <div className={`p-3 rounded-xl ${selectedItem.type === 'sport' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/50' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50'}`}>
-                  {selectedItem.type === 'sport' ? <Dumbbell className="h-6 w-6" /> : <FolderTree className="h-6 w-6" />}
-                </div>
-                <div>
-                  <Badge variant="outline" className="mb-1 uppercase text-[10px] font-bold tracking-widest">{selectedItem.type}</Badge>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{selectedItem.name}</h2>
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="py-20 text-center flex flex-col items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4"></div>
-                  <p className="text-muted-foreground font-medium">Loading skills...</p>
-                </div>
-              ) : skills.length === 0 ? (
-                <Card className="shadow-sm border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-card/50 rounded-2xl mt-4">
-                  <CardContent className="py-16 text-center flex flex-col items-center justify-center">
-                    <FolderTree className="h-10 w-10 text-emerald-200 dark:text-emerald-900 mb-4" />
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">No skills or sub-activities added</h3>
-                    <p className="text-muted-foreground text-sm max-w-sm mb-6">Add specific competencies or variations under this category.</p>
-                    <Button onClick={() => setIsAddSkillOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold">
-                      <Plus className="h-4 w-4 mr-2" /> Add Skill
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                  {skills.map(skill => (
-                    <div key={skill.id} className="group bg-white dark:bg-card border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800 transition-all">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{skill.name}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDeleteSkill(skill.id)}
-                        className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                        title="Remove"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
         </div>
-      </main>
+      </div>
 
-      {/* Add Sport/Activity Modal */}
-      <Dialog open={isAddSportOpen} onOpenChange={setIsAddSportOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+      {/* Add Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl">
           <DialogHeader>
-            <DialogTitle>Add Sport / Activity</DialogTitle>
+            <DialogTitle className="text-xl">Add Sport / Activity</DialogTitle>
             <DialogDescription>
-              Create a new master record for the network.
+              Add a new item to the master list. This will be available for partner selection.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="grid gap-5 py-4">
             <div className="space-y-2">
-              <Label htmlFor="sport-name">Name</Label>
-              <Input
-                id="sport-name"
-                placeholder="e.g. Cricket, Yoga, Chess"
-                value={newSportName}
-                onChange={(e) => setNewSportName(e.target.value)}
-                disabled={isAddingSport}
-                className="bg-slate-50 dark:bg-slate-900 rounded-xl"
+              <Label htmlFor="name" className="text-sm font-semibold">Name</Label>
+              <Input 
+                id="name" 
+                placeholder="e.g. Cricket, Yoga, Chess" 
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="rounded-xl h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sport-type">Type</Label>
-              <Select value={newSportType} onValueChange={setNewSportType} disabled={isAddingSport}>
-                <SelectTrigger className="bg-slate-50 dark:bg-slate-900 rounded-xl">
+              <Label htmlFor="type" className="text-sm font-semibold">Type</Label>
+              <Select value={formData.type} onValueChange={(val) => setFormData({...formData, type: val})}>
+                <SelectTrigger className="rounded-xl h-11">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="sport">Sport</SelectItem>
                   <SelectItem value="activity">Activity</SelectItem>
                 </SelectContent>
@@ -410,44 +372,90 @@ export default function SportsActivities() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddSportOpen(false)} disabled={isAddingSport} className="rounded-xl">
-              Cancel
-            </Button>
-            <Button onClick={handleAddSport} disabled={isAddingSport || !newSportName.trim()} className="bg-pink-600 hover:bg-pink-700 text-white rounded-xl">
-              {isAddingSport ? "Saving..." : "Save Record"}
+            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)} className="rounded-xl font-bold">Cancel</Button>
+            <Button onClick={handleAdd} disabled={!formData.name.trim() || isSubmitting} className="rounded-xl font-bold bg-pink-600 hover:bg-pink-700 text-white">
+              {isSubmitting ? "Adding..." : "Add to List"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Add Skill Modal */}
-      <Dialog open={isAddSkillOpen} onOpenChange={setIsAddSkillOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl">
           <DialogHeader>
-            <DialogTitle>Add Skill / Sub Activity</DialogTitle>
+            <DialogTitle className="text-xl">Edit Item</DialogTitle>
             <DialogDescription>
-              Add a new skill under <strong>{selectedItem?.name}</strong>.
+              Update the name or type of this sport or activity.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="grid gap-5 py-4">
             <div className="space-y-2">
-              <Label htmlFor="skill-name">Skill Name</Label>
-              <Input
-                id="skill-name"
-                placeholder="e.g. Fast Bowling, Vinyasa, Opening Openings"
-                value={newSkillName}
-                onChange={(e) => setNewSkillName(e.target.value)}
-                disabled={isAddingSkill}
-                className="bg-slate-50 dark:bg-slate-900 rounded-xl"
+              <Label htmlFor="edit-name" className="text-sm font-semibold">Name</Label>
+              <Input 
+                id="edit-name" 
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="rounded-xl h-11"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-type" className="text-sm font-semibold">Type</Label>
+              <Select value={formData.type} onValueChange={(val) => setFormData({...formData, type: val})}>
+                <SelectTrigger className="rounded-xl h-11">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="sport">Sport</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddSkillOpen(false)} disabled={isAddingSkill} className="rounded-xl">
-              Cancel
+            <Button variant="ghost" onClick={() => setIsEditModalOpen(false)} className="rounded-xl font-bold">Cancel</Button>
+            <Button onClick={handleEdit} disabled={!formData.name.trim() || isSubmitting} className="rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white">
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
-            <Button onClick={handleAddSkill} disabled={isAddingSkill || !newSkillName.trim()} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
-              {isAddingSkill ? "Saving..." : "Save Skill"}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Soft Delete Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl border-rose-200 dark:border-rose-900">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-rose-600 dark:text-rose-500" />
+            </div>
+            <DialogTitle className="text-xl text-center text-rose-600 dark:text-rose-500">Delete Record</DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              This action will remove <strong>{selectedActivity?.name}</strong> from the active list. Existing references to this activity will remain intact.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-3 py-4">
+            <Label htmlFor="confirm-delete" className="text-sm text-center">
+              Please type <strong className="select-none text-foreground">{selectedActivity?.name}</strong> to confirm.
+            </Label>
+            <Input 
+              id="confirm-delete" 
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="rounded-xl h-11 text-center font-bold text-rose-600 focus-visible:ring-rose-500"
+              autoComplete="off"
+            />
+          </div>
+          
+          <DialogFooter className="sm:justify-center flex-row gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} className="rounded-xl font-bold w-full">Cancel</Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDelete} 
+              disabled={deleteConfirmText !== selectedActivity?.name || isSubmitting} 
+              className="rounded-xl font-bold w-full bg-rose-600 hover:bg-rose-700"
+            >
+              {isSubmitting ? "Deleting..." : "Confirm Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

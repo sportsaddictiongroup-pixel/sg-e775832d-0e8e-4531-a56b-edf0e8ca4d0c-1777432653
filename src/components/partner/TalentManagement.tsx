@@ -122,6 +122,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
 
   const fetchSports = async () => {
     const { data } = await (supabase as any).from('sports_activities').select('*').eq('is_active', true).order('name');
+    console.log('sports data:', data);
     if (data) setSports(data);
   };
 
@@ -468,10 +469,14 @@ export function TalentManagement({ profile }: { profile: Profile }) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Sport / Activity *</Label>
-                  <Select required value={formData.sportId} onValueChange={v => setFormData({...formData, sportId: v})}>
+                  <Select required value={formData.sportId ? String(formData.sportId) : ""} onValueChange={v => setFormData({...formData, sportId: v})}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Sport" /></SelectTrigger>
                     <SelectContent>
-                      {sports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      {sports.map(s => (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {s.name || "Unknown Sport"}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

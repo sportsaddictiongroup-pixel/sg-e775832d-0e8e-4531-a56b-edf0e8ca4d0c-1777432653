@@ -78,7 +78,7 @@ export default function NetworkTree(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [drilldownPath, setDrilldownPath] = useState<NormalizedPartner[]>([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("downlines");
   const [downlinesPage, setDownlinesPage] = useState(1);
   const [genPages, setGenPages] = useState<number[]>([1, 1, 1, 1, 1]);
 
@@ -241,7 +241,7 @@ export default function NetworkTree(): JSX.Element {
   const handleOpenNode = (partner: NormalizedPartner) => {
     setSelectedProfileId(partner.profile_id);
     setDrilldownPath((prev) => [...prev, partner]);
-    setActiveTab("overview");
+    setActiveTab("downlines");
     setDownlinesPage(1);
     setGenPages([1, 1, 1, 1, 1]);
   };
@@ -255,7 +255,7 @@ export default function NetworkTree(): JSX.Element {
       setSelectedProfileId(partner.profile_id);
       setDrilldownPath((prev) => prev.slice(0, index + 1));
     }
-    setActiveTab("overview");
+    setActiveTab("downlines");
     setDownlinesPage(1);
     setGenPages([1, 1, 1, 1, 1]);
   };
@@ -626,10 +626,12 @@ export default function NetworkTree(): JSX.Element {
 
               {/* Tabs: Overview vs Direct Downlines vs Generations */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-3 h-auto p-1.5 bg-muted/40 border border-muted/50 rounded-2xl shadow-inner mb-8 gap-1">
+                <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-2 h-auto p-1.5 bg-muted/40 border border-muted/50 rounded-2xl shadow-inner mb-8 gap-1">
+                  {false && (
                   <TabsTrigger value="overview" className="py-3 px-8 text-sm font-bold rounded-xl transition-all duration-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground hover:bg-muted/80">
                     Overview Preview
                   </TabsTrigger>
+                  )}
                   <TabsTrigger value="downlines" className="py-3 px-8 text-sm font-bold rounded-xl transition-all duration-300 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground hover:text-foreground hover:bg-muted/80">
                     Direct Downlines
                     <Badge variant="secondary" className="ml-2 bg-white/20 text-current border-none shadow-sm hidden sm:inline-flex rounded-full px-2">{selectedPartner.direct_downlines_count}</Badge>
@@ -639,6 +641,7 @@ export default function NetworkTree(): JSX.Element {
                   </TabsTrigger>
                 </TabsList>
                 
+                {false && (
                 <TabsContent value="overview" className="mt-0">
                   <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
                     <div className="h-1.5 w-full bg-blue-500"></div>
@@ -674,6 +677,7 @@ export default function NetworkTree(): JSX.Element {
                     </CardContent>
                   </Card>
                 </TabsContent>
+                )}
 
                 <TabsContent value="downlines" className="mt-0">
                   <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">

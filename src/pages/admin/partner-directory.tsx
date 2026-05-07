@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ArrowLeft, Search, Eye, Users, MapPin, ChevronLeft, ChevronRight, User, Phone, Map as MapIcon, Shield } from "lucide-react";
+import { ArrowLeft, Search, Eye, Users, MapPin, ChevronLeft, ChevronRight, User, Phone, Map as MapIcon, Shield, Download } from "lucide-react";
 
 interface PartnerDetails {
   profile_id: string;
@@ -43,6 +43,7 @@ export default function PartnerDirectory() {
   
   // Data storage
   const [allPartners, setAllPartners] = useState<PartnerData[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<PartnerData[]>([]);
   const [displayedPartners, setDisplayedPartners] = useState<PartnerData[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -296,6 +297,7 @@ export default function PartnerDirectory() {
     }
 
     setTotalCount(filtered.length);
+    setFilteredPartners(filtered);
 
     // Apply Pagination
     const startIdx = (page - 1) * PAGE_SIZE;
@@ -330,6 +332,63 @@ export default function PartnerDirectory() {
     return map[id] || "Name not found";
   };
 
+  const handleExportCSV = () => {
+    if (filteredPartners.length === 0) return;
+
+    const headers = [
+      "Full Name",
+      "User ID",
+      "Mobile Number",
+      "WhatsApp Number",
+      "Email",
+      "Country",
+      "State",
+      "District",
+      "PIN Code",
+      "Location / Area",
+      "Upline User ID / Username"
+    ];
+
+    const escapeCSV = (str: string | undefined | null) => {
+      if (!str) return '""';
+      const escaped = String(str).replace(/"/g, '""');
+      return `"${escaped}"`;
+    };
+
+    const rows = filteredPartners.map(p => {
+      const details = p.partner_details;
+      
+      const upline = allPartners.find(u => u.id === p.upline_profile_id);
+      const uplineStr = upline ? upline.username : (p.upline_profile_id || "Not Available");
+
+      return [
+        escapeCSV(details?.full_name),
+        escapeCSV(p.username),
+        escapeCSV(details?.mobile_number),
+        escapeCSV(details?.whatsapp_number),
+        escapeCSV(details?.email),
+        escapeCSV(details?.country_id ? locationMaps.countries[details.country_id] : ""),
+        escapeCSV(details?.state_id ? locationMaps.states[details.state_id] : ""),
+        escapeCSV(details?.district_id ? locationMaps.districts[details.district_id] : ""),
+        escapeCSV(details?.pincode_id ? locationMaps.pincodes[details.pincode_id] : ""),
+        escapeCSV(details?.location_id ? locationMaps.locations[details.location_id] : ""),
+        escapeCSV(uplineStr)
+      ].join(",");
+    });
+
+    const csvContent = [headers.map(h => `"${h}"`).join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const date = new Date().toISOString().split("T")[0];
+    link.download = `partners_export_${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (!authChecked) return null;
 
   return (
@@ -353,9 +412,21 @@ export default function PartnerDirectory() {
                 Partner Directory
               </h1>
             </div>
-            <Badge variant="secondary" className="font-mono shadow-sm">
-              {totalCount} Total
-            </Badge>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Badge variant="secondary" className="font-mono shadow-sm hidden sm:inline-flex">
+                {totalCount} Total
+              </Badge>
+              <Button 
+                onClick={handleExportCSV} 
+                variant="outline" 
+                size="sm" 
+                className="h-8 shadow-sm text-xs font-semibold bg-background hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 dark:hover:border-emerald-900"
+                disabled={filteredPartners.length === 0}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Export CSV
+              </Button>
+            </div>
           </div>
         </header>
 

@@ -67,7 +67,7 @@ export default function PartnerNetworkTree(): JSX.Element {
   const [rootProfileId, setRootProfileId] = useState<string | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [drilldownPath, setDrilldownPath] = useState<NormalizedPartner[]>([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("downlines");
   const [downlinesPage, setDownlinesPage] = useState(1);
   const [genPages, setGenPages] = useState<number[]>([1, 1, 1, 1, 1]);
 
@@ -266,7 +266,7 @@ export default function PartnerNetworkTree(): JSX.Element {
   const handleOpenNode = (partner: NormalizedPartner) => {
     setSelectedProfileId(partner.profile_id);
     setDrilldownPath((prev) => [...prev, partner]);
-    setActiveTab("overview");
+    setActiveTab("downlines");
     setDownlinesPage(1);
     setGenPages([1, 1, 1, 1, 1]);
   };
@@ -280,7 +280,7 @@ export default function PartnerNetworkTree(): JSX.Element {
       setSelectedProfileId(partner.profile_id);
       setDrilldownPath((prev) => prev.slice(0, index + 1));
     }
-    setActiveTab("overview");
+    setActiveTab("downlines");
     setDownlinesPage(1);
     setGenPages([1, 1, 1, 1, 1]);
   };
@@ -514,12 +514,15 @@ export default function PartnerNetworkTree(): JSX.Element {
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="w-full overflow-x-auto mb-8">
                   <TabsList className="w-full flex flex-col sm:flex-row gap-2 h-auto p-2 overflow-x-auto sm:overflow-visible bg-muted/40 border border-muted/50 rounded-2xl shadow-inner">
+                    {false && (
                     <TabsTrigger value="overview" className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm px-3 py-2 min-w-[120px] font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-blue-600 data-[state=active]:text-white">Overview Preview</TabsTrigger>
+                    )}
                     <TabsTrigger value="downlines" className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm px-3 py-2 min-w-[120px] font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-emerald-600 data-[state=active]:text-white">Direct Downlines</TabsTrigger>
                     <TabsTrigger value="generations" className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm px-3 py-2 min-w-[120px] font-bold rounded-xl text-muted-foreground hover:text-foreground data-[state=active]:bg-purple-600 data-[state=active]:text-white">5-Level MLM View</TabsTrigger>
                   </TabsList>
                 </div>
                 
+                {false && (
                 <TabsContent value="overview" className="mt-0">
                   <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">
                     <div className="h-1.5 w-full bg-blue-500"></div>
@@ -546,6 +549,7 @@ export default function PartnerNetworkTree(): JSX.Element {
                     </CardContent>
                   </Card>
                 </TabsContent>
+                )}
 
                 <TabsContent value="downlines" className="mt-0">
                   <Card className="shadow-lg border-muted rounded-2xl overflow-hidden">

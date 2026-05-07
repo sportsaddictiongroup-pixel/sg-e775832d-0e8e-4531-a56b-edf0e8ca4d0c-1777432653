@@ -139,6 +139,9 @@ export function TalentManagement({ profile }: { profile: Profile }) {
     if (data && data.length > 0) {
       const locIds = [...new Set(data.map((d: any) => d.location_id).filter(Boolean))];
       const sportIds = [...new Set(data.map((d: any) => d.sport_activity_id).filter(Boolean))];
+      const stateIds = [...new Set(data.map((d: any) => d.state_id).filter(Boolean))];
+      const distIds = [...new Set(data.map((d: any) => d.district_id).filter(Boolean))];
+      const pinIds = [...new Set(data.map((d: any) => d.pincode_id).filter(Boolean))];
 
       let locMap: any = {};
       if (locIds.length) {
@@ -152,10 +155,31 @@ export function TalentManagement({ profile }: { profile: Profile }) {
         sportMap = sps?.reduce((acc: any, s: any) => ({...acc, [s.id]: s.name}), {}) || {};
       }
 
+      let stateMap: any = {};
+      if (stateIds.length) {
+        const { data: sts } = await supabase.from('states').select('id, name').in('id', stateIds as string[]);
+        stateMap = sts?.reduce((acc: any, s: any) => ({...acc, [s.id]: s.name}), {}) || {};
+      }
+
+      let distMap: any = {};
+      if (distIds.length) {
+        const { data: dts } = await supabase.from('districts').select('id, name').in('id', distIds as string[]);
+        distMap = dts?.reduce((acc: any, d: any) => ({...acc, [d.id]: d.name}), {}) || {};
+      }
+
+      let pinMap: any = {};
+      if (pinIds.length) {
+        const { data: pns } = await supabase.from('pincodes').select('id, code').in('id', pinIds as string[]);
+        pinMap = pns?.reduce((acc: any, p: any) => ({...acc, [p.id]: p.code}), {}) || {};
+      }
+
       const enriched = data.map((d: any) => ({
         ...d,
         sport_name: sportMap[d.sport_activity_id] || 'Unknown',
-        location_name: locMap[d.location_id] || 'Unknown'
+        location_name: locMap[d.location_id] || 'Unknown',
+        state_name: stateMap[d.state_id] || 'Unknown',
+        district_name: distMap[d.district_id] || 'Unknown',
+        pincode_code: pinMap[d.pincode_id] || 'Unknown'
       }));
       setTalents(enriched);
     } else {
@@ -352,7 +376,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
           </DialogHeader>
 
           <div className="space-y-4">
-            <Card className="shadow-sm border-border/60 overflow-hidden bg-card">
+            <Card className="shadow-sm border-border/60 overflow-hidden bg-card rounded-2xl">
               {talents.length === 0 ? (
                 <div className="py-16 text-center text-muted-foreground font-medium">
                   No talents registered yet.
@@ -360,22 +384,22 @@ export function TalentManagement({ profile }: { profile: Profile }) {
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader className="bg-muted/50 border-b">
+                    <TableHeader className="bg-slate-50/80 dark:bg-slate-900/80 border-b">
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="font-semibold px-4 py-3">Registration Date</TableHead>
-                        <TableHead className="font-semibold px-4 py-3">Name</TableHead>
-                        <TableHead className="font-semibold px-4 py-3">Gender</TableHead>
-                        <TableHead className="font-semibold px-4 py-3">Mobile Number</TableHead>
-                        <TableHead className="font-semibold px-4 py-3">Sport / Activity</TableHead>
-                        <TableHead className="font-semibold px-4 py-3">Country</TableHead>
-                        <TableHead className="font-semibold px-4 py-3 text-right">Actions</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registration Date</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Name</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Gender</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registered Mobile Number</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Sport / Activity</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Country</TableHead>
+                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {talents.map((t) => (
-                        <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group">
+                        <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group border-b border-slate-100 dark:border-slate-800">
                           <TableCell className="px-4 py-3">
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold bg-slate-100 dark:bg-slate-800 w-fit px-2.5 py-1.5 rounded-md">
                               <Calendar className="h-3.5 w-3.5" />
                               {new Date(t.registered_at).toLocaleDateString()}
                             </div>
@@ -384,28 +408,30 @@ export function TalentManagement({ profile }: { profile: Profile }) {
                             {t.full_name}
                           </TableCell>
                           <TableCell className="px-4 py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                              t.gender === 'Male' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
-                              t.gender === 'Female' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300' :
-                              'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                              t.gender === 'Male' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                              t.gender === 'Female' ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800' :
+                              'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                             }`}>
                               {t.gender || 'Other'}
                             </span>
                           </TableCell>
-                          <TableCell className="px-4 py-3 text-sm">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300">
                             {t.mobile_country_code} {t.mobile_number}
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm">
-                            <div className="flex flex-col gap-1 items-start">
-                              <span className="font-medium">{t.sport_name}</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
+                                {t.sport_name}
+                              </span>
                               {t.level && (
-                                <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                                <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 uppercase tracking-wider">
                                   {t.level}
                                 </span>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-slate-500">
                             {countries.find(c => String(c.id) === String(t.country_id))?.name || "Unknown"}
                           </TableCell>
                           <TableCell className="px-4 py-3 text-right">
@@ -413,7 +439,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
                               variant="ghost" 
                               size="sm" 
                               onClick={() => { setSelectedTalentDetail(t); setIsDetailOpen(true); }} 
-                              className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                              className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors h-8 w-8 p-0 rounded-full"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -431,67 +457,133 @@ export function TalentManagement({ profile }: { profile: Profile }) {
 
       {/* View Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl rounded-3xl p-6 sm:p-8">
-          {selectedTalentDetail && (
-            <>
-              <DialogHeader className="mb-4 flex flex-row items-start sm:items-center justify-between gap-4">
+        <DialogContent className="max-w-3xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 sm:p-8 text-white">
+            {selectedTalentDetail && (
+              <div className="flex flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <DialogTitle className="text-2xl text-foreground">{selectedTalentDetail.full_name}</DialogTitle>
-                  <DialogDescription>Talent Details & Information</DialogDescription>
+                  <h2 className="text-3xl font-bold tracking-tight">{selectedTalentDetail.full_name}</h2>
+                  <p className="text-emerald-100 font-medium mt-1">Talent Details & Information</p>
                 </div>
                 <Button 
-                  variant="outline" 
+                  variant="secondary" 
                   size="sm" 
                   onClick={() => { setIsDetailOpen(false); handleOpenModal(selectedTalentDetail); }}
-                  className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 shrink-0 m-0"
+                  className="bg-white/10 hover:bg-white/20 text-white border-0 shadow-none shrink-0 rounded-xl"
                 >
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit Detail
                 </Button>
-              </DialogHeader>
-              <div className="space-y-6 mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4 text-sm bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+              </div>
+            )}
+          </div>
+          
+          <div className="p-6 sm:p-8 max-h-[70vh] overflow-y-auto bg-slate-50 dark:bg-slate-950">
+            {selectedTalentDetail && (
+              <div className="space-y-8">
+                
+                {/* Core Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
                   <div>
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Gender</span>
-                    <span className="font-medium text-foreground">{selectedTalentDetail.gender || "Not specified"}</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Registration Date</span>
+                    <span className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                      {new Date(selectedTalentDetail.registered_at).toLocaleDateString()}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Date of Birth</span>
-                    <span className="font-medium text-foreground">
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Full Name</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.full_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Gender</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold border w-fit block ${
+                      selectedTalentDetail.gender === 'Male' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                      selectedTalentDetail.gender === 'Female' ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800' :
+                      'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                    }`}>
+                      {selectedTalentDetail.gender || "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">DOB / Age Category</span>
+                    <span className="font-semibold text-foreground text-sm">
                       {new Date(selectedTalentDetail.date_of_birth).toLocaleDateString()} 
-                      <span className="text-muted-foreground ml-1">({selectedTalentDetail.age_category})</span>
+                      <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded ml-2 text-xs">
+                        {selectedTalentDetail.age_category}
+                      </span>
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Mobile Number</span>
-                    <span className="font-medium text-foreground">{selectedTalentDetail.mobile_country_code} {selectedTalentDetail.mobile_number}</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Mobile Number</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.mobile_country_code} {selectedTalentDetail.mobile_number}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">WhatsApp Number</span>
-                    <span className="font-medium text-foreground">{selectedTalentDetail.whatsapp_country_code} {selectedTalentDetail.whatsapp_number}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Sport / Activity</span>
-                    <span className="font-medium text-foreground">{selectedTalentDetail.sport_name}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Level / Goal</span>
-                    <span className="font-medium text-foreground">{selectedTalentDetail.level || "N/A"} / {selectedTalentDetail.goal || "N/A"}</span>
-                  </div>
-                  <div className="col-span-1 sm:col-span-2">
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Location</span>
-                    <span className="font-medium text-foreground">
-                      {selectedTalentDetail.location_name}, {countries.find(c => String(c.id) === String(selectedTalentDetail.country_id))?.name || "Unknown"}
-                    </span>
-                  </div>
-                  <div className="col-span-1 sm:col-span-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <span className="text-muted-foreground block text-xs uppercase tracking-wider mb-1">Registered On</span>
-                    <span className="font-medium text-foreground">{new Date(selectedTalentDetail.registered_at).toLocaleString()}</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">WhatsApp Number</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.whatsapp_country_code} {selectedTalentDetail.whatsapp_number}</span>
                   </div>
                 </div>
+
+                {/* Sport Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Sport / Activity</span>
+                    <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
+                      {selectedTalentDetail.sport_name}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Level</span>
+                    <span className="inline-flex px-2.5 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 uppercase tracking-wider">
+                      {selectedTalentDetail.level || "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Goal</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.goal || "N/A"}</span>
+                  </div>
+                </div>
+
+                {/* Location Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-slate-200 dark:bg-slate-700" />
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Country</span>
+                    <span className="font-semibold text-foreground text-sm">{countries.find(c => String(c.id) === String(selectedTalentDetail.country_id))?.name || "Unknown"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">State</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.state_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">District</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.district_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">PIN Code</span>
+                    <span className="font-semibold text-foreground text-sm">{selectedTalentDetail.pincode_code}</span>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1.5">Location / Area</span>
+                    <span className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                      {selectedTalentDetail.location_name}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Meta Info */}
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    <span>Submitted by: <strong className="text-slate-700 dark:text-slate-300">{selectedTalentDetail.submitted_by_username || "System"}</strong></span>
+                  </div>
+                  <span>ID: <span className="font-mono">{selectedTalentDetail.id.split('-')[0]}</span></span>
+                </div>
+                
               </div>
-            </>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -83,7 +83,7 @@ export default function SportsActivitiesAdmin() {
   const fetchActivities = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('sports_activities')
         .select('*')
         .eq('is_active', true)
@@ -106,7 +106,7 @@ export default function SportsActivitiesAdmin() {
     if (!formData.name.trim()) return;
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('sports_activities')
         .insert([{ name: formData.name.trim(), type: formData.type, is_active: true }]);
         
@@ -134,7 +134,7 @@ export default function SportsActivitiesAdmin() {
     if (!selectedActivity || !formData.name.trim()) return;
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('sports_activities')
         .update({ name: formData.name.trim(), type: formData.type })
         .eq('id', selectedActivity.id);
@@ -163,7 +163,7 @@ export default function SportsActivitiesAdmin() {
     setIsSubmitting(true);
     try {
       // Soft Delete: update is_active to false instead of deleting row
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('sports_activities')
         .update({ is_active: false })
         .eq('id', selectedActivity.id);

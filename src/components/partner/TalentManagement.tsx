@@ -56,6 +56,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
     dobDay: "",
     dobMonth: "",
     dobYear: "",
+    gender: "",
     mobileCountryCode: "+91",
     mobileNumber: "",
     whatsappSame: false,
@@ -170,6 +171,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
         dobDay: d || "",
         dobMonth: m || "",
         dobYear: y || "",
+        gender: talent.gender || "",
         mobileCountryCode: talent.mobile_country_code || "+91",
         mobileNumber: talent.mobile_number || "",
         whatsappSame: talent.whatsapp_number === talent.mobile_number,
@@ -186,7 +188,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
     } else {
       setEditId(null);
       setFormData({
-        fullName: "", dobDay: "", dobMonth: "", dobYear: "",
+        fullName: "", dobDay: "", dobMonth: "", dobYear: "", gender: "",
         mobileCountryCode: "+91", mobileNumber: "", whatsappSame: false, whatsappNumber: "",
         sportId: "", level: "", goal: "",
         countryId: "", stateId: "", districtId: "", pincodeId: "", locationId: ""
@@ -203,6 +205,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
         full_name: formData.fullName,
         date_of_birth: `${formData.dobYear}-${formData.dobMonth}-${formData.dobDay}`,
         age_category: ageCategory,
+        gender: formData.gender,
         mobile_country_code: formData.mobileCountryCode,
         mobile_number: formData.mobileNumber,
         whatsapp_number: formData.whatsappSame ? formData.mobileNumber : formData.whatsappNumber,
@@ -424,6 +427,17 @@ export function TalentManagement({ profile }: { profile: Profile }) {
                   <Label>Age Category</Label>
                   <Input disabled value={ageCategory} className="h-11 rounded-xl bg-muted font-bold text-emerald-600" placeholder="Auto-calculated" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Gender *</Label>
+                <Select required value={formData.gender} onValueChange={v => setFormData({...formData, gender: v})}>
+                  <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Gender" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

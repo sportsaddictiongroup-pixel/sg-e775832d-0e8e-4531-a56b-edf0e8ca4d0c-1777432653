@@ -229,29 +229,42 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
     setIsSubmitting(true);
     try {
       const finalWaNumber = formData.whatsappSame ? formData.mobileNumber : formData.whatsappNumber;
+      const finalWaCode = formData.whatsappSame ? formData.mobileCountryCode : formData.mobileCountryCode;
 
-      // 1. Check for Mobile Duplicate against existing rows
-      let mQuery = (supabase as any).from('talent_registrations').select('id').eq('mobile_number', formData.mobileNumber);
+      // 1. Check for Mobile Duplicate against existing rows (Country Code + Number)
+      let mQuery = (supabase as any).from('talent_registrations')
+        .select('id')
+        .eq('mobile_country_code', formData.mobileCountryCode)
+        .eq('mobile_number', formData.mobileNumber);
       if (editId) mQuery = mQuery.neq('id', editId);
       const { data: existingMobile } = await mQuery.limit(1);
+      const mobileExists = existingMobile && existingMobile.length > 0;
 
-      if (existingMobile && existingMobile.length > 0) {
+      // 2. Check for WhatsApp Duplicate against existing rows (Country Code + Number)
+      let whatsappExists = false;
+      if (finalWaNumber) {
+        let wQuery = (supabase as any).from('talent_registrations')
+          .select('id')
+          .eq('whatsapp_country_code', finalWaCode)
+          .eq('whatsapp_number', finalWaNumber);
+        if (editId) wQuery = wQuery.neq('id', editId);
+        const { data: existingWa } = await wQuery.limit(1);
+        whatsappExists = existingWa && existingWa.length > 0;
+      }
+
+      // Check Combined or Individual Duplicate states
+      if (mobileExists && whatsappExists) {
+        toast({ title: "Registration Failed", description: "Mobile number and WhatsApp number already exist.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      } else if (mobileExists) {
         toast({ title: "Registration Failed", description: "Mobile number already exists.", variant: "destructive" });
         setIsSubmitting(false);
         return;
-      }
-
-      // 2. Check for WhatsApp Duplicate against existing rows
-      if (finalWaNumber) {
-        let wQuery = (supabase as any).from('talent_registrations').select('id').eq('whatsapp_number', finalWaNumber);
-        if (editId) wQuery = wQuery.neq('id', editId);
-        const { data: existingWa } = await wQuery.limit(1);
-
-        if (existingWa && existingWa.length > 0) {
-          toast({ title: "Registration Failed", description: "WhatsApp number already exists.", variant: "destructive" });
-          setIsSubmitting(false);
-          return;
-        }
+      } else if (whatsappExists) {
+        toast({ title: "Registration Failed", description: "WhatsApp number already exists.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
       }
 
       const payload = {
@@ -295,7 +308,20 @@ export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; 
         router.push("/partner/talent-directory");
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "An unexpected error occurred.", variant: "destructive" });
+      let errorMsg = error.message || "An unexpected error occurred.";
+      
+      // Sanitize raw database unique constraint violations
+      if (error.code === '23505' || errorMsg.includes('unique constraint') || errorMsg.includes('duplicate key')) {
+        if (errorMsg.includes('whatsapp')) {
+          errorMsg = "WhatsApp number already exists.";
+        } else if (errorMsg.includes('mobile')) {
+          errorMsg = "Mobile number already exists.";
+        } else {
+          errorMsg = "Mobile number and WhatsApp number already exist.";
+        }
+      }
+
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }

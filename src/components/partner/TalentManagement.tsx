@@ -578,7 +578,7 @@ export function TalentManagement({ profile }: { profile: Profile }) {
                     <Activity className="h-4 w-4" />
                     <span>Submitted by: <strong className="text-slate-700 dark:text-slate-300">{selectedTalentDetail.submitted_by_username || "System"}</strong></span>
                   </div>
-                  <span>ID: <span className="font-mono">{selectedTalentDetail.id.split('-')[0]}</span></span>
+                  <span>ID: <span className="font-mono">TR-{String(selectedTalentDetail.id).padStart(6, '0')}</span></span>
                 </div>
                 
               </div>

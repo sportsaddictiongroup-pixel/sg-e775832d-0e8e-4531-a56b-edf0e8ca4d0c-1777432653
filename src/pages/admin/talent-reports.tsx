@@ -257,15 +257,15 @@ export default function TalentReports() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-3">
                 {Object.entries({
-                  sport: { label: "Sport", options: filterOptions.sports },
-                  gender: { label: "Gender", options: filterOptions.genders },
-                  ageCategory: { label: "Age Category", options: filterOptions.ageCategories },
-                  submittedBy: { label: "Submitted By", options: filterOptions.submittedBys },
                   country: { label: "Country", options: filterOptions.countries },
                   state: { label: "State", options: filterOptions.states },
                   district: { label: "District", options: filterOptions.districts },
                   pincode: { label: "PIN Code", options: filterOptions.pincodes },
-                  location: { label: "Location", options: filterOptions.locations },
+                  location: { label: "Location / Area", options: filterOptions.locations },
+                  sport: { label: "Sport / Activity", options: filterOptions.sports },
+                  ageCategory: { label: "Age Category", options: filterOptions.ageCategories },
+                  gender: { label: "Gender", options: filterOptions.genders },
+                  submittedBy: { label: "Submitted By", options: filterOptions.submittedBys },
                 }).map(([key, config]) => (
                   <div key={key} className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{config.label}</label>

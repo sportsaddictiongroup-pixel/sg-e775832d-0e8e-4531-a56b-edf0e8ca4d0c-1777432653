@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key, Users, Activity } from "lucide-react";
+import { UserPlus, MapPin, Map as MapIcon, Network, ArrowRight, LayoutDashboard, LogOut, Key, Users, Activity, FileText } from "lucide-react";
 
 type Profile = Tables<"profiles">;
 
@@ -227,6 +227,16 @@ export default function AdminDashboard(): JSX.Element {
       iconWrapper: "bg-pink-500 dark:bg-pink-600 text-white shadow-sm shadow-pink-500/20",
       buttonClass: "bg-pink-100 hover:bg-pink-500 text-pink-900 hover:text-white border-transparent dark:bg-pink-900/50 dark:text-pink-300 dark:hover:bg-pink-600 dark:hover:text-white",
       buttonText: "Manage Activities",
+    },
+    {
+      title: "Registered Talent Reports",
+      description: "View all registered talents across the network, apply filters, and export detailed CSV reports.",
+      href: "/admin/talent-reports",
+      icon: FileText,
+      cardWrapper: "border-teal-300/70 dark:border-teal-800 hover:border-teal-500 dark:hover:border-teal-500 bg-teal-50/40 hover:bg-teal-50/80 dark:bg-teal-950/20 dark:hover:bg-teal-900/30 hover:shadow-xl hover:shadow-teal-500/10",
+      iconWrapper: "bg-teal-500 dark:bg-teal-600 text-white shadow-sm shadow-teal-500/20",
+      buttonClass: "bg-teal-100 hover:bg-teal-500 text-teal-900 hover:text-white border-transparent dark:bg-teal-900/50 dark:text-teal-300 dark:hover:bg-teal-600 dark:hover:text-white",
+      buttonText: "View Reports",
     },
   ];
 

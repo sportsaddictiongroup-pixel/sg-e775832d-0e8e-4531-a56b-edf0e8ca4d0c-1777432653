@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { authService } from "@/services/authService";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Search, Download, Eye, Calendar, Activity, MapPin, FilterX } from "lucide-react";
+import { ArrowLeft, Search, Download, Eye, Calendar, Activity, MapPin, FilterX, Users } from "lucide-react";
 
 export default function TalentReports() {
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function TalentReports() {
   const fetchTalents = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("talent_registrations")
         .select("*")
         .order("registered_at", { ascending: false });
@@ -76,7 +76,7 @@ export default function TalentReports() {
       const { data: districts } = await supabase.from('districts').select('id, name');
       const { data: pincodes } = await supabase.from('pincodes').select('id, code');
       const { data: locations } = await supabase.from('locations').select('id, name');
-      const { data: sports } = await supabase.from('sports_activities').select('id, name');
+      const { data: sports } = await (supabase as any).from('sports_activities').select('id, name');
 
       const countryMap = countries?.reduce((acc: any, c: any) => ({...acc, [c.id]: c.name}), {}) || {};
       const stateMap = states?.reduce((acc: any, s: any) => ({...acc, [s.id]: s.name}), {}) || {};

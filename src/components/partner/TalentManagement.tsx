@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,8 @@ const days = Array.from({length: 31}, (_, i) => String(i + 1).padStart(2, '0'));
 const months = Array.from({length: 12}, (_, i) => String(i + 1).padStart(2, '0'));
 const years = Array.from({length: 100}, (_, i) => String(new Date().getFullYear() - i));
 
-export function TalentManagement({ profile }: { profile: Profile }) {
+export function TalentManagement({ profile, mode = "hub" }: { profile: Profile; mode?: "hub" | "directory" }) {
+  const router = useRouter();
   const { toast } = useToast();
   
   const [talents, setTalents] = useState<any[]>([]);
@@ -45,7 +47,6 @@ export function TalentManagement({ profile }: { profile: Profile }) {
 
   // Modal States
   const [isHubOpen, setIsHubOpen] = useState(false);
-  const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedTalentDetail, setSelectedTalentDetail] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -297,163 +298,152 @@ export function TalentManagement({ profile }: { profile: Profile }) {
   };
 
   return (
-    <div className="space-y-8 mt-10">
-      <Card className="w-full border-emerald-300/80 dark:border-emerald-800/80 bg-gradient-to-br from-emerald-50/40 to-white dark:from-emerald-950/20 dark:to-background shadow-md relative overflow-hidden group hover:shadow-lg transition-all">
-        <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
-        <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-5 w-full md:w-auto">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shadow-inner shrink-0 group-hover:scale-105 transition-transform">
-              <Users className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-foreground tracking-tight">Talent Management</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-md">
-                Register new players and manage your existing talent network directory.
-              </p>
-            </div>
-          </div>
-          <Button onClick={() => setIsHubOpen(true)} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold h-11 px-8 rounded-xl shrink-0">
-            Manage Talent
-            <Plus className="h-5 w-5 ml-2" />
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Talent Management Hub Dialog */}
-      <Dialog open={isHubOpen} onOpenChange={setIsHubOpen}>
-        <DialogContent className="max-w-2xl p-6 sm:p-8 rounded-3xl">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="text-2xl text-emerald-700 dark:text-emerald-500">Talent Management Hub</DialogTitle>
-            <DialogDescription>
-              Choose an action to manage your talent network.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <Card 
-              className="cursor-pointer border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md transition-all group"
-              onClick={() => { setIsHubOpen(false); handleOpenModal(); }}
-            >
-              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Plus className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+    <div className={mode === "hub" ? "space-y-8 mt-10" : "space-y-6"}>
+      {mode === "hub" && (
+        <>
+          <Card className="w-full border-emerald-300/80 dark:border-emerald-800/80 bg-gradient-to-br from-emerald-50/40 to-white dark:from-emerald-950/20 dark:to-background shadow-md relative overflow-hidden group hover:shadow-lg transition-all">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
+            <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-5 w-full md:w-auto">
+                <div className="h-14 w-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shadow-inner shrink-0 group-hover:scale-105 transition-transform">
+                  <Users className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold">Register New Talent</h4>
-                  <p className="text-sm text-muted-foreground mt-1">Add a new player or athlete to your network.</p>
+                  <h3 className="text-xl font-bold text-foreground tracking-tight">Talent Management</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                    Register new players and manage your existing talent network directory.
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <Button onClick={() => setIsHubOpen(true)} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold h-11 px-8 rounded-xl shrink-0">
+                Manage Talent
+                <Plus className="h-5 w-5 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
 
-            <Card 
-              className="cursor-pointer border-blue-200 dark:border-blue-800 hover:border-blue-500 hover:shadow-md transition-all group"
-              onClick={() => { setIsHubOpen(false); setIsDirectoryOpen(true); }}
-            >
-              <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
-                <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold">View All Registered Talent</h4>
-                  <p className="text-sm text-muted-foreground mt-1">Browse, edit, and manage your directory.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </DialogContent>
-      </Dialog>
+          {/* Talent Management Hub Dialog */}
+          <Dialog open={isHubOpen} onOpenChange={setIsHubOpen}>
+            <DialogContent className="max-w-2xl p-6 sm:p-8 rounded-3xl">
+              <DialogHeader className="mb-4">
+                <DialogTitle className="text-2xl text-emerald-700 dark:text-emerald-500">Talent Management Hub</DialogTitle>
+                <DialogDescription>
+                  Choose an action to manage your talent network.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <Card 
+                  className="cursor-pointer border-emerald-200 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-md transition-all group"
+                  onClick={() => { setIsHubOpen(false); handleOpenModal(); }}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Plus className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold">Register New Talent</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Add a new player or athlete to your network.</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-      {/* Directory Table Dialog */}
-      <Dialog open={isDirectoryOpen} onOpenChange={setIsDirectoryOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="text-2xl flex items-center gap-2 text-foreground">
-              <Activity className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
-              My Talent / Player Directory
-            </DialogTitle>
-            <DialogDescription>
-              View and manage all the talents you have registered.
-            </DialogDescription>
-          </DialogHeader>
+                <Card 
+                  className="cursor-pointer border-blue-200 dark:border-blue-800 hover:border-blue-500 hover:shadow-md transition-all group"
+                  onClick={() => { setIsHubOpen(false); router.push('/partner/talent-directory'); }}
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold">View All Registered Talent</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Browse, edit, and manage your directory.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
 
-          <div className="space-y-4">
-            <Card className="shadow-sm border-border/60 overflow-hidden bg-card rounded-2xl">
-              {talents.length === 0 ? (
-                <div className="py-16 text-center text-muted-foreground font-medium">
-                  No talents registered yet.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-slate-50/80 dark:bg-slate-900/80 border-b">
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registration Date</TableHead>
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Name</TableHead>
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Gender</TableHead>
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registered Mobile Number</TableHead>
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Sport / Activity</TableHead>
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Country</TableHead>
-                        <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3 text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {talents.map((t) => (
-                        <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group border-b border-slate-100 dark:border-slate-800">
-                          <TableCell className="px-4 py-3">
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold bg-slate-100 dark:bg-slate-800 w-fit px-2.5 py-1.5 rounded-md">
-                              <Calendar className="h-3.5 w-3.5" />
-                              {new Date(t.registered_at).toLocaleDateString()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 font-bold text-foreground">
-                            {t.full_name}
-                          </TableCell>
-                          <TableCell className="px-4 py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                              t.gender === 'Male' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
-                              t.gender === 'Female' ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800' :
-                              'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                            }`}>
-                              {t.gender || 'Other'}
+      {mode === "directory" && (
+        <Card className="shadow-sm border-border/60 overflow-hidden bg-card rounded-2xl">
+          {talents.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground font-medium">
+              No talents registered yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-slate-50/80 dark:bg-slate-900/80 border-b">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registration Date</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Name</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Gender</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Registered Mobile Number</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Sport / Activity</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3">Country</TableHead>
+                    <TableHead className="font-bold text-slate-700 dark:text-slate-300 px-4 py-3 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {talents.map((t) => (
+                    <TableRow key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:shadow-sm transition-all group border-b border-slate-100 dark:border-slate-800">
+                      <TableCell className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold bg-slate-100 dark:bg-slate-800 w-fit px-2.5 py-1.5 rounded-md">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {new Date(t.registered_at).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 font-bold text-foreground">
+                        {t.full_name}
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                          t.gender === 'Male' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                          t.gender === 'Female' ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800' :
+                          'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                        }`}>
+                          {t.gender || 'Other'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                        {t.mobile_country_code} {t.mobile_number}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
+                            {t.sport_name}
+                          </span>
+                          {t.level && (
+                            <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 uppercase tracking-wider">
+                              {t.level}
                             </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300">
-                            {t.mobile_country_code} {t.mobile_number}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800">
-                                {t.sport_name}
-                              </span>
-                              {t.level && (
-                                <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 uppercase tracking-wider">
-                                  {t.level}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm font-medium text-slate-500">
-                            {countries.find(c => String(c.id) === String(t.country_id))?.name || "Unknown"}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => { setSelectedTalentDetail(t); setIsDetailOpen(true); }} 
-                              className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors h-8 w-8 p-0 rounded-full"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </Card>
-          </div>
-        </DialogContent>
-      </Dialog>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm font-medium text-slate-500">
+                        {countries.find(c => String(c.id) === String(t.country_id))?.name || "Unknown"}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => { setSelectedTalentDetail(t); setIsDetailOpen(true); }} 
+                          className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors h-8 w-8 p-0 rounded-full"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* View Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
